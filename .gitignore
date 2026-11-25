@@ -221,3 +221,17 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Model weights (webcam/, refactoring/)
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+*.part
+
+# macOS
+.DS_Store
+
+# DINOv3 package source (not a virtualenv)
+!refactoring/model/DINOv3/dinov3/env/
