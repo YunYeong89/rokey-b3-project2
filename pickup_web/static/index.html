@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>로키마트 픽업 주문</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0f766e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+  :root{
+    --bg:#f4f1ea; --card:#fffdf8; --ink:#1f2a28; --muted:#6b736f; --line:#e3ddd0;
+    --brand:#0f766e; --brand-2:#14b8a6; --accent:#f59e0b; --danger:#dc2626; --ok:#16a34a;
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+  header{position:sticky;top:0;z-index:5;background:var(--brand);color:#fff;
+    padding:14px 18px 0;box-shadow:0 2px 12px rgba(15,118,110,.25)}
+  .bar{display:flex;align-items:center;gap:10px;max-width:980px;margin:0 auto}
+  .logo{width:36px;height:36px;border-radius:11px;background:#fff;color:var(--brand);
+    display:grid;place-items:center;font-weight:800;font-size:18px}
+  .title{font-weight:800;font-size:18px;letter-spacing:-.02em}
+  .sub{font-size:12px;opacity:.8}
+  .mode{margin-left:auto;font-size:11px;padding:4px 9px;border-radius:99px;background:rgba(255,255,255,.18)}
+  .tabs{display:flex;gap:4px;max-width:980px;margin:12px auto 0}
+  .tab{padding:10px 16px;border-radius:12px 12px 0 0;font-weight:700;font-size:14px;opacity:.75}
+  .tab.on{background:var(--bg);color:var(--brand);opacity:1}
+  main{max-width:980px;margin:0 auto;padding:18px 16px 140px}
+  .view{display:none}.view.on{display:block}
+  h2{font-size:17px;margin:4px 2px 12px;letter-spacing:-.02em}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;
+    display:flex;flex-direction:column;gap:8px;transition:transform .15s,box-shadow .15s}
+  .card.sel{border-color:var(--brand-2);box-shadow:0 0 0 3px rgba(20,184,166,.18)}
+  .card.out{opacity:.5}
+  .emoji{font-size:40px;line-height:1;height:56px;display:grid;place-items:center;background:#f1ede3;border-radius:14px}
+  .pname{font-weight:700;font-size:15px}
+  .meta{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+  .stock.low{color:var(--accent);font-weight:700}.stock.zero{color:var(--danger);font-weight:700}
+  .qty{display:flex;align-items:center;justify-content:space-between;background:#f1ede3;border-radius:12px;padding:4px}
+  .qty button{width:34px;height:34px;border-radius:10px;background:#fff;font-size:20px;font-weight:700;color:var(--brand)}
+  .qty button:disabled{opacity:.35;cursor:default}
+  .qty span{font-weight:800;min-width:24px;text-align:center}
+  .reco{margin-top:18px;background:#fff7e6;border:1px dashed #f3c46b;border-radius:var(--radius);padding:12px 14px;display:none}
+  .reco b{font-size:14px}.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .chip{background:#fff;border:1px solid #f3c46b;border-radius:99px;padding:7px 12px;font-size:13px;font-weight:600}
+  .cart{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-top:1px solid var(--line);
+    padding:12px 16px calc(12px + env(safe-area-inset-bottom));box-shadow:0 -6px 20px rgba(0,0,0,.06)}
+  .cart .in{max-width:980px;margin:0 auto;display:flex;align-items:center;gap:12px}
+  .sum{flex:1;font-size:13px;color:var(--muted)}.sum b{display:block;font-size:19px;color:var(--ink)}
+  .btn{background:var(--brand);color:#fff;font-weight:800;padding:14px 22px;border-radius:14px;font-size:15px}
+  .btn:disabled{background:#a8b5b2;cursor:default}
+  .btn.ghost{background:#fff;color:var(--brand);border:1.5px solid var(--brand)}
+  .btn.warn{background:var(--accent)}.btn.sm{padding:9px 14px;font-size:13px;border-radius:11px}
+  /* 진행 상황 */
+  .overlay{position:fixed;inset:0;z-index:20;background:rgba(20,30,28,.55);display:none;align-items:flex-end;justify-content:center}
+  .overlay.on{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:520px;border-radius:24px 24px 0 0;padding:22px 20px calc(24px + env(safe-area-inset-bottom));
+    animation:up .25s ease}
+  @keyframes up{from{transform:translateY(40px);opacity:0}}
+  .robot{width:88px;height:88px;margin:4px auto 10px;border-radius:26px;background:#e6f4f2;display:grid;place-items:center;font-size:46px}
+  .robot.busy{animation:bob 1.2s ease-in-out infinite}@keyframes bob{50%{transform:translateY(-6px)}}
+  .st-title{text-align:center;font-weight:800;font-size:19px}
+  .st-msg{text-align:center;color:var(--muted);font-size:14px;margin:6px 0 16px}
+  .steps{display:flex;justify-content:space-between;margin:0 6px 14px;position:relative}
+  .steps:before{content:"";position:absolute;left:12%;right:12%;top:13px;height:3px;background:var(--line)}
+  .step{position:relative;text-align:center;font-size:12px;color:var(--muted);flex:1}
+  .dot{width:28px;height:28px;border-radius:50%;margin:0 auto 6px;background:#fff;border:3px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:800}
+  .step.on .dot{border-color:var(--brand-2);color:var(--brand)}.step.on{color:var(--ink);font-weight:700}
+  .step.done .dot{background:var(--brand);border-color:var(--brand);color:#fff}
+  .prog{height:10px;background:#ece7dc;border-radius:99px;overflow:hidden}
+  .prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--brand-2));transition:width .4s}
+  .plist{margin:14px 0 4px;padding:0;list-style:none;font-size:14px}
+  .plist li{display:flex;justify-content:space-between;padding:7px 2px;border-bottom:1px dashed var(--line)}
+  .choices{display:grid;gap:8px;margin-top:6px}
+  /* 직원 화면 */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+  .kpi small{color:var(--muted);font-size:12px}.kpi b{display:block;font-size:24px;margin-top:2px}
+  .kpi.red b{color:var(--danger)}.kpi.amber b{color:var(--accent)}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:14px}
+  .ph{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+  .ph h3{margin:0;font-size:15px}.ph .r{margin-left:auto;display:flex;gap:6px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{white-space:nowrap;text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:6px 6px;border-bottom:1px solid var(--line)}
+  td{padding:9px 6px;border-bottom:1px solid #efeadf}
+  td.n{text-align:center;font-variant-numeric:tabular-nums;font-weight:700}
+  .tag{font-size:12px;font-weight:700;padding:3px 8px;border-radius:99px;white-space:nowrap}
+  .tag.ok{background:#dcfce7;color:#166534}.tag.low{background:#fef3c7;color:#92400e}.tag.mismatch{background:#fee2e2;color:#991b1b}.tag.order{background:#ffedd5;color:#9a3412}
+  .tag.attr{font-size:10px;padding:2px 6px;margin-left:4px;vertical-align:middle;background:#eef2f1;color:var(--muted)}
+  .tag.fragile{background:#fee2e2;color:#991b1b}.tag.soft{background:#e0f2fe;color:#075985}.tag.unreg{background:#ede9fe;color:#5b21b6}
+  .mini{display:flex;gap:4px;flex-wrap:wrap}
+  @media (max-width:520px){td,th{padding-left:4px;padding-right:4px}}.mini button:disabled{opacity:.35;cursor:default}.mini button{background:#f1ede3;border-radius:8px;padding:5px 9px;font-size:12px;font-weight:700}
+  .alerts{list-style:none;margin:0;padding:0;font-size:13px;max-height:260px;overflow:auto}
+  .alerts li{display:flex;gap:8px;padding:8px 2px;border-bottom:1px solid #efeadf}
+  .alerts time{color:var(--muted);font-variant-numeric:tabular-nums}
+  .lv{width:8px;height:8px;border-radius:50%;margin-top:6px;flex:none}
+  .lv.warn{background:var(--accent)}.lv.error{background:var(--danger)}.lv.info{background:var(--brand-2)}
+  .empty{color:var(--muted);font-size:13px;padding:8px 2px}
+  .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#1f2a28;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;z-index:30;opacity:0;transition:opacity .2s;pointer-events:none}
+  .toast.on{opacity:1}
+  @media (min-width:720px){.grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="logo">R</div>
+    <div><div class="title">로키마트 픽업</div><div class="sub">주문하면 로봇이 담아 드려요</div></div>
+    <span class="mode" id="mode">연결 중…</span>
+  </div>
+  <nav class="tabs">
+    <button class="tab on" data-v="shop">🛒 주문하기</button>
+    <button class="tab" data-v="staff">📋 직원 · 재고</button>
+  </nav>
+</header>
+
+<main>
+  <!-- 손님 화면 -->
+  <section class="view on" id="v-shop">
+    <h2>무엇을 담아 드릴까요?</h2>
+    <div class="grid" id="grid"></div>
+    <div class="reco" id="reco"><b>💡 함께 사면 좋아요</b><div class="chips" id="chips"></div></div>
+  </section>
+
+  <!-- 직원 화면 -->
+  <section class="view" id="v-staff">
+    <div class="kpis">
+      <div class="kpi"><small>로봇 상태</small><b id="k-robot">대기</b></div>
+      <div class="kpi amber"><small>보충 필요</small><b id="k-low">0</b></div>
+      <div class="kpi red"><small>재고 불일치</small><b id="k-mis">0</b></div>
+      <div class="kpi"><small>마지막 점검</small><b id="k-time">-</b></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h3>재고 현황</h3><span class="sub" style="color:var(--muted)">창고 · 진열 vs 카메라</span>
+        <div class="r"><button class="btn sm" id="scan">📷 재고 점검</button></div></div>
+      <table><thead><tr><th>상품</th><th style="text-align:center">창고</th><th style="text-align:center">진열</th><th style="text-align:center">카메라</th><th>상태</th><th>보충</th></tr></thead>
+        <tbody id="inv"></tbody></table>
+    </div>
+    <div class="panel">
+      <div class="ph"><h3>알림</h3></div>
+      <ul class="alerts" id="alerts"></ul>
+    </div>
+  </section>
+</main>
+
+<div class="cart" id="cart">
+  <div class="in">
+    <div class="sum"><span id="cnt">담은 상품 0개</span><b id="total">0원</b></div>
+    <button class="btn" id="orderBtn" disabled>로봇에게 주문하기</button>
+  </div>
+</div>
+
+<div class="overlay" id="ov"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================================================================
+   API 계층: 서버(web_server.py)가 있으면 서버 사용,
+   없으면(파일로 열거나 미리보기) 브라우저 안에서 데모 시뮬레이션
+   ================================================================ */
+let LOW = 1;  // 보충 필요 기준 (브라우저 데모에서는 products.json 의 low_stock 값으로 바뀜)
+const Demo = (() => {
+  // 상품 정보 원본은 pickup_web/products.json. 불러오기에 실패하면(파일로 직접 열기 등) 아래 기본값 사용
+  const FALLBACK = {
+    low_stock:1,
+    products:[
+      {"id":"tuna_can","name":"참치캔","emoji":"🐟","price":2500,"stock":3,"warehouse":5,"shelf":"upper","fragile":false,"deformable":false,"registered":true},
+      {"id":"spam_can","name":"스팸 통조림","emoji":"🥫","price":4500,"stock":3,"warehouse":5,"shelf":"upper","fragile":false,"deformable":false,"registered":true},
+      {"id":"milk_pack","name":"소형 우유팩","emoji":"🥛","price":1200,"stock":3,"warehouse":5,"shelf":"lower","fragile":false,"deformable":false,"registered":true},
+      {"id":"soap_box","name":"비누 상자","emoji":"🧼","price":2000,"stock":3,"warehouse":5,"shelf":"upper","fragile":false,"deformable":false,"registered":true},
+      {"id":"choco_box","name":"초콜릿 상자","emoji":"🍫","price":3000,"stock":3,"warehouse":5,"shelf":"upper","fragile":false,"deformable":false,"registered":true},
+      {"id":"snack_bag","name":"과자 봉지","emoji":"🍿","price":1500,"stock":3,"warehouse":5,"shelf":"lower","fragile":false,"deformable":true,"registered":true},
+      {"id":"mini_tissue","name":"미니 티슈","emoji":"🧻","price":800,"stock":3,"warehouse":5,"shelf":"lower","fragile":false,"deformable":true,"registered":true},
+      {"id":"egg_pack","name":"계란 모형 포장 용기","emoji":"🥚","price":3500,"stock":3,"warehouse":5,"shelf":"lower","fragile":true,"deformable":false,"registered":true},
+      {"id":"new_item","name":"신규 실험용 상품","emoji":"📦","price":1000,"stock":2,"warehouse":5,"shelf":"lower","fragile":false,"deformable":false,"registered":false}
+    ],
+    substitute:{"tuna_can":"spam_can","spam_can":"tuna_can","choco_box":"snack_bag","snack_bag":"choco_box"},
+    pairs:{"tuna_can":["milk_pack"],"spam_can":["egg_pack"],"choco_box":["milk_pack"],"snack_bag":["milk_pack"],"soap_box":["mini_tissue"],"egg_pack":["spam_can"]},
+  };
+  let P=[], PAIRS={}, SUB={}, ready=null;
+  const load=()=>ready||(ready=fetch("/static/products.json")
+    .then(r=>{if(!r.ok) throw new Error(r.statusText);return r.json()})
+    .catch(()=>FALLBACK)
+    .then(c=>{P=c.products.map(p=>({...p}));PAIRS=c.pairs||{};SUB=c.substitute||{};LOW=c.low_stock??LOW}));
+  let status={state:"idle"}, vision={}, vtime=null, alerts=[], oid=1, resolveChoice=null;
+  const get=id=>P.find(p=>p.id===id), wait=ms=>new Promise(r=>setTimeout(r,ms));
+  const now=()=>new Date().toTimeString().slice(0,8);
+  const alert=(level,text)=>{alerts.unshift({time:now(),level,text});alerts=alerts.slice(0,30)};
+  async function run(id,items){
+    let total=Object.values(items).reduce((a,b)=>a+b,0);
+    status={order_id:id,state:"checking",message:"매대에서 재고를 확인하고 있어요",done:0,total};
+    await wait(1500);
+    const seen=Object.fromEntries(Object.keys(items).map(pid=>[pid,vision[pid]??get(pid).stock]));
+    Object.assign(vision,seen);vtime=now();
+    for(const [pid,want] of Object.entries({...items})){
+      const have=seen[pid];
+      if(have<want){
+        status={order_id:id,state:"need_choice",message:"재고가 부족해요",shortage:{id:pid,want,have},substitute:SUB[pid],done:0,total};
+        const c=await new Promise(r=>resolveChoice=r);
+        if(c.choice==="cancel"){status={order_id:id,state:"cancelled",message:"주문이 취소되었어요"};return}
+        items[pid]=have;
+        if(c.choice==="substitute"&&c.substitute) items[c.substitute]=(items[c.substitute]||0)+(want-have);
+        for(const k in items) if(!items[k]) delete items[k];
+        total=Object.values(items).reduce((a,b)=>a+b,0);
+      }
+    }
+    const picked={}; let done=0;
+    for(const [pid,n] of Object.entries(items)) for(let i=0;i<n;i++){
+      status={order_id:id,state:"picking",current:pid,done,total,picked:{...picked},message:"상품을 집어서 바구니에 담고 있어요"};
+      await wait(1800); picked[pid]=(picked[pid]||0)+1; done++;
+    }
+    for(const [pid,n] of Object.entries(picked)){const p=get(pid);p.stock=Math.max(0,p.stock-n);if(pid in vision) vision[pid]=Math.max(0,vision[pid]-n);
+      if(p.stock<=LOW) p.warehouse>0?alert("warn",`${p.name} 진열 보충 필요 (진열 ${p.stock}개 / 창고 ${p.warehouse}개)`)
+        :alert("error",`${p.name} 창고 재고 없음 - 발주 필요 (진열 ${p.stock}개)`)}
+    status={order_id:id,state:"done",done,total,picked,message:"담기 완료! 픽업대에서 가져가세요"};
+  }
+  return {
+    products:async()=>{await load();return {products:P,mode:"demo"}},
+    order:async items=>{if(["checking","picking","need_choice"].includes(status.state)) throw new Error("로봇이 다른 주문을 처리 중이에요");
+      const id=oid++; run(id,{...items}); return {order_id:id}},
+    status:async()=>status,
+    choice:async c=>{resolveChoice&&resolveChoice(c);resolveChoice=null;return{ok:true}},
+    recommend:async basket=>{const s={};basket.forEach(a=>(PAIRS[a]||[]).forEach(b=>s[b]=(s[b]||0)+1));
+      return {items:Object.keys(s).sort((a,b)=>s[b]-s[a]).filter(b=>!basket.includes(b)&&get(b).stock>0).slice(0,2)}},
+    inventory:async()=>({rows:P.map(p=>{const v=vision[p.id];return{...p,vision:v,state:v!=null&&v!==p.stock?"mismatch":p.stock<=LOW?(p.warehouse>0?"low":"order"):"ok"}}),
+      vision_time:vtime,alerts,robot:status}),
+    scan:async()=>{setTimeout(()=>{vision=Object.fromEntries(P.map(p=>[p.id,p.stock]));
+      if(Math.random()<.4){const p=P[Math.floor(Math.random()*P.length)];vision[p.id]=Math.max(0,p.stock-1)}
+      vtime=now();P.forEach(p=>{if(vision[p.id]!==p.stock) alert("error",`${p.name} 불일치: 진열 ${p.stock}개 / 카메라 ${vision[p.id]}개`)})},1500);return{ok:true}},
+    restock:async(id,qty,mode="move")=>{const p=get(id), sg=n=>(n>0?"+":"")+n; let text;
+      if(mode==="move"){const n=qty>0?Math.min(qty,p.warehouse):Math.max(qty,-p.stock);
+        if(!n) throw new Error(qty>0?"창고 재고가 없어요":"진열 재고가 없어요");
+        p.warehouse-=n;p.stock+=n;text=`${p.name} 창고 -> 진열 ${sg(n)}개 (진열 ${p.stock}개 / 창고 ${p.warehouse}개)`}
+      else if(mode==="receive"){p.warehouse=Math.max(0,p.warehouse+qty);text=`${p.name} 창고 입고 ${sg(qty)}개 (창고 ${p.warehouse}개)`}
+      else {p.stock=Math.max(0,p.stock+qty);text=`${p.name} 진열 재고 ${sg(qty)}개 수정 (진열 ${p.stock}개)`}
+      delete vision[id];alert("info",text);return{ok:true}},
+  };
+})();
+
+const Server = {
+  async j(url,opt){const r=await fetch(url,opt);const d=await r.json().catch(()=>({}));if(!r.ok) throw new Error(d.detail||r.statusText);return d},
+  post(url,body){return this.j(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body||{})})},
+  products(){return this.j("/api/products")},
+  order(items){return this.post("/api/order",{items})},
+  status(){return this.j("/api/status")},
+  choice(c){return this.post("/api/choice",c)},
+  recommend(b){return this.j("/api/recommend?basket="+b.join(","))},
+  inventory(){return this.j("/api/inventory")},
+  scan(){return this.post("/api/scan")},
+  restock(id,qty,mode="move"){return this.post("/api/restock",{id,qty,mode})},
+};
+let API = Server;
+
+/* ================================================================ UI */
+const $=s=>document.querySelector(s);
+const won=n=>n.toLocaleString("ko-KR")+"원";
+let products=[], cart={}, polling=null, lastState=null;
+const pmap=()=>Object.fromEntries(products.map(p=>[p.id,p]));
+
+function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("on"),2200)}
+
+async function loadProducts(){
+  try{const d=await API.products();products=d.products;
+    $("#mode").textContent=d.mode==="robot"?"🤖 로봇 연결됨":d.mode==="mock"?"서버 · 데모 로봇":"브라우저 데모";
+  }catch(e){
+    if(API===Server){API=Demo;return loadProducts()}
+    toast(e.message)
+  }
+  renderGrid();
+}
+
+function renderGrid(){
+  $("#grid").innerHTML=products.map(p=>{
+    const q=cart[p.id]||0, s=p.stock, cls=s===0?"zero":s<=LOW?"low":"";
+    return `<div class="card ${q?"sel":""} ${s===0?"out":""}">
+      <div class="emoji">${p.emoji}</div>
+      <div class="pname">${p.name}</div>
+      <div class="meta"><span>${won(p.price)}</span><span class="stock ${cls}">${s===0?"품절":"남은 "+s+"개"}</span></div>
+      <div class="qty"><button data-a="-" data-id="${p.id}" ${q?"":"disabled"} aria-label="빼기">−</button>
+        <span>${q}</span><button data-a="+" data-id="${p.id}" ${q>=s?"disabled":""} aria-label="더하기">+</button></div>
+    </div>`}).join("");
+  const ids=Object.keys(cart).filter(k=>cart[k]>0), m=pmap();
+  const n=ids.reduce((a,k)=>a+cart[k],0), t=ids.reduce((a,k)=>a+cart[k]*m[k].price,0);
+  $("#cnt").textContent=`담은 상품 ${n}개`;$("#total").textContent=won(t);$("#orderBtn").disabled=!n;
+  updateReco(ids);
+}
+
+async function updateReco(ids){
+  if(!ids.length){$("#reco").style.display="none";return}
+  try{const r=await API.recommend(ids), m=pmap();
+    if(!r.items.length){$("#reco").style.display="none";return}
+    $("#chips").innerHTML=r.items.map(id=>`<button class="chip" data-add="${id}">${m[id].emoji} ${m[id].name} 추가</button>`).join("");
+    $("#reco").style.display="block";
+  }catch{}
+}
+
+$("#grid").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-a]");if(!b)return;
+  const id=b.dataset.id;cart[id]=Math.max(0,(cart[id]||0)+(b.dataset.a==="+"?1:-1));renderGrid();
+});
+$("#chips").addEventListener("click",e=>{
+  const b=e.target.closest("[data-add]");if(!b)return;const id=b.dataset.add, p=pmap()[id];
+  if((cart[id]||0)<p.stock){cart[id]=(cart[id]||0)+1;renderGrid();toast(`${p.name}을(를) 담았어요`)}
+});
+
+$("#orderBtn").addEventListener("click",async()=>{
+  const items=Object.fromEntries(Object.entries(cart).filter(([,v])=>v>0));
+  try{await API.order(items);lastState=null;$("#ov").classList.add("on");startPolling()}
+  catch(e){toast(e.message)}
+});
+
+function startPolling(){clearInterval(polling);tick();polling=setInterval(tick,700)}
+async function tick(){
+  let s;try{s=await API.status()}catch{return}
+  const key=JSON.stringify(s);if(key===lastState)return;lastState=key;renderStatus(s);
+}
+
+function renderStatus(s){
+  const m=pmap(), st=s.state;
+  const order=["checking","picking","done"], idx=st==="need_choice"?0:order.indexOf(st);
+  const stepHtml=["재고 확인","담는 중","완료"].map((t,i)=>
+    `<div class="step ${i<idx||st==="done"?"done":i===idx?"on":""}"><div class="dot">${i<idx||st==="done"?"✓":i+1}</div>${t}</div>`).join("");
+  let body="";
+  if(st==="need_choice"){
+    const sh=s.shortage, p=m[sh.id], sub=s.substitute&&m[s.substitute];
+    body=`<div class="robot">🤔</div><div class="st-title">${p.name} 재고가 부족해요</div>
+      <div class="st-msg">${sh.want}개를 주문하셨는데 매대에 ${sh.have}개만 있어요</div>
+      <div class="choices">
+        ${sh.have>0?`<button class="btn" data-c="partial">${sh.have}개만 받을게요</button>`:""}
+        ${sub&&sub.stock>0?`<button class="btn warn" data-c="substitute" data-s="${sub.id}">부족한 만큼 ${sub.emoji} ${sub.name}로 바꿀게요</button>`:""}
+        <button class="btn ghost" data-c="cancel">주문 취소</button></div>`;
+  }else if(st==="done"||st==="cancelled"||st==="error"){
+    const picked=s.picked||{};
+    body=`<div class="robot">${st==="done"?"✅":st==="error"?"⚠️":"🙅"}</div>
+      <div class="st-title">${st==="done"?"담기 완료!":st==="error"?"문제가 생겼어요":"주문 취소"}</div>
+      <div class="st-msg">${s.message||""}</div>
+      ${st!=="cancelled"?`<div class="steps">${stepHtml}</div>`:""}
+      ${Object.keys(picked).length?`<ul class="plist">${Object.entries(picked).map(([k,v])=>`<li><span>${m[k].emoji} ${m[k].name}</span><b>${v}개</b></li>`).join("")}</ul>`:""}
+      <button class="btn" style="width:100%;margin-top:12px" id="closeOv">확인</button>`;
+    clearInterval(polling);
+    if(st==="done"){cart={};loadProducts()}
+  }else{
+    const pct=s.total?Math.round((s.done||0)/s.total*100):0, cur=s.current&&m[s.current];
+    body=`<div class="robot busy">🤖</div>
+      <div class="st-title">${st==="checking"?"재고 확인 중":cur?`${cur.emoji} ${cur.name} 담는 중`:"담는 중"}</div>
+      <div class="st-msg">${s.message||""}</div>
+      <div class="steps">${stepHtml}</div>
+      <div class="prog"><i style="width:${pct}%"></i></div>
+      <div class="meta" style="margin-top:6px"><span>진행</span><span>${s.done||0} / ${s.total||0}개</span></div>`;
+  }
+  $("#sheet").innerHTML=body;
+}
+
+$("#sheet").addEventListener("click",async e=>{
+  const c=e.target.closest("[data-c]");
+  if(c){c.disabled=true;await API.choice({choice:c.dataset.c,substitute:c.dataset.s||null});lastState=null;return}
+  if(e.target.id==="closeOv"){$("#ov").classList.remove("on");loadProducts()}
+});
+
+/* ---------------- 직원 화면 */
+let staffTimer=null;
+const STATE_TXT={ok:"정상",low:"보충 필요",order:"발주 필요",mismatch:"불일치"};
+const attrTags=r=>(r.fragile?`<span class="tag attr fragile">깨짐주의</span>`:"")+(r.deformable?`<span class="tag attr soft">말랑</span>`:"")
+  +(r.registered===false?`<span class="tag attr unreg">미등록</span>`:"");
+const ROBOT_TXT={idle:"대기",checking:"재고 확인",picking:"담는 중",need_choice:"손님 선택 대기",done:"대기",cancelled:"대기",error:"오류"};
+async function loadStaff(){
+  let d;try{d=await API.inventory()}catch(e){return}
+  $("#inv").innerHTML=d.rows.map(r=>`<tr>
+    <td>${r.emoji} ${r.name}${attrTags(r)}</td><td class="n" style="${r.warehouse===0?"color:var(--danger)":""}">${r.warehouse}</td><td class="n">${r.stock}</td>
+    <td class="n" style="${r.state==="mismatch"?"color:var(--danger)":""}">${r.vision??"-"}</td>
+    <td><span class="tag ${r.state}">${STATE_TXT[r.state]}</span></td>
+    <td><div class="mini"><button data-r="${r.id}" data-m="move" data-q="1" ${r.warehouse?"":"disabled"} title="창고에서 1개 꺼내 진열">진열 +1</button>
+      <button data-r="${r.id}" data-m="receive" data-q="5" title="창고에 5개 입고">입고 +5</button>
+      ${r.state==="mismatch"?`<button data-r="${r.id}" data-m="adjust" data-q="${r.vision-r.stock}">카메라값 반영</button>`:""}</div></td></tr>`).join("");
+  $("#k-low").textContent=d.rows.filter(r=>r.state==="low"||r.state==="order").length;
+  $("#k-mis").textContent=d.rows.filter(r=>r.state==="mismatch").length;
+  $("#k-time").textContent=d.vision_time||"-";
+  $("#k-robot").textContent=ROBOT_TXT[d.robot?.state]||"대기";
+  $("#alerts").innerHTML=d.alerts.length?d.alerts.map(a=>`<li><span class="lv ${a.level}"></span><time>${a.time}</time><span>${a.text}</span></li>`).join("")
+    :`<li class="empty">아직 알림이 없어요</li>`;
+}
+$("#inv").addEventListener("click",async e=>{
+  const b=e.target.closest("button");if(!b)return;
+  try{await API.restock(b.dataset.r,+b.dataset.q,b.dataset.m)}catch(e){toast(e.message)}loadStaff();loadProducts();
+});
+$("#scan").addEventListener("click",async()=>{await API.scan();toast("로봇이 매대를 점검하고 있어요");setTimeout(loadStaff,1800)});
+
+/* ---------------- 탭 */
+function show(v){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.v===v));
+  document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id==="v-"+v));
+  $("#cart").style.display=v==="shop"?"block":"none";
+  clearInterval(staffTimer);
+  if(v==="staff"){loadStaff();staffTimer=setInterval(loadStaff,1500)}else loadProducts();
+  history.replaceState(null,"",v==="staff"?"#staff":location.pathname);
+}
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>show(t.dataset.v)));
+
+loadProducts().then(()=>show(location.hash==="#staff"?"staff":"shop"));
+</script>
+</body>
+</html>

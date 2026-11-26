@@ -1,0 +1,9 @@
+{
+  "name": "로키마트 픽업 주문",
+  "short_name": "로키픽업",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f1ea",
+  "theme_color": "#0f766e",
+  "icons": [{ "src": "/static/icon.png", "sizes": "512x512", "type": "image/png" }]
+}
