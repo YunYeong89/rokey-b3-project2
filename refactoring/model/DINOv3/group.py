@@ -13,7 +13,7 @@ import torch.nn.functional as F
 
 DINO_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(DINO_DIR.parent / "CLIP"))
-from instruction import InstructionStream, create_parser, masked_crop
+from instruction import InstructionStream, create_parser as create_clip_parser, masked_crop
 from dinov3.hub.backbones import dinov3_vits16
 
 CHECKPOINT = DINO_DIR / "checkpoints" / "dinov3_vits16_pretrain_lvd1689m-08c60483.pth"
@@ -105,48 +105,70 @@ class GroupStream(InstructionStream):
     def process(self, bgr):
         rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
         masks, boxes = self.segmenter(rgb)
-        total, keep = len(masks), self.selector.keep(masks)
+        hit_masks, hit_boxes, groups, scores, _ = self.select(rgb, masks, boxes)
+        overlay = self.render(bgr, hit_masks, hit_boxes, scores, groups)
+        return overlay, f"Groups: {len(np.unique(groups))} | Matches: {len(groups)}/{len(masks)}"
+
+    def select(self, rgb, masks, boxes):
+        """면적 필터 → DINOv3 그룹 → 그룹 평균 CLIP 점수가 min_score 이상이고 최고 그룹 대비 margin 이내인 그룹만 남깁니다.
+        남은 (마스크, 박스, 그룹 ID, 그룹 CLIP 점수, 마스크 CLIP 점수)를 반환합니다."""
+        keep = self.selector.keep(masks)
         if self.selector.text is None or len(keep) == 0:
-            return bgr.copy(), f"Groups: 0 | Matches: 0/{total}"
+            return masks[:0], boxes[:0], np.empty(0, dtype=int), np.empty(0), np.empty(0)
         masks, boxes = masks[keep], boxes[keep]
 
         groups = self.grouper(self.embedder(rgb, masks, boxes))
         image = self.selector.embed(rgb, masks, boxes)
         ids = np.unique(groups)
         centers = np.stack([image[groups == group].mean(0) for group in ids])
-        scores = centers @ self.selector.text / np.linalg.norm(centers, axis=1)
-        chosen = (scores >= self.args.min_score) & (scores >= scores.max() - self.args.margin)
-        hit = np.isin(groups, ids[chosen])
-
-        overlay = self.render(bgr, masks[hit], boxes[hit], scores[np.searchsorted(ids, groups[hit])], groups[hit])
-        return overlay, f"Groups: {chosen.sum()} | Matches: {hit.sum()}/{total}"
+        scores = (centers @ self.selector.text / np.linalg.norm(centers, axis=1))[np.searchsorted(ids, groups)]
+        hit = (scores >= self.args.min_score) & (scores >= scores.max() - self.args.margin)
+        return masks[hit], boxes[hit], groups[hit], scores[hit], image[hit] @ self.selector.text
 
     @classmethod
-    def render(cls, bgr, masks, boxes, scores, groups):
-        """그룹 ID별 고정 색으로 마스크와 윤곽을 칠하고 'G<ID> <CLIP 점수>'를 그린 BGR 이미지를 반환합니다."""
+    def paint(cls, bgr, masks, groups):
+        """그룹 ID별 고정 색으로 마스크와 윤곽을 칠한 BGR 이미지와 마스크별 색 (N, 3)을 반환합니다."""
         overlay = bgr.copy()
         colors = cls.COLORS[groups % len(cls.COLORS)]
         for mask, color in zip(masks, colors):
             overlay[mask] = overlay[mask] * 0.5 + color * 0.5
             contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             cv2.drawContours(overlay, contours, -1, color.tolist(), 2)
+        return overlay, colors
+
+    @classmethod
+    def render(cls, bgr, masks, boxes, scores, groups):
+        """그룹 색 마스크 위에 'G<ID> <CLIP 점수>'를 그린 BGR 이미지를 반환합니다."""
+        overlay, colors = cls.paint(bgr, masks, groups)
         for (x1, y1, _, _), score, group, color in zip(boxes.astype(int), scores, groups, colors):
             cv2.putText(overlay, f"G{group} {score:.2f}", (x1 + 4, y1 + 20), cv2.FONT_HERSHEY_SIMPLEX,
                         0.6, color.tolist(), 2, cv2.LINE_AA)
         return overlay
 
 
-def parse_args():
-    parser = create_parser("Group identical items by DINOv3 crop features, then keep the groups whose mean CLIP "
-                           "embedding matches the instruction. Processes --input into --output, or the webcam with --stream.")
+def add_group_arguments(parser):
+    """DINOv3 그룹·CLIP 그룹 선택 인자 (grasp_clustering.py도 공유합니다)."""
     parser.add_argument("--dino-size", type=int, default=224, help="DINOv3 input size of each square mask crop.")
     parser.add_argument("--group-sim", type=float, default=0.78,
                         help="Minimum DINOv3 cosine similarity for two masks to be the same item.")
     parser.add_argument("--margin", type=float, default=0.025,
                         help="Keep groups whose CLIP score is within this margin of the best group (and >= --min-score).")
+    return parser
+
+
+def create_parser():
+    """instruction.py 인자에 DINOv3 그룹 인자를 더한 파서 (ROS dinov3.py는 parse_args([])로 기본값만 씁니다)."""
+    parser = add_group_arguments(create_clip_parser(
+        "Group identical items by DINOv3 crop features, then keep the groups whose mean CLIP embedding matches the "
+        "instruction. Processes --input into --output, or the webcam with --stream."))
     parser.add_argument("--input", type=Path, default=DINO_DIR / "images" / "before.jpg", help="Input image.")
     parser.add_argument("--output", type=Path, default=DINO_DIR / "images" / "after.jpg", help="Masked output image.")
     parser.add_argument("--stream", action="store_true", help="Run on webcam shared memory instead of --input.")
+    return parser
+
+
+def parse_args():
+    parser = create_parser()
     args = parser.parse_args()
     if not args.stream and not args.instruction:
         parser.error("--instruction is required for image mode, e.g. --instruction can.")
