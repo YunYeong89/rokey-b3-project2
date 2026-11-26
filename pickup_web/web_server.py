@@ -19,7 +19,8 @@ ROS2 토픽 (모두 std_msgs/String, JSON 문자열):
     로봇 -> 웹
       /order_status   {"order_id": 3, "state": "checking"|"picking"|"need_choice"|"done"|"cancelled"|"error",
                        "message": "...", "current": "tuna_can", "done": 1, "total": 3,
-                       "shortage": {"id": "tuna_can", "want": 2, "have": 1}, "picked": {"tuna_can": 1}}
+                       "shortage": {"id": "tuna_can", "want": 2, "have": 1}, "picked": {"tuna_can": 1},
+                       "staff_items": {"cola": 1}}   # done 일 때: 로봇이 안 담는 가상 상품(직원 준비)
       /vision_count   {"tuna_can": 1, "spam_can": 3, ...}   # 카메라로 센 개수
 """
 import argparse
@@ -35,37 +36,45 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from recommender import Recommender
+
 BASE = Path(__file__).parent
 STATIC = BASE / "static"
+DATA = BASE / "data"
 INVENTORY_FILE = BASE / "inventory.json"
-PRODUCTS_FILE = BASE / "products.json"  # 상품·대체·추천 정보 (robot_order_node.py, index.html 과 공유)
+PRODUCTS_FILE = DATA / "products.json"  # 상품 목록 (robot_order_node.py, index.html 과 공유)
 
-_CATALOG = json.loads(PRODUCTS_FILE.read_text(encoding="utf-8"))
-LOW_STOCK = _CATALOG.get("low_stock", 1)  # 진열 재고가 이 개수 이하이면 보충 필요
-# 재고 필드: stock = 진열 재고(로봇이 집는 매대, 손님 화면에 보이는 수량), warehouse = 창고 재고
-DEFAULT_PRODUCTS = _CATALOG["products"]
-# 함께 사는 상품 (빈도 기반 추천 대신 데모용 고정 규칙; 주문 기록이 쌓이면 아래 co_count로 대체)
-PAIRS = _CATALOG.get("pairs", {})
-SUBSTITUTE = _CATALOG.get("substitute", {})
+LOW_STOCK = 1  # 진열 재고가 이 개수 이하이면 보충 필요
+# 재고 필드: stock = 진열 재고(손님 화면에 보이는 수량), warehouse = 창고 재고
+# robot: true = 실물(로봇이 매대에서 집음), false = 가상(직원이 준비)
+PRODUCTS = json.loads(PRODUCTS_FILE.read_text(encoding="utf-8"))["products"]
+IS_ROBOT = {p["id"]: p.get("robot", False) for p in PRODUCTS}
+
+
+def split_items(items):
+    """주문을 로봇이 담을 상품 / 직원이 준비할 상품으로 나누기"""
+    robot_items = {k: v for k, v in items.items() if v > 0 and IS_ROBOT.get(k)}
+    staff_items = {k: v for k, v in items.items() if v > 0 and not IS_ROBOT.get(k)}
+    return robot_items, staff_items
 
 
 # ---------------------------------------------------------------- 상태 저장
 class Store:
     def __init__(self):
         self.lock = threading.Lock()
+        self.products = [dict(p) for p in PRODUCTS]
         if INVENTORY_FILE.exists():
-            self.products = json.loads(INVENTORY_FILE.read_text(encoding="utf-8"))
-        else:
-            self.products = [dict(p) for p in DEFAULT_PRODUCTS]
-        default_wh = {p["id"]: p.get("warehouse", 0) for p in DEFAULT_PRODUCTS}
-        for p in self.products:  # 예전 inventory.json 에는 창고 재고가 없음
-            p.setdefault("warehouse", default_wh.get(p["id"], 0))
+            # 저장된 재고(stock, warehouse)만 가져오고 상품 정보는 products.json 기준
+            saved = {p["id"]: p for p in json.loads(INVENTORY_FILE.read_text(encoding="utf-8"))}
+            for p in self.products:
+                for key in ("stock", "warehouse"):
+                    if key in saved.get(p["id"], {}):
+                        p[key] = saved[p["id"]][key]
         self.vision = {}          # 카메라로 센 개수
         self.vision_time = None
         self.alerts = []          # 직원 알림
         self.status = {"state": "idle"}
         self.next_id = 1
-        self.co_count = {}        # 주문 기록 기반 동시 구매 빈도
 
     def save(self):
         INVENTORY_FILE.write_text(json.dumps(self.products, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -94,25 +103,6 @@ class Store:
                         self.alert("error", f"{p['name']} 창고 재고 없음 - 발주 필요 (진열 {p['stock']}개)")
         self.save()
 
-    def record_order(self, items):
-        ids = [k for k, v in items.items() if v > 0]
-        for a in ids:
-            for b in ids:
-                if a != b:
-                    self.co_count.setdefault(a, {}).setdefault(b, 0)
-                    self.co_count[a][b] += 1
-
-    def recommend(self, basket, k=2):
-        score = {}
-        for a in basket:
-            for b, c in self.co_count.get(a, {}).items():
-                score[b] = score.get(b, 0) + c * 10
-            for b in PAIRS.get(a, []):
-                score[b] = score.get(b, 0) + 1
-        ranked = [b for b, _ in sorted(score.items(), key=lambda x: -x[1])
-                  if b not in basket and (self.get(b) or {}).get("stock", 0) > 0]
-        return ranked[:k]
-
     def on_vision(self, counts):
         self.vision = counts
         self.vision_time = time.strftime("%H:%M:%S")
@@ -123,6 +113,9 @@ class Store:
 
 
 store = Store()
+# 추천: 재고는 store 의 실시간 값 사용 (store.lock 을 잡은 상태에서 호출)
+rec = Recommender(PRODUCTS_FILE, DATA / "our_recs.json",
+                  stock_fn=lambda pid: (store.get(pid) or {}).get("stock", 0))
 
 
 # ---------------------------------------------------------------- 로봇 연결 (ROS2 / 데모)
@@ -176,7 +169,7 @@ class MockRobot:
         def scan():
             time.sleep(1.5)
             with store.lock:
-                counts = {p["id"]: p["stock"] for p in store.products}
+                counts = {p["id"]: p["stock"] for p in store.products if p.get("robot")}  # 카메라는 실물 매대만
             if random.random() < 0.3:  # 가끔 불일치 상황을 만들어 시연
                 pid = random.choice(list(counts))
                 counts[pid] = max(0, counts[pid] - 1)
@@ -188,6 +181,8 @@ class MockRobot:
         handle_status(kw)
 
     def _run(self, oid, items):
+        # robot: true 상품만 로봇이 담고, 가상 상품은 직원 준비 (staff_items)
+        items, staff = split_items(items)
         total = sum(items.values())
         self._st(order_id=oid, state="checking", message="매대에서 재고를 확인하고 있어요", done=0, total=total)
         time.sleep(1.5)
@@ -201,7 +196,7 @@ class MockRobot:
                 self.choice_evt.clear()
                 self._st(order_id=oid, state="need_choice", done=0, total=total,
                          message=f"재고가 부족해요", shortage={"id": pid, "want": want, "have": have},
-                         substitute=SUBSTITUTE.get(pid))
+                         substitute=None)  # handle_status 에서 추천기로 채움
                 self.choice_evt.wait(timeout=120)
                 c = (self.choice or {}).get("choice", "cancel")
                 if c == "cancel":
@@ -210,7 +205,8 @@ class MockRobot:
                 items[pid] = have
                 if c == "substitute" and self.choice.get("substitute"):
                     sub = self.choice["substitute"]
-                    items[sub] = items.get(sub, 0) + (want - have)
+                    dst = items if IS_ROBOT.get(sub) else staff  # 대체 상품이 가상이면 직원 준비
+                    dst[sub] = dst.get(sub, 0) + (want - have)
                 items = {k: v for k, v in items.items() if v > 0}
                 total = sum(items.values())
         picked, done = {}, 0
@@ -221,7 +217,7 @@ class MockRobot:
                 time.sleep(2.0)
                 picked[pid] = picked.get(pid, 0) + 1
                 done += 1
-        self._st(order_id=oid, state="done", done=done, total=total, picked=picked,
+        self._st(order_id=oid, state="done", done=done, total=total, picked=picked, staff_items=staff,
                  message="담기 완료! 픽업대에서 가져가세요")
 
 
@@ -229,8 +225,12 @@ def handle_status(st):
     with store.lock:
         prev = store.status
         store.status = st
+        if st.get("state") == "need_choice" and st.get("shortage"):
+            # 대체 상품은 추천기(our_recs.json substitute + 현재 재고)로 결정
+            subs = rec.substitute(st["shortage"]["id"])
+            st["substitute"] = subs[0] if subs else None
         if st.get("state") == "done" and prev.get("state") != "done":
-            store.apply_picked(st.get("picked", {}))
+            store.apply_picked({**st.get("picked", {}), **st.get("staff_items", {})})
         if st.get("state") == "error":
             store.alert("error", f"로봇 오류: {st.get('message', '')}")
 
@@ -272,14 +272,16 @@ def order(req: OrderReq):
     with store.lock:
         if store.status.get("state") in ("checking", "picking", "need_choice"):
             raise HTTPException(409, "로봇이 다른 주문을 처리 중이에요. 잠시 후 다시 시도해 주세요")
-        for pid in items:
-            if not store.get(pid):
+        for pid, n in items.items():
+            p = store.get(pid)
+            if not p:
                 raise HTTPException(400, f"없는 상품: {pid}")
+            if not p.get("robot") and n > p["stock"]:  # 가상 상품은 카메라 확인이 없으므로 장부로 확인
+                raise HTTPException(400, f"{p['name']} 재고가 부족해요 (남은 {p['stock']}개)")
         oid = store.next_id
         store.next_id += 1
-        store.record_order(items)
         store.status = {"order_id": oid, "state": "checking", "message": "주문을 로봇에게 보냈어요",
-                        "done": 0, "total": sum(items.values())}
+                        "done": 0, "total": sum(split_items(items)[0].values())}
     robot.send_order(oid, items)
     return {"order_id": oid}
 
@@ -302,7 +304,13 @@ def choice(req: ChoiceReq):
 def recommend(basket: str = ""):
     ids = [b for b in basket.split(",") if b]
     with store.lock:
-        return {"items": store.recommend(ids)}
+        return {"items": rec.for_basket(ids)}
+
+
+@app.get("/api/recommend/home")
+def recommend_home():
+    with store.lock:
+        return {"items": rec.home()}
 
 
 @app.get("/api/inventory")
@@ -360,13 +368,8 @@ def index():
     return FileResponse(STATIC / "index.html")
 
 
-@app.get("/static/products.json")
-def products_json():
-    # 원본은 pickup_web/products.json (static/products.json 은 이 파일을 가리키는 심볼릭 링크)
-    return FileResponse(PRODUCTS_FILE, media_type="application/json")
-
-
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
+app.mount("/data", StaticFiles(directory=DATA), name="data")  # products.json, our_recs.json (브라우저 데모용)
 
 
 @app.get("/manifest.json")

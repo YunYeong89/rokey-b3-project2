@@ -8,22 +8,28 @@ web_server.py 가 보내는 /order 를 받아서
 
 기존 robot_control.py 의 함수(이동, 3D 위치, pick, 그리퍼)를
 아래 TODO 자리에 연결하면 됩니다.
+
+products.json 의 robot: true 상품(실물)만 로봇이 처리하고,
+robot: false 상품(가상)은 직원이 준비하도록 완료 메시지의 staff_items 로 넘깁니다.
 """
 import json
 import threading
-from pathlib import Path
 
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-# 상품 정보는 web_server.py 와 같은 products.json 에서 읽음
-_CATALOG = json.loads((Path(__file__).parent / "products.json").read_text(encoding="utf-8"))
+from recommender import PRODUCTS_FILE, Recommender
+
+# 상품 정보는 web_server.py 와 같은 data/products.json 에서 읽음
+_CATALOG = json.loads(PRODUCTS_FILE.read_text(encoding="utf-8"))
 # 상품 id -> 속성 (shelf, fragile, deformable, registered). pick_one 에서 그립 방식 결정에 사용
 PRODUCT_INFO = {p["id"]: p for p in _CATALOG["products"]}
-SUBSTITUTE = _CATALOG.get("substitute", {})
-# 상품 id -> 매대 ("upper" / "lower"). 매대 위치는 products.json 의 "shelf" 필드로 관리
-SHELF_VIEW_POSE = {pid: p["shelf"] for pid, p in PRODUCT_INFO.items()}
+ROBOT_ITEMS = {pid for pid, p in PRODUCT_INFO.items() if p.get("robot")}  # 로봇이 집는 실물 상품
+# 대체 상품 후보 (our_recs.json). 최종 대체 상품은 web_server 가 실시간 재고로 다시 고름
+RECOMMENDER = Recommender()
+# 상품 id -> 매대 ("upper" / "lower"). 실물 상품만, products.json 의 "shelf" 값으로 만듦
+SHELF_VIEW_POSE = {pid: PRODUCT_INFO[pid]["shelf"] for pid in ROBOT_ITEMS}
 # 매대 이름 -> 촬영 위치 (posj 또는 posx). 직접 티칭해서 채우세요.
 SHELF_POSE = {"upper": None, "lower": None}
 BASKET_POSE = None  # TODO: 바구니 위 place 위치 posx
@@ -95,6 +101,9 @@ class OrderNode(Node):
     def run_order(self, oid, items):
         self.busy = True
         try:
+            # 가상 상품(robot: false)은 직원 준비 -> 완료 메시지의 staff_items
+            staff = {k: v for k, v in items.items() if v > 0 and k not in ROBOT_ITEMS}
+            items = {k: v for k, v in items.items() if v > 0 and k in ROBOT_ITEMS}
             total = sum(items.values())
             self.status(order_id=oid, state="checking", message="매대에서 재고를 확인하고 있어요",
                         done=0, total=total)
@@ -111,14 +120,15 @@ class OrderNode(Node):
                 self.choice_evt.clear()
                 self.status(order_id=oid, state="need_choice", message="재고가 부족해요",
                             shortage={"id": pid, "want": want, "have": have},
-                            substitute=SUBSTITUTE.get(pid), done=0, total=total)
+                            substitute=next(iter(RECOMMENDER.substitute(pid)), None), done=0, total=total)
                 if not self.choice_evt.wait(timeout=120) or self.choice["choice"] == "cancel":
                     self.status(order_id=oid, state="cancelled", message="주문이 취소되었어요")
                     return
                 items[pid] = have
                 sub = self.choice.get("substitute")
                 if self.choice["choice"] == "substitute" and sub:
-                    items[sub] = items.get(sub, 0) + (want - have)
+                    dst = items if sub in ROBOT_ITEMS else staff  # 대체 상품이 가상이면 직원 준비
+                    dst[sub] = dst.get(sub, 0) + (want - have)
             items = {k: v for k, v in items.items() if v > 0}
             total = sum(items.values())
 
@@ -136,7 +146,7 @@ class OrderNode(Node):
                     picked[pid] = picked.get(pid, 0) + 1
                     done += 1
             self.status(order_id=oid, state="done", done=done, total=total, picked=picked,
-                        message="담기 완료! 픽업대에서 가져가세요")
+                        staff_items=staff, message="담기 완료! 픽업대에서 가져가세요")
         finally:
             self.busy = False
 

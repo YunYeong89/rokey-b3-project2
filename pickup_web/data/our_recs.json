@@ -1,0 +1,498 @@
+{
+ "tuna_can": {
+  "name": "참치캔",
+  "aisle": "canned meat seafood",
+  "recommend": [],
+  "substitute": [
+   "spam_can"
+  ],
+  "popularity": 0.00759
+ },
+ "spam_can": {
+  "name": "스팸 통조림",
+  "aisle": "canned meat seafood",
+  "recommend": [],
+  "substitute": [
+   "tuna_can"
+  ],
+  "popularity": 0.00759
+ },
+ "milk_pack": {
+  "name": "소형 우유팩",
+  "aisle": "milk",
+  "recommend": [
+   {
+    "id": "cereal",
+    "name": "시리얼",
+    "lift": 1.344,
+    "count": 8701
+   },
+   {
+    "id": "yogurt",
+    "name": "요구르트",
+    "lift": 1.31,
+    "count": 28831
+   }
+  ],
+  "substitute": [],
+  "popularity": 0.14553
+ },
+ "soap_box": {
+  "name": "비누 상자",
+  "aisle": "soap",
+  "recommend": [
+   {
+    "id": "toothpaste",
+    "name": "치약",
+    "lift": 4.53,
+    "count": 347
+   },
+   {
+    "id": "mini_tissue",
+    "name": "미니 티슈",
+    "lift": 2.266,
+    "count": 738
+   }
+  ],
+  "substitute": [],
+  "popularity": 0.00774
+ },
+ "choco_box": {
+  "name": "초콜릿",
+  "aisle": "candy chocolate",
+  "recommend": [
+   {
+    "id": "cookie",
+    "name": "쿠키",
+    "lift": 2.025,
+    "count": 2868
+   },
+   {
+    "id": "nuts",
+    "name": "견과류",
+    "lift": 1.89,
+    "count": 3812
+   },
+   {
+    "id": "snack_bag",
+    "name": "과자",
+    "lift": 1.587,
+    "count": 5805
+   },
+   {
+    "id": "cola",
+    "name": "콜라",
+    "lift": 1.537,
+    "count": 4985
+   },
+   {
+    "id": "cracker",
+    "name": "크래커",
+    "lift": 1.396,
+    "count": 3098
+   }
+  ],
+  "substitute": [],
+  "popularity": 0.04199
+ },
+ "snack_bag": {
+  "name": "과자",
+  "aisle": "chips pretzels",
+  "recommend": [
+   {
+    "id": "cookie",
+    "name": "쿠키",
+    "lift": 1.838,
+    "count": 4629
+   },
+   {
+    "id": "choco_box",
+    "name": "초콜릿",
+    "lift": 1.587,
+    "count": 5805
+   },
+   {
+    "id": "cracker",
+    "name": "크래커",
+    "lift": 1.548,
+    "count": 6105
+   }
+  ],
+  "substitute": [],
+  "popularity": 0.07464
+ },
+ "mini_tissue": {
+  "name": "미니 티슈",
+  "aisle": "paper goods",
+  "recommend": [
+   {
+    "id": "toothpaste",
+    "name": "치약",
+    "lift": 3.885,
+    "count": 1386
+   },
+   {
+    "id": "soap_box",
+    "name": "비누 상자",
+    "lift": 2.266,
+    "count": 738
+   },
+   {
+    "id": "cola",
+    "name": "콜라",
+    "lift": 1.364,
+    "count": 3796
+   },
+   {
+    "id": "water",
+    "name": "생수",
+    "lift": 1.32,
+    "count": 7809
+   },
+   {
+    "id": "can_coffee",
+    "name": "캔커피",
+    "lift": 1.23,
+    "count": 1710
+   }
+  ],
+  "substitute": [],
+  "popularity": 0.03604
+ },
+ "egg_pack": {
+  "name": "계란 모형",
+  "aisle": "eggs",
+  "recommend": [
+   {
+    "id": "sausage",
+    "name": "소시지",
+    "lift": 1.442,
+    "count": 3045
+   },
+   {
+    "id": "bread",
+    "name": "식빵",
+    "lift": 1.248,
+    "count": 5592
+   }
+  ],
+  "substitute": [],
+  "popularity": 0.05782
+ },
+ "cup_ramen": {
+  "name": "컵라면",
+  "aisle": "instant foods",
+  "recommend": [],
+  "substitute": [],
+  "popularity": 0.01329
+ },
+ "cola": {
+  "name": "콜라",
+  "aisle": "soft drinks",
+  "recommend": [
+   {
+    "id": "water",
+    "name": "생수",
+    "lift": 1.688,
+    "count": 18327
+   },
+   {
+    "id": "choco_box",
+    "name": "초콜릿",
+    "lift": 1.537,
+    "count": 4985
+   },
+   {
+    "id": "cookie",
+    "name": "쿠키",
+    "lift": 1.517,
+    "count": 3386
+   },
+   {
+    "id": "mini_tissue",
+    "name": "미니 티슈",
+    "lift": 1.364,
+    "count": 3796
+   },
+   {
+    "id": "juice",
+    "name": "주스",
+    "lift": 1.351,
+    "count": 4867
+   }
+  ],
+  "substitute": [],
+  "popularity": 0.06616
+ },
+ "water": {
+  "name": "생수",
+  "aisle": "water seltzer sparkling water",
+  "recommend": [
+   {
+    "id": "cola",
+    "name": "콜라",
+    "lift": 1.688,
+    "count": 18327
+   },
+   {
+    "id": "mini_tissue",
+    "name": "미니 티슈",
+    "lift": 1.32,
+    "count": 7809
+   },
+   {
+    "id": "can_coffee",
+    "name": "캔커피",
+    "lift": 1.217,
+    "count": 6598
+   }
+  ],
+  "substitute": [],
+  "popularity": 0.14054
+ },
+ "can_coffee": {
+  "name": "캔커피",
+  "aisle": "coffee",
+  "recommend": [
+   {
+    "id": "mini_tissue",
+    "name": "미니 티슈",
+    "lift": 1.23,
+    "count": 1710
+   },
+   {
+    "id": "water",
+    "name": "생수",
+    "lift": 1.217,
+    "count": 6598
+   }
+  ],
+  "substitute": [],
+  "popularity": 0.03305
+ },
+ "yogurt": {
+  "name": "요구르트",
+  "aisle": "yogurt",
+  "recommend": [
+   {
+    "id": "milk_pack",
+    "name": "소형 우유팩",
+    "lift": 1.31,
+    "count": 28831
+   }
+  ],
+  "substitute": [],
+  "popularity": 0.12951
+ },
+ "bread": {
+  "name": "식빵",
+  "aisle": "bread",
+  "recommend": [
+   {
+    "id": "egg_pack",
+    "name": "계란 모형",
+    "lift": 1.248,
+    "count": 5592
+   }
+  ],
+  "substitute": [],
+  "popularity": 0.0664
+ },
+ "cookie": {
+  "name": "쿠키",
+  "aisle": "cookies cakes",
+  "recommend": [
+   {
+    "id": "choco_box",
+    "name": "초콜릿",
+    "lift": 2.025,
+    "count": 2868
+   },
+   {
+    "id": "cracker",
+    "name": "크래커",
+    "lift": 2.009,
+    "count": 3067
+   },
+   {
+    "id": "snack_bag",
+    "name": "과자",
+    "lift": 1.838,
+    "count": 4629
+   },
+   {
+    "id": "cola",
+    "name": "콜라",
+    "lift": 1.517,
+    "count": 3386
+   },
+   {
+    "id": "ice_cream",
+    "name": "아이스크림",
+    "lift": 1.426,
+    "count": 2933
+   }
+  ],
+  "substitute": [],
+  "popularity": 0.02889
+ },
+ "ice_cream": {
+  "name": "아이스크림",
+  "aisle": "ice cream ice",
+  "recommend": [
+   {
+    "id": "cookie",
+    "name": "쿠키",
+    "lift": 1.426,
+    "count": 2933
+   },
+   {
+    "id": "cola",
+    "name": "콜라",
+    "lift": 1.204,
+    "count": 5672
+   }
+  ],
+  "substitute": [],
+  "popularity": 0.06097
+ },
+ "cereal": {
+  "name": "시리얼",
+  "aisle": "cereal",
+  "recommend": [
+   {
+    "id": "milk_pack",
+    "name": "소형 우유팩",
+    "lift": 1.344,
+    "count": 8701
+   },
+   {
+    "id": "cracker",
+    "name": "크래커",
+    "lift": 1.295,
+    "count": 2608
+   },
+   {
+    "id": "cookie",
+    "name": "쿠키",
+    "lift": 1.235,
+    "count": 1587
+   }
+  ],
+  "substitute": [],
+  "popularity": 0.03811
+ },
+ "nuts": {
+  "name": "견과류",
+  "aisle": "nuts seeds dried fruit",
+  "recommend": [
+   {
+    "id": "choco_box",
+    "name": "초콜릿",
+    "lift": 1.89,
+    "count": 3812
+   },
+   {
+    "id": "cracker",
+    "name": "크래커",
+    "lift": 1.262,
+    "count": 2743
+   }
+  ],
+  "substitute": [],
+  "popularity": 0.04114
+ },
+ "toothpaste": {
+  "name": "치약",
+  "aisle": "oral hygiene",
+  "recommend": [
+   {
+    "id": "soap_box",
+    "name": "비누 상자",
+    "lift": 4.53,
+    "count": 347
+   },
+   {
+    "id": "mini_tissue",
+    "name": "미니 티슈",
+    "lift": 3.885,
+    "count": 1386
+   }
+  ],
+  "substitute": [],
+  "popularity": 0.00848
+ },
+ "juice": {
+  "name": "주스",
+  "aisle": "juice nectars",
+  "recommend": [
+   {
+    "id": "cola",
+    "name": "콜라",
+    "lift": 1.351,
+    "count": 4867
+   }
+  ],
+  "substitute": [],
+  "popularity": 0.04665
+ },
+ "sausage": {
+  "name": "소시지",
+  "aisle": "hot dogs bacon sausage",
+  "recommend": [
+   {
+    "id": "egg_pack",
+    "name": "계란 모형",
+    "lift": 1.442,
+    "count": 3045
+   }
+  ],
+  "substitute": [],
+  "popularity": 0.03129
+ },
+ "cracker": {
+  "name": "크래커",
+  "aisle": "crackers",
+  "recommend": [
+   {
+    "id": "cookie",
+    "name": "쿠키",
+    "lift": 2.009,
+    "count": 3067
+   },
+   {
+    "id": "snack_bag",
+    "name": "과자",
+    "lift": 1.548,
+    "count": 6105
+   },
+   {
+    "id": "choco_box",
+    "name": "초콜릿",
+    "lift": 1.396,
+    "count": 3098
+   },
+   {
+    "id": "cereal",
+    "name": "시리얼",
+    "lift": 1.295,
+    "count": 2608
+   },
+   {
+    "id": "nuts",
+    "name": "견과류",
+    "lift": 1.262,
+    "count": 2743
+   }
+  ],
+  "substitute": [],
+  "popularity": 0.04526
+ },
+ "lunchbox": {
+  "name": "도시락",
+  "aisle": "prepared meals",
+  "recommend": [],
+  "substitute": [],
+  "popularity": 0.01322
+ }
+}

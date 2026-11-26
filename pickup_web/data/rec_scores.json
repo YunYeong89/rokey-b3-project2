@@ -1,0 +1,7141 @@
+{
+ "source": "Instacart prior orders",
+ "n_orders": 1167496,
+ "basket_size": [
+  2,
+  5
+ ],
+ "min_count": 200,
+ "min_lift": 1.2,
+ "aisles": {
+  "prepared soups salads": {
+   "id": 1,
+   "count": 11784,
+   "popularity": 0.01009
+  },
+  "specialty cheeses": {
+   "id": 2,
+   "count": 10810,
+   "popularity": 0.00926
+  },
+  "energy granola bars": {
+   "id": 3,
+   "count": 46627,
+   "popularity": 0.03994
+  },
+  "instant foods": {
+   "id": 4,
+   "count": 15521,
+   "popularity": 0.01329
+  },
+  "marinades meat preparation": {
+   "id": 5,
+   "count": 6362,
+   "popularity": 0.00545
+  },
+  "packaged meat": {
+   "id": 7,
+   "count": 5649,
+   "popularity": 0.00484
+  },
+  "bakery desserts": {
+   "id": 8,
+   "count": 7926,
+   "popularity": 0.00679
+  },
+  "pasta sauce": {
+   "id": 9,
+   "count": 18974,
+   "popularity": 0.01625
+  },
+  "kitchen supplies": {
+   "id": 10,
+   "count": 1896,
+   "popularity": 0.00162
+  },
+  "cold flu allergy": {
+   "id": 11,
+   "count": 5909,
+   "popularity": 0.00506
+  },
+  "fresh pasta": {
+   "id": 12,
+   "count": 3378,
+   "popularity": 0.00289
+  },
+  "prepared meals": {
+   "id": 13,
+   "count": 15432,
+   "popularity": 0.01322
+  },
+  "tofu meat alternatives": {
+   "id": 14,
+   "count": 12756,
+   "popularity": 0.01093
+  },
+  "packaged seafood": {
+   "id": 15,
+   "count": 2824,
+   "popularity": 0.00242
+  },
+  "fresh herbs": {
+   "id": 16,
+   "count": 43486,
+   "popularity": 0.03725
+  },
+  "baking ingredients": {
+   "id": 17,
+   "count": 43334,
+   "popularity": 0.03712
+  },
+  "bulk dried fruits vegetables": {
+   "id": 18,
+   "count": 3994,
+   "popularity": 0.00342
+  },
+  "oils vinegars": {
+   "id": 19,
+   "count": 39720,
+   "popularity": 0.03402
+  },
+  "oral hygiene": {
+   "id": 20,
+   "count": 9898,
+   "popularity": 0.00848
+  },
+  "packaged cheese": {
+   "id": 21,
+   "count": 103446,
+   "popularity": 0.08861
+  },
+  "hair care": {
+   "id": 22,
+   "count": 4712,
+   "popularity": 0.00404
+  },
+  "popcorn jerky": {
+   "id": 23,
+   "count": 27988,
+   "popularity": 0.02397
+  },
+  "fresh fruits": {
+   "id": 24,
+   "count": 457726,
+   "popularity": 0.39206
+  },
+  "soap": {
+   "id": 25,
+   "count": 9036,
+   "popularity": 0.00774
+  },
+  "coffee": {
+   "id": 26,
+   "count": 38582,
+   "popularity": 0.03305
+  },
+  "beers coolers": {
+   "id": 27,
+   "count": 11902,
+   "popularity": 0.01019
+  },
+  "red wines": {
+   "id": 28,
+   "count": 9698,
+   "popularity": 0.00831
+  },
+  "honeys syrups nectars": {
+   "id": 29,
+   "count": 10280,
+   "popularity": 0.00881
+  },
+  "latino foods": {
+   "id": 30,
+   "count": 5516,
+   "popularity": 0.00472
+  },
+  "refrigerated": {
+   "id": 31,
+   "count": 84863,
+   "popularity": 0.07269
+  },
+  "packaged produce": {
+   "id": 32,
+   "count": 92191,
+   "popularity": 0.07896
+  },
+  "kosher foods": {
+   "id": 33,
+   "count": 1665,
+   "popularity": 0.00143
+  },
+  "frozen meat seafood": {
+   "id": 34,
+   "count": 11770,
+   "popularity": 0.01008
+  },
+  "poultry counter": {
+   "id": 35,
+   "count": 17527,
+   "popularity": 0.01501
+  },
+  "butter": {
+   "id": 36,
+   "count": 36883,
+   "popularity": 0.03159
+  },
+  "ice cream ice": {
+   "id": 37,
+   "count": 71179,
+   "popularity": 0.06097
+  },
+  "frozen meals": {
+   "id": 38,
+   "count": 37277,
+   "popularity": 0.03193
+  },
+  "seafood counter": {
+   "id": 39,
+   "count": 4825,
+   "popularity": 0.00413
+  },
+  "dog food care": {
+   "id": 40,
+   "count": 5164,
+   "popularity": 0.00442
+  },
+  "cat food care": {
+   "id": 41,
+   "count": 7954,
+   "popularity": 0.00681
+  },
+  "frozen vegan vegetarian": {
+   "id": 42,
+   "count": 9943,
+   "popularity": 0.00852
+  },
+  "buns rolls": {
+   "id": 43,
+   "count": 14603,
+   "popularity": 0.01251
+  },
+  "eye ear care": {
+   "id": 44,
+   "count": 2188,
+   "popularity": 0.00187
+  },
+  "candy chocolate": {
+   "id": 45,
+   "count": 49018,
+   "popularity": 0.04199
+  },
+  "mint gum": {
+   "id": 46,
+   "count": 5460,
+   "popularity": 0.00468
+  },
+  "vitamins supplements": {
+   "id": 47,
+   "count": 9063,
+   "popularity": 0.00776
+  },
+  "breakfast bars pastries": {
+   "id": 48,
+   "count": 9525,
+   "popularity": 0.00816
+  },
+  "packaged poultry": {
+   "id": 49,
+   "count": 15569,
+   "popularity": 0.01334
+  },
+  "fruit vegetable snacks": {
+   "id": 50,
+   "count": 21447,
+   "popularity": 0.01837
+  },
+  "preserved dips spreads": {
+   "id": 51,
+   "count": 12027,
+   "popularity": 0.0103
+  },
+  "frozen breakfast": {
+   "id": 52,
+   "count": 21041,
+   "popularity": 0.01802
+  },
+  "cream": {
+   "id": 53,
+   "count": 62269,
+   "popularity": 0.05334
+  },
+  "paper goods": {
+   "id": 54,
+   "count": 42080,
+   "popularity": 0.03604
+  },
+  "shave needs": {
+   "id": 55,
+   "count": 2172,
+   "popularity": 0.00186
+  },
+  "diapers wipes": {
+   "id": 56,
+   "count": 4818,
+   "popularity": 0.00413
+  },
+  "granola": {
+   "id": 57,
+   "count": 12041,
+   "popularity": 0.01031
+  },
+  "frozen breads doughs": {
+   "id": 58,
+   "count": 4808,
+   "popularity": 0.00412
+  },
+  "canned meals beans": {
+   "id": 59,
+   "count": 19996,
+   "popularity": 0.01713
+  },
+  "trash bags liners": {
+   "id": 60,
+   "count": 6603,
+   "popularity": 0.00566
+  },
+  "cookies cakes": {
+   "id": 61,
+   "count": 33734,
+   "popularity": 0.02889
+  },
+  "white wines": {
+   "id": 62,
+   "count": 9673,
+   "popularity": 0.00829
+  },
+  "grains rice dried goods": {
+   "id": 63,
+   "count": 15138,
+   "popularity": 0.01297
+  },
+  "energy sports drinks": {
+   "id": 64,
+   "count": 18379,
+   "popularity": 0.01574
+  },
+  "protein meal replacements": {
+   "id": 65,
+   "count": 6179,
+   "popularity": 0.00529
+  },
+  "asian foods": {
+   "id": 66,
+   "count": 19108,
+   "popularity": 0.01637
+  },
+  "fresh dips tapenades": {
+   "id": 67,
+   "count": 43981,
+   "popularity": 0.03767
+  },
+  "bulk grains rice dried goods": {
+   "id": 68,
+   "count": 2133,
+   "popularity": 0.00183
+  },
+  "soup broth bouillon": {
+   "id": 69,
+   "count": 33424,
+   "popularity": 0.02863
+  },
+  "digestion": {
+   "id": 70,
+   "count": 5665,
+   "popularity": 0.00485
+  },
+  "refrigerated pudding desserts": {
+   "id": 71,
+   "count": 4229,
+   "popularity": 0.00362
+  },
+  "condiments": {
+   "id": 72,
+   "count": 26038,
+   "popularity": 0.0223
+  },
+  "facial care": {
+   "id": 73,
+   "count": 2644,
+   "popularity": 0.00226
+  },
+  "dish detergents": {
+   "id": 74,
+   "count": 14594,
+   "popularity": 0.0125
+  },
+  "laundry": {
+   "id": 75,
+   "count": 18275,
+   "popularity": 0.01565
+  },
+  "indian foods": {
+   "id": 76,
+   "count": 1480,
+   "popularity": 0.00127
+  },
+  "soft drinks": {
+   "id": 77,
+   "count": 77239,
+   "popularity": 0.06616
+  },
+  "crackers": {
+   "id": 78,
+   "count": 52840,
+   "popularity": 0.04526
+  },
+  "frozen pizza": {
+   "id": 79,
+   "count": 16753,
+   "popularity": 0.01435
+  },
+  "deodorants": {
+   "id": 80,
+   "count": 2431,
+   "popularity": 0.00208
+  },
+  "canned jarred vegetables": {
+   "id": 81,
+   "count": 25344,
+   "popularity": 0.02171
+  },
+  "baby accessories": {
+   "id": 82,
+   "count": 1251,
+   "popularity": 0.00107
+  },
+  "fresh vegetables": {
+   "id": 83,
+   "count": 304849,
+   "popularity": 0.26111
+  },
+  "milk": {
+   "id": 84,
+   "count": 169911,
+   "popularity": 0.14553
+  },
+  "food storage": {
+   "id": 85,
+   "count": 10147,
+   "popularity": 0.00869
+  },
+  "eggs": {
+   "id": 86,
+   "count": 67502,
+   "popularity": 0.05782
+  },
+  "more household": {
+   "id": 87,
+   "count": 4068,
+   "popularity": 0.00348
+  },
+  "spreads": {
+   "id": 88,
+   "count": 37769,
+   "popularity": 0.03235
+  },
+  "salad dressing toppings": {
+   "id": 89,
+   "count": 10444,
+   "popularity": 0.00895
+  },
+  "cocoa drink mixes": {
+   "id": 90,
+   "count": 3409,
+   "popularity": 0.00292
+  },
+  "soy lactosefree": {
+   "id": 91,
+   "count": 106769,
+   "popularity": 0.09145
+  },
+  "baby food formula": {
+   "id": 92,
+   "count": 21411,
+   "popularity": 0.01834
+  },
+  "breakfast bakery": {
+   "id": 93,
+   "count": 29957,
+   "popularity": 0.02566
+  },
+  "tea": {
+   "id": 94,
+   "count": 38997,
+   "popularity": 0.0334
+  },
+  "canned meat seafood": {
+   "id": 95,
+   "count": 8865,
+   "popularity": 0.00759
+  },
+  "lunch meat": {
+   "id": 96,
+   "count": 41820,
+   "popularity": 0.03582
+  },
+  "baking supplies decor": {
+   "id": 97,
+   "count": 3734,
+   "popularity": 0.0032
+  },
+  "juice nectars": {
+   "id": 98,
+   "count": 54465,
+   "popularity": 0.04665
+  },
+  "canned fruit applesauce": {
+   "id": 99,
+   "count": 6759,
+   "popularity": 0.00579
+  },
+  "air fresheners candles": {
+   "id": 101,
+   "count": 3488,
+   "popularity": 0.00299
+  },
+  "baby bath body care": {
+   "id": 102,
+   "count": 1281,
+   "popularity": 0.0011
+  },
+  "ice cream toppings": {
+   "id": 103,
+   "count": 1687,
+   "popularity": 0.00144
+  },
+  "spices seasonings": {
+   "id": 104,
+   "count": 23137,
+   "popularity": 0.01982
+  },
+  "doughs gelatins bake mixes": {
+   "id": 105,
+   "count": 10187,
+   "popularity": 0.00873
+  },
+  "hot dogs bacon sausage": {
+   "id": 106,
+   "count": 36527,
+   "popularity": 0.03129
+  },
+  "chips pretzels": {
+   "id": 107,
+   "count": 87143,
+   "popularity": 0.07464
+  },
+  "other creams cheeses": {
+   "id": 108,
+   "count": 34239,
+   "popularity": 0.02933
+  },
+  "skin care": {
+   "id": 109,
+   "count": 1600,
+   "popularity": 0.00137
+  },
+  "pickled goods olives": {
+   "id": 110,
+   "count": 11899,
+   "popularity": 0.01019
+  },
+  "plates bowls cups flatware": {
+   "id": 111,
+   "count": 8917,
+   "popularity": 0.00764
+  },
+  "bread": {
+   "id": 112,
+   "count": 77516,
+   "popularity": 0.0664
+  },
+  "frozen juice": {
+   "id": 113,
+   "count": 700,
+   "popularity": 0.0006
+  },
+  "cleaning products": {
+   "id": 114,
+   "count": 19828,
+   "popularity": 0.01698
+  },
+  "water seltzer sparkling water": {
+   "id": 115,
+   "count": 164079,
+   "popularity": 0.14054
+  },
+  "frozen produce": {
+   "id": 116,
+   "count": 60450,
+   "popularity": 0.05178
+  },
+  "nuts seeds dried fruit": {
+   "id": 117,
+   "count": 48036,
+   "popularity": 0.04114
+  },
+  "first aid": {
+   "id": 118,
+   "count": 2582,
+   "popularity": 0.00221
+  },
+  "frozen dessert": {
+   "id": 119,
+   "count": 2633,
+   "popularity": 0.00226
+  },
+  "yogurt": {
+   "id": 120,
+   "count": 151207,
+   "popularity": 0.12951
+  },
+  "cereal": {
+   "id": 121,
+   "count": 44491,
+   "popularity": 0.03811
+  },
+  "meat counter": {
+   "id": 122,
+   "count": 10194,
+   "popularity": 0.00873
+  },
+  "packaged vegetables fruits": {
+   "id": 123,
+   "count": 235237,
+   "popularity": 0.20149
+  },
+  "spirits": {
+   "id": 124,
+   "count": 9122,
+   "popularity": 0.00781
+  },
+  "trail mix snack mix": {
+   "id": 125,
+   "count": 9420,
+   "popularity": 0.00807
+  },
+  "feminine care": {
+   "id": 126,
+   "count": 4005,
+   "popularity": 0.00343
+  },
+  "body lotions soap": {
+   "id": 127,
+   "count": 7612,
+   "popularity": 0.00652
+  },
+  "tortillas flat bread": {
+   "id": 128,
+   "count": 17721,
+   "popularity": 0.01518
+  },
+  "frozen appetizers sides": {
+   "id": 129,
+   "count": 19003,
+   "popularity": 0.01628
+  },
+  "hot cereal pancake mixes": {
+   "id": 130,
+   "count": 19042,
+   "popularity": 0.01631
+  },
+  "dry pasta": {
+   "id": 131,
+   "count": 20916,
+   "popularity": 0.01792
+  },
+  "beauty": {
+   "id": 132,
+   "count": 1090,
+   "popularity": 0.00093
+  },
+  "muscles joints pain relief": {
+   "id": 133,
+   "count": 4782,
+   "popularity": 0.0041
+  },
+  "specialty wines champagnes": {
+   "id": 134,
+   "count": 3932,
+   "popularity": 0.00337
+  }
+ },
+ "pairs": {
+  "prepared soups salads": [
+   {
+    "aisle": "prepared meals",
+    "count": 700,
+    "lift": 4.494
+   },
+   {
+    "aisle": "soup broth bouillon",
+    "count": 573,
+    "lift": 1.698
+   },
+   {
+    "aisle": "frozen meals",
+    "count": 586,
+    "lift": 1.557
+   },
+   {
+    "aisle": "buns rolls",
+    "count": 225,
+    "lift": 1.527
+   },
+   {
+    "aisle": "fresh dips tapenades",
+    "count": 618,
+    "lift": 1.392
+   },
+   {
+    "aisle": "lunch meat",
+    "count": 510,
+    "lift": 1.208
+   }
+  ],
+  "specialty cheeses": [
+   {
+    "aisle": "crackers",
+    "count": 1314,
+    "lift": 2.686
+   },
+   {
+    "aisle": "lunch meat",
+    "count": 957,
+    "lift": 2.471
+   },
+   {
+    "aisle": "packaged cheese",
+    "count": 1822,
+    "lift": 1.902
+   },
+   {
+    "aisle": "dry pasta",
+    "count": 297,
+    "lift": 1.534
+   },
+   {
+    "aisle": "pasta sauce",
+    "count": 260,
+    "lift": 1.48
+   },
+   {
+    "aisle": "bread",
+    "count": 1001,
+    "lift": 1.395
+   },
+   {
+    "aisle": "fresh dips tapenades",
+    "count": 565,
+    "lift": 1.387
+   },
+   {
+    "aisle": "fresh herbs",
+    "count": 550,
+    "lift": 1.366
+   },
+   {
+    "aisle": "other creams cheeses",
+    "count": 388,
+    "lift": 1.224
+   }
+  ],
+  "energy granola bars": [
+   {
+    "aisle": "breakfast bars pastries",
+    "count": 1617,
+    "lift": 4.251
+   },
+   {
+    "aisle": "trail mix snack mix",
+    "count": 976,
+    "lift": 2.594
+   },
+   {
+    "aisle": "fruit vegetable snacks",
+    "count": 2160,
+    "lift": 2.522
+   },
+   {
+    "aisle": "protein meal replacements",
+    "count": 617,
+    "lift": 2.5
+   },
+   {
+    "aisle": "granola",
+    "count": 977,
+    "lift": 2.032
+   },
+   {
+    "aisle": "popcorn jerky",
+    "count": 2111,
+    "lift": 1.889
+   },
+   {
+    "aisle": "mint gum",
+    "count": 373,
+    "lift": 1.711
+   },
+   {
+    "aisle": "cookies cakes",
+    "count": 2031,
+    "lift": 1.508
+   },
+   {
+    "aisle": "candy chocolate",
+    "count": 2864,
+    "lift": 1.463
+   },
+   {
+    "aisle": "crackers",
+    "count": 3082,
+    "lift": 1.46
+   },
+   {
+    "aisle": "nuts seeds dried fruit",
+    "count": 2685,
+    "lift": 1.4
+   },
+   {
+    "aisle": "chips pretzels",
+    "count": 4548,
+    "lift": 1.307
+   },
+   {
+    "aisle": "tea",
+    "count": 1952,
+    "lift": 1.253
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 919,
+    "lift": 1.252
+   }
+  ],
+  "instant foods": [
+   {
+    "aisle": "frozen pizza",
+    "count": 512,
+    "lift": 2.299
+   },
+   {
+    "aisle": "frozen appetizers sides",
+    "count": 527,
+    "lift": 2.086
+   },
+   {
+    "aisle": "doughs gelatins bake mixes",
+    "count": 262,
+    "lift": 1.935
+   },
+   {
+    "aisle": "frozen meals",
+    "count": 930,
+    "lift": 1.877
+   },
+   {
+    "aisle": "grains rice dried goods",
+    "count": 371,
+    "lift": 1.843
+   },
+   {
+    "aisle": "frozen vegan vegetarian",
+    "count": 224,
+    "lift": 1.695
+   },
+   {
+    "aisle": "pasta sauce",
+    "count": 421,
+    "lift": 1.669
+   },
+   {
+    "aisle": "canned meals beans",
+    "count": 417,
+    "lift": 1.569
+   },
+   {
+    "aisle": "soup broth bouillon",
+    "count": 692,
+    "lift": 1.557
+   },
+   {
+    "aisle": "dry pasta",
+    "count": 431,
+    "lift": 1.55
+   },
+   {
+    "aisle": "frozen breakfast",
+    "count": 418,
+    "lift": 1.494
+   },
+   {
+    "aisle": "baby food formula",
+    "count": 417,
+    "lift": 1.465
+   },
+   {
+    "aisle": "packaged poultry",
+    "count": 296,
+    "lift": 1.43
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 348,
+    "lift": 1.424
+   },
+   {
+    "aisle": "asian foods",
+    "count": 358,
+    "lift": 1.409
+   },
+   {
+    "aisle": "frozen meat seafood",
+    "count": 201,
+    "lift": 1.285
+   },
+   {
+    "aisle": "buns rolls",
+    "count": 237,
+    "lift": 1.221
+   }
+  ],
+  "marinades meat preparation": [
+   {
+    "aisle": "condiments",
+    "count": 407,
+    "lift": 2.868
+   },
+   {
+    "aisle": "asian foods",
+    "count": 264,
+    "lift": 2.535
+   },
+   {
+    "aisle": "packaged poultry",
+    "count": 202,
+    "lift": 2.381
+   },
+   {
+    "aisle": "spices seasonings",
+    "count": 290,
+    "lift": 2.3
+   },
+   {
+    "aisle": "canned jarred vegetables",
+    "count": 282,
+    "lift": 2.042
+   },
+   {
+    "aisle": "soup broth bouillon",
+    "count": 292,
+    "lift": 1.603
+   },
+   {
+    "aisle": "fresh herbs",
+    "count": 331,
+    "lift": 1.397
+   },
+   {
+    "aisle": "baking ingredients",
+    "count": 322,
+    "lift": 1.364
+   },
+   {
+    "aisle": "oils vinegars",
+    "count": 295,
+    "lift": 1.363
+   },
+   {
+    "aisle": "fresh vegetables",
+    "count": 2174,
+    "lift": 1.309
+   },
+   {
+    "aisle": "other creams cheeses",
+    "count": 230,
+    "lift": 1.233
+   },
+   {
+    "aisle": "hot dogs bacon sausage",
+    "count": 242,
+    "lift": 1.216
+   }
+  ],
+  "packaged meat": [
+   {
+    "aisle": "canned jarred vegetables",
+    "count": 206,
+    "lift": 1.68
+   },
+   {
+    "aisle": "packaged produce",
+    "count": 665,
+    "lift": 1.491
+   },
+   {
+    "aisle": "hot dogs bacon sausage",
+    "count": 246,
+    "lift": 1.392
+   },
+   {
+    "aisle": "fresh vegetables",
+    "count": 1936,
+    "lift": 1.313
+   },
+   {
+    "aisle": "fresh herbs",
+    "count": 264,
+    "lift": 1.255
+   }
+  ],
+  "bakery desserts": [
+   {
+    "aisle": "cookies cakes",
+    "count": 776,
+    "lift": 3.388
+   },
+   {
+    "aisle": "ice cream ice",
+    "count": 829,
+    "lift": 1.716
+   },
+   {
+    "aisle": "breakfast bakery",
+    "count": 304,
+    "lift": 1.495
+   },
+   {
+    "aisle": "candy chocolate",
+    "count": 443,
+    "lift": 1.331
+   },
+   {
+    "aisle": "chips pretzels",
+    "count": 764,
+    "lift": 1.291
+   }
+  ],
+  "pasta sauce": [
+   {
+    "aisle": "fresh pasta",
+    "count": 458,
+    "lift": 8.343
+   },
+   {
+    "aisle": "dry pasta",
+    "count": 2834,
+    "lift": 8.337
+   },
+   {
+    "aisle": "meat counter",
+    "count": 366,
+    "lift": 2.209
+   },
+   {
+    "aisle": "canned jarred vegetables",
+    "count": 798,
+    "lift": 1.937
+   },
+   {
+    "aisle": "packaged cheese",
+    "count": 2910,
+    "lift": 1.731
+   },
+   {
+    "aisle": "instant foods",
+    "count": 421,
+    "lift": 1.669
+   },
+   {
+    "aisle": "packaged poultry",
+    "count": 411,
+    "lift": 1.624
+   },
+   {
+    "aisle": "poultry counter",
+    "count": 443,
+    "lift": 1.555
+   },
+   {
+    "aisle": "doughs gelatins bake mixes",
+    "count": 253,
+    "lift": 1.528
+   },
+   {
+    "aisle": "specialty cheeses",
+    "count": 260,
+    "lift": 1.48
+   },
+   {
+    "aisle": "tofu meat alternatives",
+    "count": 285,
+    "lift": 1.375
+   },
+   {
+    "aisle": "frozen pizza",
+    "count": 367,
+    "lift": 1.348
+   },
+   {
+    "aisle": "frozen appetizers sides",
+    "count": 409,
+    "lift": 1.324
+   },
+   {
+    "aisle": "canned meals beans",
+    "count": 424,
+    "lift": 1.305
+   },
+   {
+    "aisle": "pickled goods olives",
+    "count": 251,
+    "lift": 1.298
+   },
+   {
+    "aisle": "salad dressing toppings",
+    "count": 215,
+    "lift": 1.267
+   },
+   {
+    "aisle": "frozen vegan vegetarian",
+    "count": 204,
+    "lift": 1.262
+   },
+   {
+    "aisle": "fresh vegetables",
+    "count": 6059,
+    "lift": 1.223
+   },
+   {
+    "aisle": "soup broth bouillon",
+    "count": 662,
+    "lift": 1.219
+   }
+  ],
+  "kitchen supplies": [],
+  "cold flu allergy": [
+   {
+    "aisle": "muscles joints pain relief",
+    "count": 292,
+    "lift": 12.065
+   },
+   {
+    "aisle": "vitamins supplements",
+    "count": 413,
+    "lift": 9.004
+   },
+   {
+    "aisle": "oral hygiene",
+    "count": 202,
+    "lift": 4.032
+   },
+   {
+    "aisle": "paper goods",
+    "count": 652,
+    "lift": 3.061
+   },
+   {
+    "aisle": "tea",
+    "count": 476,
+    "lift": 2.412
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 223,
+    "lift": 2.397
+   },
+   {
+    "aisle": "soup broth bouillon",
+    "count": 405,
+    "lift": 2.394
+   },
+   {
+    "aisle": "cleaning products",
+    "count": 232,
+    "lift": 2.312
+   },
+   {
+    "aisle": "refrigerated",
+    "count": 547,
+    "lift": 1.274
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 475,
+    "lift": 1.215
+   }
+  ],
+  "fresh pasta": [
+   {
+    "aisle": "pasta sauce",
+    "count": 458,
+    "lift": 8.343
+   },
+   {
+    "aisle": "frozen meals",
+    "count": 209,
+    "lift": 1.938
+   },
+   {
+    "aisle": "packaged cheese",
+    "count": 396,
+    "lift": 1.323
+   }
+  ],
+  "prepared meals": [
+   {
+    "aisle": "prepared soups salads",
+    "count": 700,
+    "lift": 4.494
+   },
+   {
+    "aisle": "frozen meals",
+    "count": 889,
+    "lift": 1.804
+   },
+   {
+    "aisle": "frozen pizza",
+    "count": 324,
+    "lift": 1.463
+   },
+   {
+    "aisle": "fresh dips tapenades",
+    "count": 781,
+    "lift": 1.343
+   },
+   {
+    "aisle": "lunch meat",
+    "count": 738,
+    "lift": 1.335
+   },
+   {
+    "aisle": "frozen appetizers sides",
+    "count": 321,
+    "lift": 1.278
+   }
+  ],
+  "tofu meat alternatives": [
+   {
+    "aisle": "frozen vegan vegetarian",
+    "count": 757,
+    "lift": 6.968
+   },
+   {
+    "aisle": "asian foods",
+    "count": 646,
+    "lift": 3.094
+   },
+   {
+    "aisle": "canned meals beans",
+    "count": 471,
+    "lift": 2.156
+   },
+   {
+    "aisle": "grains rice dried goods",
+    "count": 284,
+    "lift": 1.717
+   },
+   {
+    "aisle": "fresh vegetables",
+    "count": 5500,
+    "lift": 1.651
+   },
+   {
+    "aisle": "soy lactosefree",
+    "count": 1623,
+    "lift": 1.391
+   },
+   {
+    "aisle": "pasta sauce",
+    "count": 285,
+    "lift": 1.375
+   },
+   {
+    "aisle": "frozen produce",
+    "count": 883,
+    "lift": 1.337
+   },
+   {
+    "aisle": "condiments",
+    "count": 378,
+    "lift": 1.329
+   },
+   {
+    "aisle": "tortillas flat bread",
+    "count": 243,
+    "lift": 1.255
+   },
+   {
+    "aisle": "dry pasta",
+    "count": 280,
+    "lift": 1.225
+   }
+  ],
+  "packaged seafood": [
+   {
+    "aisle": "other creams cheeses",
+    "count": 249,
+    "lift": 3.007
+   },
+   {
+    "aisle": "eggs",
+    "count": 205,
+    "lift": 1.256
+   }
+  ],
+  "fresh herbs": [
+   {
+    "aisle": "fresh vegetables",
+    "count": 28055,
+    "lift": 2.471
+   },
+   {
+    "aisle": "spices seasonings",
+    "count": 2091,
+    "lift": 2.426
+   },
+   {
+    "aisle": "canned jarred vegetables",
+    "count": 2182,
+    "lift": 2.311
+   },
+   {
+    "aisle": "seafood counter",
+    "count": 341,
+    "lift": 1.897
+   },
+   {
+    "aisle": "meat counter",
+    "count": 644,
+    "lift": 1.696
+   },
+   {
+    "aisle": "grains rice dried goods",
+    "count": 911,
+    "lift": 1.616
+   },
+   {
+    "aisle": "dry pasta",
+    "count": 1246,
+    "lift": 1.599
+   },
+   {
+    "aisle": "poultry counter",
+    "count": 1040,
+    "lift": 1.593
+   },
+   {
+    "aisle": "asian foods",
+    "count": 1131,
+    "lift": 1.589
+   },
+   {
+    "aisle": "soup broth bouillon",
+    "count": 1898,
+    "lift": 1.525
+   },
+   {
+    "aisle": "canned meals beans",
+    "count": 1101,
+    "lift": 1.478
+   },
+   {
+    "aisle": "latino foods",
+    "count": 303,
+    "lift": 1.475
+   },
+   {
+    "aisle": "pickled goods olives",
+    "count": 623,
+    "lift": 1.406
+   },
+   {
+    "aisle": "marinades meat preparation",
+    "count": 331,
+    "lift": 1.397
+   },
+   {
+    "aisle": "specialty cheeses",
+    "count": 550,
+    "lift": 1.366
+   },
+   {
+    "aisle": "tortillas flat bread",
+    "count": 857,
+    "lift": 1.298
+   },
+   {
+    "aisle": "packaged meat",
+    "count": 264,
+    "lift": 1.255
+   },
+   {
+    "aisle": "packaged poultry",
+    "count": 726,
+    "lift": 1.252
+   },
+   {
+    "aisle": "oils vinegars",
+    "count": 1841,
+    "lift": 1.244
+   },
+   {
+    "aisle": "packaged vegetables fruits",
+    "count": 10862,
+    "lift": 1.24
+   }
+  ],
+  "baking ingredients": [
+   {
+    "aisle": "baking supplies decor",
+    "count": 630,
+    "lift": 4.546
+   },
+   {
+    "aisle": "butter",
+    "count": 3696,
+    "lift": 2.7
+   },
+   {
+    "aisle": "cocoa drink mixes",
+    "count": 335,
+    "lift": 2.648
+   },
+   {
+    "aisle": "spices seasonings",
+    "count": 2196,
+    "lift": 2.557
+   },
+   {
+    "aisle": "honeys syrups nectars",
+    "count": 942,
+    "lift": 2.469
+   },
+   {
+    "aisle": "doughs gelatins bake mixes",
+    "count": 925,
+    "lift": 2.446
+   },
+   {
+    "aisle": "oils vinegars",
+    "count": 2938,
+    "lift": 1.993
+   },
+   {
+    "aisle": "hot cereal pancake mixes",
+    "count": 1134,
+    "lift": 1.604
+   },
+   {
+    "aisle": "marinades meat preparation",
+    "count": 322,
+    "lift": 1.364
+   },
+   {
+    "aisle": "food storage",
+    "count": 510,
+    "lift": 1.354
+   },
+   {
+    "aisle": "cream",
+    "count": 3106,
+    "lift": 1.344
+   },
+   {
+    "aisle": "other creams cheeses",
+    "count": 1631,
+    "lift": 1.283
+   },
+   {
+    "aisle": "asian foods",
+    "count": 886,
+    "lift": 1.249
+   },
+   {
+    "aisle": "grains rice dried goods",
+    "count": 698,
+    "lift": 1.242
+   },
+   {
+    "aisle": "spreads",
+    "count": 1723,
+    "lift": 1.229
+   },
+   {
+    "aisle": "nuts seeds dried fruit",
+    "count": 2147,
+    "lift": 1.204
+   }
+  ],
+  "bulk dried fruits vegetables": [
+   {
+    "aisle": "nuts seeds dried fruit",
+    "count": 555,
+    "lift": 3.377
+   },
+   {
+    "aisle": "packaged produce",
+    "count": 675,
+    "lift": 2.14
+   },
+   {
+    "aisle": "candy chocolate",
+    "count": 279,
+    "lift": 1.664
+   },
+   {
+    "aisle": "crackers",
+    "count": 234,
+    "lift": 1.294
+   },
+   {
+    "aisle": "chips pretzels",
+    "count": 359,
+    "lift": 1.204
+   }
+  ],
+  "oils vinegars": [
+   {
+    "aisle": "spices seasonings",
+    "count": 2027,
+    "lift": 2.575
+   },
+   {
+    "aisle": "baking ingredients",
+    "count": 2938,
+    "lift": 1.993
+   },
+   {
+    "aisle": "baking supplies decor",
+    "count": 238,
+    "lift": 1.873
+   },
+   {
+    "aisle": "butter",
+    "count": 1955,
+    "lift": 1.558
+   },
+   {
+    "aisle": "honeys syrups nectars",
+    "count": 538,
+    "lift": 1.538
+   },
+   {
+    "aisle": "grains rice dried goods",
+    "count": 791,
+    "lift": 1.536
+   },
+   {
+    "aisle": "asian foods",
+    "count": 988,
+    "lift": 1.52
+   },
+   {
+    "aisle": "condiments",
+    "count": 1324,
+    "lift": 1.495
+   },
+   {
+    "aisle": "canned meat seafood",
+    "count": 426,
+    "lift": 1.412
+   },
+   {
+    "aisle": "laundry",
+    "count": 851,
+    "lift": 1.369
+   },
+   {
+    "aisle": "marinades meat preparation",
+    "count": 295,
+    "lift": 1.363
+   },
+   {
+    "aisle": "canned jarred vegetables",
+    "count": 1144,
+    "lift": 1.327
+   },
+   {
+    "aisle": "fresh herbs",
+    "count": 1841,
+    "lift": 1.244
+   }
+  ],
+  "oral hygiene": [
+   {
+    "aisle": "deodorants",
+    "count": 307,
+    "lift": 14.896
+   },
+   {
+    "aisle": "shave needs",
+    "count": 256,
+    "lift": 13.902
+   },
+   {
+    "aisle": "body lotions soap",
+    "count": 581,
+    "lift": 9.003
+   },
+   {
+    "aisle": "hair care",
+    "count": 353,
+    "lift": 8.836
+   },
+   {
+    "aisle": "feminine care",
+    "count": 238,
+    "lift": 7.009
+   },
+   {
+    "aisle": "soap",
+    "count": 347,
+    "lift": 4.53
+   },
+   {
+    "aisle": "cleaning products",
+    "count": 680,
+    "lift": 4.045
+   },
+   {
+    "aisle": "cold flu allergy",
+    "count": 202,
+    "lift": 4.032
+   },
+   {
+    "aisle": "laundry",
+    "count": 603,
+    "lift": 3.892
+   },
+   {
+    "aisle": "paper goods",
+    "count": 1386,
+    "lift": 3.885
+   },
+   {
+    "aisle": "dish detergents",
+    "count": 416,
+    "lift": 3.362
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 246,
+    "lift": 1.579
+   },
+   {
+    "aisle": "baby food formula",
+    "count": 244,
+    "lift": 1.344
+   }
+  ],
+  "packaged cheese": [
+   {
+    "aisle": "specialty cheeses",
+    "count": 1822,
+    "lift": 1.902
+   },
+   {
+    "aisle": "lunch meat",
+    "count": 6632,
+    "lift": 1.79
+   },
+   {
+    "aisle": "pasta sauce",
+    "count": 2910,
+    "lift": 1.731
+   },
+   {
+    "aisle": "tortillas flat bread",
+    "count": 2562,
+    "lift": 1.632
+   },
+   {
+    "aisle": "dry pasta",
+    "count": 2820,
+    "lift": 1.522
+   },
+   {
+    "aisle": "latino foods",
+    "count": 732,
+    "lift": 1.498
+   },
+   {
+    "aisle": "other creams cheeses",
+    "count": 4444,
+    "lift": 1.465
+   },
+   {
+    "aisle": "fresh pasta",
+    "count": 396,
+    "lift": 1.323
+   },
+   {
+    "aisle": "salad dressing toppings",
+    "count": 1219,
+    "lift": 1.317
+   },
+   {
+    "aisle": "crackers",
+    "count": 5642,
+    "lift": 1.205
+   }
+  ],
+  "hair care": [
+   {
+    "aisle": "body lotions soap",
+    "count": 452,
+    "lift": 14.713
+   },
+   {
+    "aisle": "oral hygiene",
+    "count": 353,
+    "lift": 8.836
+   },
+   {
+    "aisle": "soap",
+    "count": 309,
+    "lift": 8.473
+   },
+   {
+    "aisle": "cleaning products",
+    "count": 281,
+    "lift": 3.511
+   },
+   {
+    "aisle": "laundry",
+    "count": 236,
+    "lift": 3.2
+   },
+   {
+    "aisle": "paper goods",
+    "count": 514,
+    "lift": 3.026
+   }
+  ],
+  "popcorn jerky": [
+   {
+    "aisle": "trail mix snack mix",
+    "count": 960,
+    "lift": 4.251
+   },
+   {
+    "aisle": "breakfast bars pastries",
+    "count": 569,
+    "lift": 2.492
+   },
+   {
+    "aisle": "mint gum",
+    "count": 325,
+    "lift": 2.483
+   },
+   {
+    "aisle": "fruit vegetable snacks",
+    "count": 1268,
+    "lift": 2.466
+   },
+   {
+    "aisle": "candy chocolate",
+    "count": 2346,
+    "lift": 1.996
+   },
+   {
+    "aisle": "nuts seeds dried fruit",
+    "count": 2188,
+    "lift": 1.9
+   },
+   {
+    "aisle": "energy granola bars",
+    "count": 2111,
+    "lift": 1.889
+   },
+   {
+    "aisle": "cookies cakes",
+    "count": 1475,
+    "lift": 1.824
+   },
+   {
+    "aisle": "chips pretzels",
+    "count": 3761,
+    "lift": 1.8
+   },
+   {
+    "aisle": "crackers",
+    "count": 2192,
+    "lift": 1.73
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 3124,
+    "lift": 1.687
+   },
+   {
+    "aisle": "packaged produce",
+    "count": 2659,
+    "lift": 1.203
+   }
+  ],
+  "fresh fruits": [
+   {
+    "aisle": "packaged produce",
+    "count": 49169,
+    "lift": 1.36
+   },
+   {
+    "aisle": "packaged vegetables fruits",
+    "count": 122640,
+    "lift": 1.33
+   },
+   {
+    "aisle": "fresh vegetables",
+    "count": 148543,
+    "lift": 1.243
+   }
+  ],
+  "soap": [
+   {
+    "aisle": "skin care",
+    "count": 206,
+    "lift": 16.635
+   },
+   {
+    "aisle": "hair care",
+    "count": 309,
+    "lift": 8.473
+   },
+   {
+    "aisle": "dish detergents",
+    "count": 630,
+    "lift": 5.578
+   },
+   {
+    "aisle": "oral hygiene",
+    "count": 347,
+    "lift": 4.53
+   },
+   {
+    "aisle": "cleaning products",
+    "count": 468,
+    "lift": 3.05
+   },
+   {
+    "aisle": "paper goods",
+    "count": 738,
+    "lift": 2.266
+   },
+   {
+    "aisle": "laundry",
+    "count": 313,
+    "lift": 2.213
+   }
+  ],
+  "coffee": [
+   {
+    "aisle": "cream",
+    "count": 3770,
+    "lift": 1.832
+   },
+   {
+    "aisle": "tea",
+    "count": 2113,
+    "lift": 1.64
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 877,
+    "lift": 1.444
+   },
+   {
+    "aisle": "cat food care",
+    "count": 376,
+    "lift": 1.43
+   },
+   {
+    "aisle": "plates bowls cups flatware",
+    "count": 375,
+    "lift": 1.273
+   },
+   {
+    "aisle": "dog food care",
+    "count": 210,
+    "lift": 1.231
+   },
+   {
+    "aisle": "paper goods",
+    "count": 1710,
+    "lift": 1.23
+   },
+   {
+    "aisle": "water seltzer sparkling water",
+    "count": 6598,
+    "lift": 1.217
+   }
+  ],
+  "beers coolers": [
+   {
+    "aisle": "red wines",
+    "count": 2424,
+    "lift": 24.518
+   },
+   {
+    "aisle": "white wines",
+    "count": 2062,
+    "lift": 20.91
+   },
+   {
+    "aisle": "spirits",
+    "count": 1548,
+    "lift": 16.646
+   },
+   {
+    "aisle": "specialty wines champagnes",
+    "count": 628,
+    "lift": 15.667
+   },
+   {
+    "aisle": "plates bowls cups flatware",
+    "count": 243,
+    "lift": 2.673
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 1555,
+    "lift": 1.975
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 321,
+    "lift": 1.713
+   },
+   {
+    "aisle": "chips pretzels",
+    "count": 1095,
+    "lift": 1.233
+   }
+  ],
+  "red wines": [
+   {
+    "aisle": "white wines",
+    "count": 3425,
+    "lift": 42.626
+   },
+   {
+    "aisle": "specialty wines champagnes",
+    "count": 822,
+    "lift": 25.167
+   },
+   {
+    "aisle": "beers coolers",
+    "count": 2424,
+    "lift": 24.518
+   },
+   {
+    "aisle": "spirits",
+    "count": 1005,
+    "lift": 13.263
+   }
+  ],
+  "honeys syrups nectars": [
+   {
+    "aisle": "baking ingredients",
+    "count": 942,
+    "lift": 2.469
+   },
+   {
+    "aisle": "hot cereal pancake mixes",
+    "count": 365,
+    "lift": 2.177
+   },
+   {
+    "aisle": "tea",
+    "count": 666,
+    "lift": 1.94
+   },
+   {
+    "aisle": "spices seasonings",
+    "count": 391,
+    "lift": 1.919
+   },
+   {
+    "aisle": "oils vinegars",
+    "count": 538,
+    "lift": 1.538
+   },
+   {
+    "aisle": "spreads",
+    "count": 509,
+    "lift": 1.531
+   },
+   {
+    "aisle": "frozen breakfast",
+    "count": 277,
+    "lift": 1.495
+   },
+   {
+    "aisle": "cream",
+    "count": 784,
+    "lift": 1.43
+   },
+   {
+    "aisle": "condiments",
+    "count": 317,
+    "lift": 1.383
+   },
+   {
+    "aisle": "asian foods",
+    "count": 204,
+    "lift": 1.212
+   },
+   {
+    "aisle": "soy lactosefree",
+    "count": 1137,
+    "lift": 1.209
+   }
+  ],
+  "latino foods": [
+   {
+    "aisle": "tortillas flat bread",
+    "count": 441,
+    "lift": 5.267
+   },
+   {
+    "aisle": "preserved dips spreads",
+    "count": 236,
+    "lift": 4.153
+   },
+   {
+    "aisle": "canned meals beans",
+    "count": 385,
+    "lift": 4.075
+   },
+   {
+    "aisle": "canned jarred vegetables",
+    "count": 363,
+    "lift": 3.032
+   },
+   {
+    "aisle": "other creams cheeses",
+    "count": 422,
+    "lift": 2.609
+   },
+   {
+    "aisle": "spices seasonings",
+    "count": 243,
+    "lift": 2.223
+   },
+   {
+    "aisle": "condiments",
+    "count": 241,
+    "lift": 1.959
+   },
+   {
+    "aisle": "packaged cheese",
+    "count": 732,
+    "lift": 1.498
+   },
+   {
+    "aisle": "fresh herbs",
+    "count": 303,
+    "lift": 1.475
+   },
+   {
+    "aisle": "fresh vegetables",
+    "count": 1996,
+    "lift": 1.386
+   },
+   {
+    "aisle": "soup broth bouillon",
+    "count": 203,
+    "lift": 1.285
+   },
+   {
+    "aisle": "fresh dips tapenades",
+    "count": 266,
+    "lift": 1.28
+   }
+  ],
+  "refrigerated": [
+   {
+    "aisle": "juice nectars",
+    "count": 7071,
+    "lift": 1.786
+   },
+   {
+    "aisle": "specialty wines champagnes",
+    "count": 403,
+    "lift": 1.41
+   },
+   {
+    "aisle": "tea",
+    "count": 3934,
+    "lift": 1.388
+   },
+   {
+    "aisle": "vitamins supplements",
+    "count": 856,
+    "lift": 1.299
+   },
+   {
+    "aisle": "cold flu allergy",
+    "count": 547,
+    "lift": 1.274
+   },
+   {
+    "aisle": "digestion",
+    "count": 521,
+    "lift": 1.265
+   },
+   {
+    "aisle": "protein meal replacements",
+    "count": 545,
+    "lift": 1.213
+   }
+  ],
+  "packaged produce": [
+   {
+    "aisle": "frozen meat seafood",
+    "count": 2374,
+    "lift": 2.554
+   },
+   {
+    "aisle": "bulk dried fruits vegetables",
+    "count": 675,
+    "lift": 2.14
+   },
+   {
+    "aisle": "trail mix snack mix",
+    "count": 1480,
+    "lift": 1.99
+   },
+   {
+    "aisle": "packaged meat",
+    "count": 665,
+    "lift": 1.491
+   },
+   {
+    "aisle": "fresh fruits",
+    "count": 49169,
+    "lift": 1.36
+   },
+   {
+    "aisle": "canned meat seafood",
+    "count": 886,
+    "lift": 1.266
+   },
+   {
+    "aisle": "nuts seeds dried fruit",
+    "count": 4716,
+    "lift": 1.243
+   },
+   {
+    "aisle": "frozen produce",
+    "count": 5781,
+    "lift": 1.211
+   },
+   {
+    "aisle": "popcorn jerky",
+    "count": 2659,
+    "lift": 1.203
+   }
+  ],
+  "kosher foods": [],
+  "frozen meat seafood": [
+   {
+    "aisle": "frozen appetizers sides",
+    "count": 520,
+    "lift": 2.714
+   },
+   {
+    "aisle": "packaged produce",
+    "count": 2374,
+    "lift": 2.554
+   },
+   {
+    "aisle": "buns rolls",
+    "count": 303,
+    "lift": 2.058
+   },
+   {
+    "aisle": "hot dogs bacon sausage",
+    "count": 658,
+    "lift": 1.787
+   },
+   {
+    "aisle": "frozen meals",
+    "count": 637,
+    "lift": 1.695
+   },
+   {
+    "aisle": "frozen breakfast",
+    "count": 338,
+    "lift": 1.593
+   },
+   {
+    "aisle": "frozen pizza",
+    "count": 242,
+    "lift": 1.433
+   },
+   {
+    "aisle": "instant foods",
+    "count": 201,
+    "lift": 1.285
+   }
+  ],
+  "poultry counter": [
+   {
+    "aisle": "meat counter",
+    "count": 352,
+    "lift": 2.3
+   },
+   {
+    "aisle": "fresh vegetables",
+    "count": 8149,
+    "lift": 1.781
+   },
+   {
+    "aisle": "canned jarred vegetables",
+    "count": 664,
+    "lift": 1.745
+   },
+   {
+    "aisle": "packaged poultry",
+    "count": 382,
+    "lift": 1.634
+   },
+   {
+    "aisle": "grains rice dried goods",
+    "count": 371,
+    "lift": 1.633
+   },
+   {
+    "aisle": "fresh herbs",
+    "count": 1040,
+    "lift": 1.593
+   },
+   {
+    "aisle": "pasta sauce",
+    "count": 443,
+    "lift": 1.555
+   },
+   {
+    "aisle": "soup broth bouillon",
+    "count": 703,
+    "lift": 1.401
+   },
+   {
+    "aisle": "canned meals beans",
+    "count": 396,
+    "lift": 1.319
+   },
+   {
+    "aisle": "spices seasonings",
+    "count": 447,
+    "lift": 1.287
+   },
+   {
+    "aisle": "eggs",
+    "count": 1290,
+    "lift": 1.273
+   },
+   {
+    "aisle": "dry pasta",
+    "count": 396,
+    "lift": 1.261
+   },
+   {
+    "aisle": "frozen produce",
+    "count": 1122,
+    "lift": 1.236
+   }
+  ],
+  "butter": [
+   {
+    "aisle": "baking ingredients",
+    "count": 3696,
+    "lift": 2.7
+   },
+   {
+    "aisle": "baking supplies decor",
+    "count": 203,
+    "lift": 1.721
+   },
+   {
+    "aisle": "oils vinegars",
+    "count": 1955,
+    "lift": 1.558
+   },
+   {
+    "aisle": "other creams cheeses",
+    "count": 1600,
+    "lift": 1.479
+   },
+   {
+    "aisle": "spices seasonings",
+    "count": 1015,
+    "lift": 1.389
+   },
+   {
+    "aisle": "eggs",
+    "count": 2819,
+    "lift": 1.322
+   },
+   {
+    "aisle": "cream",
+    "count": 2547,
+    "lift": 1.295
+   },
+   {
+    "aisle": "doughs gelatins bake mixes",
+    "count": 416,
+    "lift": 1.293
+   }
+  ],
+  "ice cream ice": [
+   {
+    "aisle": "ice cream toppings",
+    "count": 732,
+    "lift": 7.117
+   },
+   {
+    "aisle": "frozen dessert",
+    "count": 411,
+    "lift": 2.56
+   },
+   {
+    "aisle": "refrigerated pudding desserts",
+    "count": 526,
+    "lift": 2.04
+   },
+   {
+    "aisle": "frozen pizza",
+    "count": 1785,
+    "lift": 1.748
+   },
+   {
+    "aisle": "bakery desserts",
+    "count": 829,
+    "lift": 1.716
+   },
+   {
+    "aisle": "doughs gelatins bake mixes",
+    "count": 955,
+    "lift": 1.538
+   },
+   {
+    "aisle": "frozen meals",
+    "count": 3457,
+    "lift": 1.521
+   },
+   {
+    "aisle": "cookies cakes",
+    "count": 2933,
+    "lift": 1.426
+   },
+   {
+    "aisle": "frozen appetizers sides",
+    "count": 1575,
+    "lift": 1.359
+   },
+   {
+    "aisle": "cat food care",
+    "count": 625,
+    "lift": 1.289
+   },
+   {
+    "aisle": "frozen vegan vegetarian",
+    "count": 781,
+    "lift": 1.288
+   },
+   {
+    "aisle": "dog food care",
+    "count": 402,
+    "lift": 1.277
+   },
+   {
+    "aisle": "frozen breads doughs",
+    "count": 367,
+    "lift": 1.252
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 1398,
+    "lift": 1.248
+   },
+   {
+    "aisle": "frozen breakfast",
+    "count": 1594,
+    "lift": 1.243
+   },
+   {
+    "aisle": "baking supplies decor",
+    "count": 278,
+    "lift": 1.221
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 5672,
+    "lift": 1.204
+   }
+  ],
+  "frozen meals": [
+   {
+    "aisle": "frozen pizza",
+    "count": 1940,
+    "lift": 3.627
+   },
+   {
+    "aisle": "frozen vegan vegetarian",
+    "count": 1024,
+    "lift": 3.225
+   },
+   {
+    "aisle": "frozen appetizers sides",
+    "count": 1724,
+    "lift": 2.841
+   },
+   {
+    "aisle": "frozen breakfast",
+    "count": 1870,
+    "lift": 2.783
+   },
+   {
+    "aisle": "fresh pasta",
+    "count": 209,
+    "lift": 1.938
+   },
+   {
+    "aisle": "refrigerated pudding desserts",
+    "count": 257,
+    "lift": 1.903
+   },
+   {
+    "aisle": "instant foods",
+    "count": 930,
+    "lift": 1.877
+   },
+   {
+    "aisle": "cat food care",
+    "count": 459,
+    "lift": 1.807
+   },
+   {
+    "aisle": "prepared meals",
+    "count": 889,
+    "lift": 1.804
+   },
+   {
+    "aisle": "frozen meat seafood",
+    "count": 637,
+    "lift": 1.695
+   },
+   {
+    "aisle": "prepared soups salads",
+    "count": 586,
+    "lift": 1.557
+   },
+   {
+    "aisle": "ice cream ice",
+    "count": 3457,
+    "lift": 1.521
+   },
+   {
+    "aisle": "spirits",
+    "count": 406,
+    "lift": 1.394
+   },
+   {
+    "aisle": "protein meal replacements",
+    "count": 274,
+    "lift": 1.389
+   },
+   {
+    "aisle": "dog food care",
+    "count": 226,
+    "lift": 1.371
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 765,
+    "lift": 1.304
+   },
+   {
+    "aisle": "soup broth bouillon",
+    "count": 1353,
+    "lift": 1.268
+   }
+  ],
+  "seafood counter": [
+   {
+    "aisle": "fresh vegetables",
+    "count": 2396,
+    "lift": 1.902
+   },
+   {
+    "aisle": "fresh herbs",
+    "count": 341,
+    "lift": 1.897
+   },
+   {
+    "aisle": "packaged vegetables fruits",
+    "count": 1217,
+    "lift": 1.252
+   }
+  ],
+  "dog food care": [
+   {
+    "aisle": "cat food care",
+    "count": 210,
+    "lift": 5.969
+   },
+   {
+    "aisle": "paper goods",
+    "count": 405,
+    "lift": 2.176
+   },
+   {
+    "aisle": "frozen meals",
+    "count": 226,
+    "lift": 1.371
+   },
+   {
+    "aisle": "ice cream ice",
+    "count": 402,
+    "lift": 1.277
+   },
+   {
+    "aisle": "coffee",
+    "count": 210,
+    "lift": 1.231
+   }
+  ],
+  "cat food care": [
+   {
+    "aisle": "dog food care",
+    "count": 210,
+    "lift": 5.969
+   },
+   {
+    "aisle": "paper goods",
+    "count": 1032,
+    "lift": 3.6
+   },
+   {
+    "aisle": "cleaning products",
+    "count": 411,
+    "lift": 3.043
+   },
+   {
+    "aisle": "laundry",
+    "count": 366,
+    "lift": 2.94
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 307,
+    "lift": 2.452
+   },
+   {
+    "aisle": "dish detergents",
+    "count": 211,
+    "lift": 2.122
+   },
+   {
+    "aisle": "frozen pizza",
+    "count": 239,
+    "lift": 2.094
+   },
+   {
+    "aisle": "frozen meals",
+    "count": 459,
+    "lift": 1.807
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 852,
+    "lift": 1.619
+   },
+   {
+    "aisle": "coffee",
+    "count": 376,
+    "lift": 1.43
+   },
+   {
+    "aisle": "ice cream ice",
+    "count": 625,
+    "lift": 1.289
+   }
+  ],
+  "frozen vegan vegetarian": [
+   {
+    "aisle": "tofu meat alternatives",
+    "count": 757,
+    "lift": 6.968
+   },
+   {
+    "aisle": "frozen meals",
+    "count": 1024,
+    "lift": 3.225
+   },
+   {
+    "aisle": "frozen pizza",
+    "count": 338,
+    "lift": 2.369
+   },
+   {
+    "aisle": "frozen appetizers sides",
+    "count": 368,
+    "lift": 2.274
+   },
+   {
+    "aisle": "frozen breakfast",
+    "count": 401,
+    "lift": 2.238
+   },
+   {
+    "aisle": "buns rolls",
+    "count": 220,
+    "lift": 1.769
+   },
+   {
+    "aisle": "instant foods",
+    "count": 224,
+    "lift": 1.695
+   },
+   {
+    "aisle": "canned meals beans",
+    "count": 286,
+    "lift": 1.679
+   },
+   {
+    "aisle": "condiments",
+    "count": 308,
+    "lift": 1.389
+   },
+   {
+    "aisle": "ice cream ice",
+    "count": 781,
+    "lift": 1.288
+   },
+   {
+    "aisle": "pasta sauce",
+    "count": 204,
+    "lift": 1.262
+   },
+   {
+    "aisle": "soy lactosefree",
+    "count": 1115,
+    "lift": 1.226
+   }
+  ],
+  "buns rolls": [
+   {
+    "aisle": "hot dogs bacon sausage",
+    "count": 1788,
+    "lift": 3.914
+   },
+   {
+    "aisle": "frozen meat seafood",
+    "count": 303,
+    "lift": 2.058
+   },
+   {
+    "aisle": "condiments",
+    "count": 658,
+    "lift": 2.02
+   },
+   {
+    "aisle": "frozen appetizers sides",
+    "count": 480,
+    "lift": 2.019
+   },
+   {
+    "aisle": "pickled goods olives",
+    "count": 266,
+    "lift": 1.787
+   },
+   {
+    "aisle": "frozen vegan vegetarian",
+    "count": 220,
+    "lift": 1.769
+   },
+   {
+    "aisle": "meat counter",
+    "count": 200,
+    "lift": 1.569
+   },
+   {
+    "aisle": "prepared soups salads",
+    "count": 225,
+    "lift": 1.527
+   },
+   {
+    "aisle": "lunch meat",
+    "count": 696,
+    "lift": 1.331
+   },
+   {
+    "aisle": "breakfast bakery",
+    "count": 488,
+    "lift": 1.302
+   },
+   {
+    "aisle": "instant foods",
+    "count": 237,
+    "lift": 1.221
+   }
+  ],
+  "eye ear care": [
+   {
+    "aisle": "paper goods",
+    "count": 316,
+    "lift": 4.007
+   }
+  ],
+  "candy chocolate": [
+   {
+    "aisle": "trail mix snack mix",
+    "count": 1391,
+    "lift": 3.517
+   },
+   {
+    "aisle": "mint gum",
+    "count": 765,
+    "lift": 3.337
+   },
+   {
+    "aisle": "cookies cakes",
+    "count": 2868,
+    "lift": 2.025
+   },
+   {
+    "aisle": "popcorn jerky",
+    "count": 2346,
+    "lift": 1.996
+   },
+   {
+    "aisle": "breakfast bars pastries",
+    "count": 778,
+    "lift": 1.945
+   },
+   {
+    "aisle": "nuts seeds dried fruit",
+    "count": 3812,
+    "lift": 1.89
+   },
+   {
+    "aisle": "bulk dried fruits vegetables",
+    "count": 279,
+    "lift": 1.664
+   },
+   {
+    "aisle": "chips pretzels",
+    "count": 5805,
+    "lift": 1.587
+   },
+   {
+    "aisle": "fruit vegetable snacks",
+    "count": 1411,
+    "lift": 1.567
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 4985,
+    "lift": 1.537
+   },
+   {
+    "aisle": "energy granola bars",
+    "count": 2864,
+    "lift": 1.463
+   },
+   {
+    "aisle": "baking supplies decor",
+    "count": 225,
+    "lift": 1.435
+   },
+   {
+    "aisle": "crackers",
+    "count": 3098,
+    "lift": 1.396
+   },
+   {
+    "aisle": "bakery desserts",
+    "count": 443,
+    "lift": 1.331
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 968,
+    "lift": 1.254
+   },
+   {
+    "aisle": "food storage",
+    "count": 527,
+    "lift": 1.237
+   },
+   {
+    "aisle": "tea",
+    "count": 2017,
+    "lift": 1.232
+   }
+  ],
+  "mint gum": [
+   {
+    "aisle": "candy chocolate",
+    "count": 765,
+    "lift": 3.337
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 228,
+    "lift": 2.653
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 911,
+    "lift": 2.522
+   },
+   {
+    "aisle": "popcorn jerky",
+    "count": 325,
+    "lift": 2.483
+   },
+   {
+    "aisle": "energy granola bars",
+    "count": 373,
+    "lift": 1.711
+   },
+   {
+    "aisle": "cookies cakes",
+    "count": 244,
+    "lift": 1.547
+   },
+   {
+    "aisle": "paper goods",
+    "count": 302,
+    "lift": 1.535
+   },
+   {
+    "aisle": "nuts seeds dried fruit",
+    "count": 333,
+    "lift": 1.482
+   },
+   {
+    "aisle": "tea",
+    "count": 256,
+    "lift": 1.404
+   },
+   {
+    "aisle": "water seltzer sparkling water",
+    "count": 983,
+    "lift": 1.281
+   },
+   {
+    "aisle": "crackers",
+    "count": 313,
+    "lift": 1.267
+   }
+  ],
+  "vitamins supplements": [
+   {
+    "aisle": "cold flu allergy",
+    "count": 413,
+    "lift": 9.004
+   },
+   {
+    "aisle": "digestion",
+    "count": 289,
+    "lift": 6.572
+   },
+   {
+    "aisle": "tea",
+    "count": 571,
+    "lift": 1.886
+   },
+   {
+    "aisle": "refrigerated",
+    "count": 856,
+    "lift": 1.299
+   },
+   {
+    "aisle": "soup broth bouillon",
+    "count": 313,
+    "lift": 1.206
+   }
+  ],
+  "breakfast bars pastries": [
+   {
+    "aisle": "trail mix snack mix",
+    "count": 361,
+    "lift": 4.697
+   },
+   {
+    "aisle": "energy granola bars",
+    "count": 1617,
+    "lift": 4.251
+   },
+   {
+    "aisle": "fruit vegetable snacks",
+    "count": 570,
+    "lift": 3.258
+   },
+   {
+    "aisle": "cookies cakes",
+    "count": 807,
+    "lift": 2.932
+   },
+   {
+    "aisle": "popcorn jerky",
+    "count": 569,
+    "lift": 2.492
+   },
+   {
+    "aisle": "crackers",
+    "count": 862,
+    "lift": 2.0
+   },
+   {
+    "aisle": "candy chocolate",
+    "count": 778,
+    "lift": 1.945
+   },
+   {
+    "aisle": "cereal",
+    "count": 668,
+    "lift": 1.84
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 272,
+    "lift": 1.814
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 1139,
+    "lift": 1.807
+   },
+   {
+    "aisle": "breakfast bakery",
+    "count": 349,
+    "lift": 1.428
+   },
+   {
+    "aisle": "nuts seeds dried fruit",
+    "count": 549,
+    "lift": 1.401
+   },
+   {
+    "aisle": "chips pretzels",
+    "count": 925,
+    "lift": 1.301
+   },
+   {
+    "aisle": "frozen breakfast",
+    "count": 215,
+    "lift": 1.252
+   }
+  ],
+  "packaged poultry": [
+   {
+    "aisle": "meat counter",
+    "count": 346,
+    "lift": 2.545
+   },
+   {
+    "aisle": "marinades meat preparation",
+    "count": 202,
+    "lift": 2.381
+   },
+   {
+    "aisle": "poultry counter",
+    "count": 382,
+    "lift": 1.634
+   },
+   {
+    "aisle": "grains rice dried goods",
+    "count": 328,
+    "lift": 1.625
+   },
+   {
+    "aisle": "pasta sauce",
+    "count": 411,
+    "lift": 1.624
+   },
+   {
+    "aisle": "fresh vegetables",
+    "count": 6357,
+    "lift": 1.564
+   },
+   {
+    "aisle": "canned jarred vegetables",
+    "count": 503,
+    "lift": 1.488
+   },
+   {
+    "aisle": "instant foods",
+    "count": 296,
+    "lift": 1.43
+   },
+   {
+    "aisle": "dry pasta",
+    "count": 393,
+    "lift": 1.409
+   },
+   {
+    "aisle": "tortillas flat bread",
+    "count": 323,
+    "lift": 1.367
+   },
+   {
+    "aisle": "canned meals beans",
+    "count": 355,
+    "lift": 1.331
+   },
+   {
+    "aisle": "hot dogs bacon sausage",
+    "count": 640,
+    "lift": 1.314
+   },
+   {
+    "aisle": "soup broth bouillon",
+    "count": 571,
+    "lift": 1.281
+   },
+   {
+    "aisle": "fresh herbs",
+    "count": 726,
+    "lift": 1.252
+   },
+   {
+    "aisle": "spices seasonings",
+    "count": 376,
+    "lift": 1.219
+   },
+   {
+    "aisle": "frozen produce",
+    "count": 980,
+    "lift": 1.216
+   }
+  ],
+  "fruit vegetable snacks": [
+   {
+    "aisle": "breakfast bars pastries",
+    "count": 570,
+    "lift": 3.258
+   },
+   {
+    "aisle": "trail mix snack mix",
+    "count": 505,
+    "lift": 2.918
+   },
+   {
+    "aisle": "energy granola bars",
+    "count": 2160,
+    "lift": 2.522
+   },
+   {
+    "aisle": "popcorn jerky",
+    "count": 1268,
+    "lift": 2.466
+   },
+   {
+    "aisle": "cookies cakes",
+    "count": 1403,
+    "lift": 2.264
+   },
+   {
+    "aisle": "canned fruit applesauce",
+    "count": 263,
+    "lift": 2.118
+   },
+   {
+    "aisle": "crackers",
+    "count": 1858,
+    "lift": 1.914
+   },
+   {
+    "aisle": "nuts seeds dried fruit",
+    "count": 1517,
+    "lift": 1.719
+   },
+   {
+    "aisle": "chips pretzels",
+    "count": 2619,
+    "lift": 1.636
+   },
+   {
+    "aisle": "candy chocolate",
+    "count": 1411,
+    "lift": 1.567
+   },
+   {
+    "aisle": "baby food formula",
+    "count": 552,
+    "lift": 1.403
+   }
+  ],
+  "preserved dips spreads": [
+   {
+    "aisle": "latino foods",
+    "count": 236,
+    "lift": 4.153
+   },
+   {
+    "aisle": "chips pretzels",
+    "count": 3396,
+    "lift": 3.783
+   },
+   {
+    "aisle": "fresh dips tapenades",
+    "count": 1536,
+    "lift": 3.39
+   },
+   {
+    "aisle": "tortillas flat bread",
+    "count": 440,
+    "lift": 2.41
+   },
+   {
+    "aisle": "canned meals beans",
+    "count": 409,
+    "lift": 1.986
+   },
+   {
+    "aisle": "other creams cheeses",
+    "count": 542,
+    "lift": 1.537
+   },
+   {
+    "aisle": "frozen appetizers sides",
+    "count": 245,
+    "lift": 1.252
+   },
+   {
+    "aisle": "frozen pizza",
+    "count": 208,
+    "lift": 1.205
+   }
+  ],
+  "frozen breakfast": [
+   {
+    "aisle": "frozen meals",
+    "count": 1870,
+    "lift": 2.783
+   },
+   {
+    "aisle": "frozen appetizers sides",
+    "count": 904,
+    "lift": 2.64
+   },
+   {
+    "aisle": "frozen pizza",
+    "count": 686,
+    "lift": 2.272
+   },
+   {
+    "aisle": "frozen vegan vegetarian",
+    "count": 401,
+    "lift": 2.238
+   },
+   {
+    "aisle": "baby food formula",
+    "count": 700,
+    "lift": 1.814
+   },
+   {
+    "aisle": "hot dogs bacon sausage",
+    "count": 1161,
+    "lift": 1.764
+   },
+   {
+    "aisle": "doughs gelatins bake mixes",
+    "count": 307,
+    "lift": 1.672
+   },
+   {
+    "aisle": "frozen meat seafood",
+    "count": 338,
+    "lift": 1.593
+   },
+   {
+    "aisle": "honeys syrups nectars",
+    "count": 277,
+    "lift": 1.495
+   },
+   {
+    "aisle": "instant foods",
+    "count": 418,
+    "lift": 1.494
+   },
+   {
+    "aisle": "breakfast bakery",
+    "count": 790,
+    "lift": 1.463
+   },
+   {
+    "aisle": "breakfast bars pastries",
+    "count": 215,
+    "lift": 1.252
+   },
+   {
+    "aisle": "ice cream ice",
+    "count": 1594,
+    "lift": 1.243
+   }
+  ],
+  "cream": [
+   {
+    "aisle": "ice cream toppings",
+    "count": 220,
+    "lift": 2.445
+   },
+   {
+    "aisle": "coffee",
+    "count": 3770,
+    "lift": 1.832
+   },
+   {
+    "aisle": "milk",
+    "count": 16216,
+    "lift": 1.789
+   },
+   {
+    "aisle": "soy lactosefree",
+    "count": 8211,
+    "lift": 1.442
+   },
+   {
+    "aisle": "honeys syrups nectars",
+    "count": 784,
+    "lift": 1.43
+   },
+   {
+    "aisle": "cocoa drink mixes",
+    "count": 249,
+    "lift": 1.369
+   },
+   {
+    "aisle": "baking ingredients",
+    "count": 3106,
+    "lift": 1.344
+   },
+   {
+    "aisle": "butter",
+    "count": 2547,
+    "lift": 1.295
+   },
+   {
+    "aisle": "tea",
+    "count": 2666,
+    "lift": 1.282
+   }
+  ],
+  "paper goods": [
+   {
+    "aisle": "trash bags liners",
+    "count": 1238,
+    "lift": 5.202
+   },
+   {
+    "aisle": "cleaning products",
+    "count": 3691,
+    "lift": 5.165
+   },
+   {
+    "aisle": "body lotions soap",
+    "count": 1359,
+    "lift": 4.953
+   },
+   {
+    "aisle": "dish detergents",
+    "count": 2233,
+    "lift": 4.245
+   },
+   {
+    "aisle": "laundry",
+    "count": 2753,
+    "lift": 4.18
+   },
+   {
+    "aisle": "air fresheners candles",
+    "count": 515,
+    "lift": 4.096
+   },
+   {
+    "aisle": "eye ear care",
+    "count": 316,
+    "lift": 4.007
+   },
+   {
+    "aisle": "shave needs",
+    "count": 307,
+    "lift": 3.922
+   },
+   {
+    "aisle": "oral hygiene",
+    "count": 1386,
+    "lift": 3.885
+   },
+   {
+    "aisle": "diapers wipes",
+    "count": 627,
+    "lift": 3.611
+   },
+   {
+    "aisle": "cat food care",
+    "count": 1032,
+    "lift": 3.6
+   },
+   {
+    "aisle": "facial care",
+    "count": 339,
+    "lift": 3.557
+   },
+   {
+    "aisle": "feminine care",
+    "count": 510,
+    "lift": 3.533
+   },
+   {
+    "aisle": "plates bowls cups flatware",
+    "count": 1130,
+    "lift": 3.516
+   },
+   {
+    "aisle": "food storage",
+    "count": 1168,
+    "lift": 3.194
+   },
+   {
+    "aisle": "deodorants",
+    "count": 274,
+    "lift": 3.127
+   },
+   {
+    "aisle": "first aid",
+    "count": 290,
+    "lift": 3.116
+   },
+   {
+    "aisle": "more household",
+    "count": 455,
+    "lift": 3.103
+   },
+   {
+    "aisle": "cold flu allergy",
+    "count": 652,
+    "lift": 3.061
+   },
+   {
+    "aisle": "hair care",
+    "count": 514,
+    "lift": 3.026
+   },
+   {
+    "aisle": "soap",
+    "count": 738,
+    "lift": 2.266
+   },
+   {
+    "aisle": "dog food care",
+    "count": 405,
+    "lift": 2.176
+   },
+   {
+    "aisle": "muscles joints pain relief",
+    "count": 358,
+    "lift": 2.077
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 1118,
+    "lift": 1.688
+   },
+   {
+    "aisle": "mint gum",
+    "count": 302,
+    "lift": 1.535
+   },
+   {
+    "aisle": "spirits",
+    "count": 450,
+    "lift": 1.369
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 3796,
+    "lift": 1.364
+   },
+   {
+    "aisle": "digestion",
+    "count": 270,
+    "lift": 1.322
+   },
+   {
+    "aisle": "water seltzer sparkling water",
+    "count": 7809,
+    "lift": 1.32
+   },
+   {
+    "aisle": "coffee",
+    "count": 1710,
+    "lift": 1.23
+   }
+  ],
+  "shave needs": [
+   {
+    "aisle": "body lotions soap",
+    "count": 208,
+    "lift": 14.688
+   },
+   {
+    "aisle": "oral hygiene",
+    "count": 256,
+    "lift": 13.902
+   },
+   {
+    "aisle": "paper goods",
+    "count": 307,
+    "lift": 3.922
+   }
+  ],
+  "diapers wipes": [
+   {
+    "aisle": "baby food formula",
+    "count": 615,
+    "lift": 6.96
+   },
+   {
+    "aisle": "body lotions soap",
+    "count": 215,
+    "lift": 6.844
+   },
+   {
+    "aisle": "cleaning products",
+    "count": 352,
+    "lift": 4.302
+   },
+   {
+    "aisle": "paper goods",
+    "count": 627,
+    "lift": 3.611
+   },
+   {
+    "aisle": "laundry",
+    "count": 254,
+    "lift": 3.368
+   }
+  ],
+  "granola": [
+   {
+    "aisle": "yogurt",
+    "count": 3634,
+    "lift": 2.33
+   },
+   {
+    "aisle": "cereal",
+    "count": 965,
+    "lift": 2.103
+   },
+   {
+    "aisle": "energy granola bars",
+    "count": 977,
+    "lift": 2.032
+   },
+   {
+    "aisle": "hot cereal pancake mixes",
+    "count": 343,
+    "lift": 1.747
+   },
+   {
+    "aisle": "soy lactosefree",
+    "count": 1729,
+    "lift": 1.57
+   },
+   {
+    "aisle": "tea",
+    "count": 527,
+    "lift": 1.31
+   },
+   {
+    "aisle": "spreads",
+    "count": 490,
+    "lift": 1.258
+   }
+  ],
+  "frozen breads doughs": [
+   {
+    "aisle": "lunch meat",
+    "count": 256,
+    "lift": 1.486
+   },
+   {
+    "aisle": "bread",
+    "count": 431,
+    "lift": 1.35
+   },
+   {
+    "aisle": "ice cream ice",
+    "count": 367,
+    "lift": 1.252
+   },
+   {
+    "aisle": "soy lactosefree",
+    "count": 528,
+    "lift": 1.201
+   }
+  ],
+  "canned meals beans": [
+   {
+    "aisle": "canned jarred vegetables",
+    "count": 1939,
+    "lift": 4.467
+   },
+   {
+    "aisle": "latino foods",
+    "count": 385,
+    "lift": 4.075
+   },
+   {
+    "aisle": "grains rice dried goods",
+    "count": 712,
+    "lift": 2.746
+   },
+   {
+    "aisle": "tortillas flat bread",
+    "count": 762,
+    "lift": 2.511
+   },
+   {
+    "aisle": "soup broth bouillon",
+    "count": 1244,
+    "lift": 2.173
+   },
+   {
+    "aisle": "tofu meat alternatives",
+    "count": 471,
+    "lift": 2.156
+   },
+   {
+    "aisle": "preserved dips spreads",
+    "count": 409,
+    "lift": 1.986
+   },
+   {
+    "aisle": "canned meat seafood",
+    "count": 270,
+    "lift": 1.778
+   },
+   {
+    "aisle": "frozen vegan vegetarian",
+    "count": 286,
+    "lift": 1.679
+   },
+   {
+    "aisle": "pickled goods olives",
+    "count": 341,
+    "lift": 1.673
+   },
+   {
+    "aisle": "instant foods",
+    "count": 417,
+    "lift": 1.569
+   },
+   {
+    "aisle": "spices seasonings",
+    "count": 596,
+    "lift": 1.504
+   },
+   {
+    "aisle": "fresh herbs",
+    "count": 1101,
+    "lift": 1.478
+   },
+   {
+    "aisle": "fresh vegetables",
+    "count": 7664,
+    "lift": 1.468
+   },
+   {
+    "aisle": "dry pasta",
+    "count": 480,
+    "lift": 1.34
+   },
+   {
+    "aisle": "packaged poultry",
+    "count": 355,
+    "lift": 1.331
+   },
+   {
+    "aisle": "meat counter",
+    "count": 232,
+    "lift": 1.329
+   },
+   {
+    "aisle": "frozen produce",
+    "count": 1375,
+    "lift": 1.328
+   },
+   {
+    "aisle": "poultry counter",
+    "count": 396,
+    "lift": 1.319
+   },
+   {
+    "aisle": "pasta sauce",
+    "count": 424,
+    "lift": 1.305
+   }
+  ],
+  "trash bags liners": [
+   {
+    "aisle": "cleaning products",
+    "count": 817,
+    "lift": 7.285
+   },
+   {
+    "aisle": "laundry",
+    "count": 627,
+    "lift": 6.066
+   },
+   {
+    "aisle": "food storage",
+    "count": 323,
+    "lift": 5.628
+   },
+   {
+    "aisle": "paper goods",
+    "count": 1238,
+    "lift": 5.202
+   },
+   {
+    "aisle": "dish detergents",
+    "count": 394,
+    "lift": 4.773
+   },
+   {
+    "aisle": "water seltzer sparkling water",
+    "count": 1188,
+    "lift": 1.28
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 531,
+    "lift": 1.216
+   }
+  ],
+  "cookies cakes": [
+   {
+    "aisle": "bakery desserts",
+    "count": 776,
+    "lift": 3.388
+   },
+   {
+    "aisle": "breakfast bars pastries",
+    "count": 807,
+    "lift": 2.932
+   },
+   {
+    "aisle": "fruit vegetable snacks",
+    "count": 1403,
+    "lift": 2.264
+   },
+   {
+    "aisle": "trail mix snack mix",
+    "count": 578,
+    "lift": 2.124
+   },
+   {
+    "aisle": "candy chocolate",
+    "count": 2868,
+    "lift": 2.025
+   },
+   {
+    "aisle": "crackers",
+    "count": 3067,
+    "lift": 2.009
+   },
+   {
+    "aisle": "chips pretzels",
+    "count": 4629,
+    "lift": 1.838
+   },
+   {
+    "aisle": "popcorn jerky",
+    "count": 1475,
+    "lift": 1.824
+   },
+   {
+    "aisle": "mint gum",
+    "count": 244,
+    "lift": 1.547
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 3386,
+    "lift": 1.517
+   },
+   {
+    "aisle": "energy granola bars",
+    "count": 2031,
+    "lift": 1.508
+   },
+   {
+    "aisle": "ice cream ice",
+    "count": 2933,
+    "lift": 1.426
+   },
+   {
+    "aisle": "doughs gelatins bake mixes",
+    "count": 402,
+    "lift": 1.366
+   },
+   {
+    "aisle": "frozen pizza",
+    "count": 600,
+    "lift": 1.239
+   },
+   {
+    "aisle": "cereal",
+    "count": 1587,
+    "lift": 1.235
+   }
+  ],
+  "white wines": [
+   {
+    "aisle": "red wines",
+    "count": 3425,
+    "lift": 42.626
+   },
+   {
+    "aisle": "specialty wines champagnes",
+    "count": 790,
+    "lift": 24.25
+   },
+   {
+    "aisle": "beers coolers",
+    "count": 2062,
+    "lift": 20.91
+   },
+   {
+    "aisle": "spirits",
+    "count": 983,
+    "lift": 13.006
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 211,
+    "lift": 1.386
+   }
+  ],
+  "grains rice dried goods": [
+   {
+    "aisle": "canned meals beans",
+    "count": 712,
+    "lift": 2.746
+   },
+   {
+    "aisle": "soup broth bouillon",
+    "count": 900,
+    "lift": 2.077
+   },
+   {
+    "aisle": "asian foods",
+    "count": 511,
+    "lift": 2.062
+   },
+   {
+    "aisle": "spices seasonings",
+    "count": 596,
+    "lift": 1.987
+   },
+   {
+    "aisle": "instant foods",
+    "count": 371,
+    "lift": 1.843
+   },
+   {
+    "aisle": "canned jarred vegetables",
+    "count": 600,
+    "lift": 1.826
+   },
+   {
+    "aisle": "tofu meat alternatives",
+    "count": 284,
+    "lift": 1.717
+   },
+   {
+    "aisle": "dry pasta",
+    "count": 452,
+    "lift": 1.667
+   },
+   {
+    "aisle": "poultry counter",
+    "count": 371,
+    "lift": 1.633
+   },
+   {
+    "aisle": "packaged poultry",
+    "count": 328,
+    "lift": 1.625
+   },
+   {
+    "aisle": "fresh herbs",
+    "count": 911,
+    "lift": 1.616
+   },
+   {
+    "aisle": "fresh vegetables",
+    "count": 6259,
+    "lift": 1.583
+   },
+   {
+    "aisle": "oils vinegars",
+    "count": 791,
+    "lift": 1.536
+   },
+   {
+    "aisle": "hot cereal pancake mixes",
+    "count": 313,
+    "lift": 1.268
+   },
+   {
+    "aisle": "frozen produce",
+    "count": 979,
+    "lift": 1.249
+   },
+   {
+    "aisle": "baking ingredients",
+    "count": 698,
+    "lift": 1.242
+   }
+  ],
+  "energy sports drinks": [
+   {
+    "aisle": "spirits",
+    "count": 457,
+    "lift": 3.182
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 3228,
+    "lift": 2.655
+   },
+   {
+    "aisle": "mint gum",
+    "count": 228,
+    "lift": 2.653
+   },
+   {
+    "aisle": "cat food care",
+    "count": 307,
+    "lift": 2.452
+   },
+   {
+    "aisle": "cold flu allergy",
+    "count": 223,
+    "lift": 2.397
+   },
+   {
+    "aisle": "body lotions soap",
+    "count": 266,
+    "lift": 2.22
+   },
+   {
+    "aisle": "breakfast bars pastries",
+    "count": 272,
+    "lift": 1.814
+   },
+   {
+    "aisle": "beers coolers",
+    "count": 321,
+    "lift": 1.713
+   },
+   {
+    "aisle": "plates bowls cups flatware",
+    "count": 237,
+    "lift": 1.688
+   },
+   {
+    "aisle": "paper goods",
+    "count": 1118,
+    "lift": 1.688
+   },
+   {
+    "aisle": "tea",
+    "count": 1028,
+    "lift": 1.675
+   },
+   {
+    "aisle": "frozen pizza",
+    "count": 432,
+    "lift": 1.638
+   },
+   {
+    "aisle": "oral hygiene",
+    "count": 246,
+    "lift": 1.579
+   },
+   {
+    "aisle": "juice nectars",
+    "count": 1321,
+    "lift": 1.541
+   },
+   {
+    "aisle": "coffee",
+    "count": 877,
+    "lift": 1.444
+   },
+   {
+    "aisle": "instant foods",
+    "count": 348,
+    "lift": 1.424
+   },
+   {
+    "aisle": "water seltzer sparkling water",
+    "count": 3650,
+    "lift": 1.413
+   },
+   {
+    "aisle": "white wines",
+    "count": 211,
+    "lift": 1.386
+   },
+   {
+    "aisle": "frozen meals",
+    "count": 765,
+    "lift": 1.304
+   },
+   {
+    "aisle": "candy chocolate",
+    "count": 968,
+    "lift": 1.254
+   },
+   {
+    "aisle": "energy granola bars",
+    "count": 919,
+    "lift": 1.252
+   },
+   {
+    "aisle": "ice cream ice",
+    "count": 1398,
+    "lift": 1.248
+   },
+   {
+    "aisle": "cleaning products",
+    "count": 382,
+    "lift": 1.224
+   },
+   {
+    "aisle": "crackers",
+    "count": 999,
+    "lift": 1.201
+   }
+  ],
+  "protein meal replacements": [
+   {
+    "aisle": "energy granola bars",
+    "count": 617,
+    "lift": 2.5
+   },
+   {
+    "aisle": "soy lactosefree",
+    "count": 832,
+    "lift": 1.472
+   },
+   {
+    "aisle": "frozen meals",
+    "count": 274,
+    "lift": 1.389
+   },
+   {
+    "aisle": "frozen produce",
+    "count": 425,
+    "lift": 1.328
+   },
+   {
+    "aisle": "refrigerated",
+    "count": 545,
+    "lift": 1.213
+   }
+  ],
+  "asian foods": [
+   {
+    "aisle": "tofu meat alternatives",
+    "count": 646,
+    "lift": 3.094
+   },
+   {
+    "aisle": "condiments",
+    "count": 1238,
+    "lift": 2.905
+   },
+   {
+    "aisle": "marinades meat preparation",
+    "count": 264,
+    "lift": 2.535
+   },
+   {
+    "aisle": "grains rice dried goods",
+    "count": 511,
+    "lift": 2.062
+   },
+   {
+    "aisle": "spices seasonings",
+    "count": 736,
+    "lift": 1.944
+   },
+   {
+    "aisle": "soup broth bouillon",
+    "count": 996,
+    "lift": 1.821
+   },
+   {
+    "aisle": "fresh herbs",
+    "count": 1131,
+    "lift": 1.589
+   },
+   {
+    "aisle": "pickled goods olives",
+    "count": 302,
+    "lift": 1.551
+   },
+   {
+    "aisle": "oils vinegars",
+    "count": 988,
+    "lift": 1.52
+   },
+   {
+    "aisle": "instant foods",
+    "count": 358,
+    "lift": 1.409
+   },
+   {
+    "aisle": "salad dressing toppings",
+    "count": 224,
+    "lift": 1.31
+   },
+   {
+    "aisle": "fresh vegetables",
+    "count": 6380,
+    "lift": 1.279
+   },
+   {
+    "aisle": "baking ingredients",
+    "count": 886,
+    "lift": 1.249
+   },
+   {
+    "aisle": "honeys syrups nectars",
+    "count": 204,
+    "lift": 1.212
+   },
+   {
+    "aisle": "canned jarred vegetables",
+    "count": 499,
+    "lift": 1.203
+   }
+  ],
+  "fresh dips tapenades": [
+   {
+    "aisle": "preserved dips spreads",
+    "count": 1536,
+    "lift": 3.39
+   },
+   {
+    "aisle": "chips pretzels",
+    "count": 9428,
+    "lift": 2.872
+   },
+   {
+    "aisle": "tortillas flat bread",
+    "count": 1082,
+    "lift": 1.621
+   },
+   {
+    "aisle": "crackers",
+    "count": 3067,
+    "lift": 1.541
+   },
+   {
+    "aisle": "prepared soups salads",
+    "count": 618,
+    "lift": 1.392
+   },
+   {
+    "aisle": "specialty cheeses",
+    "count": 565,
+    "lift": 1.387
+   },
+   {
+    "aisle": "prepared meals",
+    "count": 781,
+    "lift": 1.343
+   },
+   {
+    "aisle": "latino foods",
+    "count": 266,
+    "lift": 1.28
+   }
+  ],
+  "bulk grains rice dried goods": [
+   {
+    "aisle": "fresh vegetables",
+    "count": 836,
+    "lift": 1.501
+   },
+   {
+    "aisle": "soy lactosefree",
+    "count": 289,
+    "lift": 1.482
+   }
+  ],
+  "soup broth bouillon": [
+   {
+    "aisle": "canned jarred vegetables",
+    "count": 1788,
+    "lift": 2.464
+   },
+   {
+    "aisle": "cold flu allergy",
+    "count": 405,
+    "lift": 2.394
+   },
+   {
+    "aisle": "canned meals beans",
+    "count": 1244,
+    "lift": 2.173
+   },
+   {
+    "aisle": "grains rice dried goods",
+    "count": 900,
+    "lift": 2.077
+   },
+   {
+    "aisle": "asian foods",
+    "count": 996,
+    "lift": 1.821
+   },
+   {
+    "aisle": "prepared soups salads",
+    "count": 573,
+    "lift": 1.698
+   },
+   {
+    "aisle": "spices seasonings",
+    "count": 1090,
+    "lift": 1.646
+   },
+   {
+    "aisle": "dry pasta",
+    "count": 974,
+    "lift": 1.627
+   },
+   {
+    "aisle": "marinades meat preparation",
+    "count": 292,
+    "lift": 1.603
+   },
+   {
+    "aisle": "instant foods",
+    "count": 692,
+    "lift": 1.557
+   },
+   {
+    "aisle": "fresh herbs",
+    "count": 1898,
+    "lift": 1.525
+   },
+   {
+    "aisle": "meat counter",
+    "count": 422,
+    "lift": 1.446
+   },
+   {
+    "aisle": "canned meat seafood",
+    "count": 356,
+    "lift": 1.403
+   },
+   {
+    "aisle": "poultry counter",
+    "count": 703,
+    "lift": 1.401
+   },
+   {
+    "aisle": "fresh vegetables",
+    "count": 11834,
+    "lift": 1.356
+   },
+   {
+    "aisle": "latino foods",
+    "count": 203,
+    "lift": 1.285
+   },
+   {
+    "aisle": "packaged poultry",
+    "count": 571,
+    "lift": 1.281
+   },
+   {
+    "aisle": "frozen meals",
+    "count": 1353,
+    "lift": 1.268
+   },
+   {
+    "aisle": "salad dressing toppings",
+    "count": 379,
+    "lift": 1.268
+   },
+   {
+    "aisle": "canned fruit applesauce",
+    "count": 236,
+    "lift": 1.22
+   },
+   {
+    "aisle": "pasta sauce",
+    "count": 662,
+    "lift": 1.219
+   },
+   {
+    "aisle": "vitamins supplements",
+    "count": 313,
+    "lift": 1.206
+   }
+  ],
+  "digestion": [
+   {
+    "aisle": "vitamins supplements",
+    "count": 289,
+    "lift": 6.572
+   },
+   {
+    "aisle": "paper goods",
+    "count": 270,
+    "lift": 1.322
+   },
+   {
+    "aisle": "tea",
+    "count": 240,
+    "lift": 1.268
+   },
+   {
+    "aisle": "refrigerated",
+    "count": 521,
+    "lift": 1.265
+   }
+  ],
+  "refrigerated pudding desserts": [
+   {
+    "aisle": "ice cream ice",
+    "count": 526,
+    "lift": 2.04
+   },
+   {
+    "aisle": "frozen meals",
+    "count": 257,
+    "lift": 1.903
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 350,
+    "lift": 1.251
+   },
+   {
+    "aisle": "yogurt",
+    "count": 659,
+    "lift": 1.203
+   }
+  ],
+  "condiments": [
+   {
+    "aisle": "asian foods",
+    "count": 1238,
+    "lift": 2.905
+   },
+   {
+    "aisle": "marinades meat preparation",
+    "count": 407,
+    "lift": 2.868
+   },
+   {
+    "aisle": "pickled goods olives",
+    "count": 669,
+    "lift": 2.521
+   },
+   {
+    "aisle": "salad dressing toppings",
+    "count": 524,
+    "lift": 2.25
+   },
+   {
+    "aisle": "spices seasonings",
+    "count": 1068,
+    "lift": 2.07
+   },
+   {
+    "aisle": "canned meat seafood",
+    "count": 407,
+    "lift": 2.059
+   },
+   {
+    "aisle": "buns rolls",
+    "count": 658,
+    "lift": 2.02
+   },
+   {
+    "aisle": "latino foods",
+    "count": 241,
+    "lift": 1.959
+   },
+   {
+    "aisle": "oils vinegars",
+    "count": 1324,
+    "lift": 1.495
+   },
+   {
+    "aisle": "frozen vegan vegetarian",
+    "count": 308,
+    "lift": 1.389
+   },
+   {
+    "aisle": "honeys syrups nectars",
+    "count": 317,
+    "lift": 1.383
+   },
+   {
+    "aisle": "tofu meat alternatives",
+    "count": 378,
+    "lift": 1.329
+   },
+   {
+    "aisle": "hot dogs bacon sausage",
+    "count": 1064,
+    "lift": 1.306
+   },
+   {
+    "aisle": "frozen appetizers sides",
+    "count": 539,
+    "lift": 1.272
+   },
+   {
+    "aisle": "spreads",
+    "count": 1022,
+    "lift": 1.213
+   }
+  ],
+  "facial care": [
+   {
+    "aisle": "body lotions soap",
+    "count": 275,
+    "lift": 15.952
+   },
+   {
+    "aisle": "paper goods",
+    "count": 339,
+    "lift": 3.557
+   }
+  ],
+  "dish detergents": [
+   {
+    "aisle": "cleaning products",
+    "count": 1752,
+    "lift": 7.069
+   },
+   {
+    "aisle": "laundry",
+    "count": 1558,
+    "lift": 6.82
+   },
+   {
+    "aisle": "body lotions soap",
+    "count": 551,
+    "lift": 5.791
+   },
+   {
+    "aisle": "soap",
+    "count": 630,
+    "lift": 5.578
+   },
+   {
+    "aisle": "trash bags liners",
+    "count": 394,
+    "lift": 4.773
+   },
+   {
+    "aisle": "paper goods",
+    "count": 2233,
+    "lift": 4.245
+   },
+   {
+    "aisle": "oral hygiene",
+    "count": 416,
+    "lift": 3.362
+   },
+   {
+    "aisle": "food storage",
+    "count": 358,
+    "lift": 2.822
+   },
+   {
+    "aisle": "cat food care",
+    "count": 211,
+    "lift": 2.122
+   },
+   {
+    "aisle": "baby food formula",
+    "count": 365,
+    "lift": 1.364
+   }
+  ],
+  "laundry": [
+   {
+    "aisle": "cleaning products",
+    "count": 2705,
+    "lift": 8.715
+   },
+   {
+    "aisle": "dish detergents",
+    "count": 1558,
+    "lift": 6.82
+   },
+   {
+    "aisle": "trash bags liners",
+    "count": 627,
+    "lift": 6.066
+   },
+   {
+    "aisle": "air fresheners candles",
+    "count": 273,
+    "lift": 5.0
+   },
+   {
+    "aisle": "body lotions soap",
+    "count": 559,
+    "lift": 4.691
+   },
+   {
+    "aisle": "paper goods",
+    "count": 2753,
+    "lift": 4.18
+   },
+   {
+    "aisle": "oral hygiene",
+    "count": 603,
+    "lift": 3.892
+   },
+   {
+    "aisle": "diapers wipes",
+    "count": 254,
+    "lift": 3.368
+   },
+   {
+    "aisle": "feminine care",
+    "count": 202,
+    "lift": 3.222
+   },
+   {
+    "aisle": "hair care",
+    "count": 236,
+    "lift": 3.2
+   },
+   {
+    "aisle": "more household",
+    "count": 202,
+    "lift": 3.172
+   },
+   {
+    "aisle": "cat food care",
+    "count": 366,
+    "lift": 2.94
+   },
+   {
+    "aisle": "food storage",
+    "count": 440,
+    "lift": 2.77
+   },
+   {
+    "aisle": "soap",
+    "count": 313,
+    "lift": 2.213
+   },
+   {
+    "aisle": "plates bowls cups flatware",
+    "count": 232,
+    "lift": 1.662
+   },
+   {
+    "aisle": "oils vinegars",
+    "count": 851,
+    "lift": 1.369
+   }
+  ],
+  "indian foods": [],
+  "soft drinks": [
+   {
+    "aisle": "spirits",
+    "count": 1651,
+    "lift": 2.736
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 3228,
+    "lift": 2.655
+   },
+   {
+    "aisle": "mint gum",
+    "count": 911,
+    "lift": 2.522
+   },
+   {
+    "aisle": "trail mix snack mix",
+    "count": 1477,
+    "lift": 2.37
+   },
+   {
+    "aisle": "beers coolers",
+    "count": 1555,
+    "lift": 1.975
+   },
+   {
+    "aisle": "plates bowls cups flatware",
+    "count": 1160,
+    "lift": 1.966
+   },
+   {
+    "aisle": "breakfast bars pastries",
+    "count": 1139,
+    "lift": 1.807
+   },
+   {
+    "aisle": "water seltzer sparkling water",
+    "count": 18327,
+    "lift": 1.688
+   },
+   {
+    "aisle": "popcorn jerky",
+    "count": 3124,
+    "lift": 1.687
+   },
+   {
+    "aisle": "cat food care",
+    "count": 852,
+    "lift": 1.619
+   },
+   {
+    "aisle": "candy chocolate",
+    "count": 4985,
+    "lift": 1.537
+   },
+   {
+    "aisle": "cookies cakes",
+    "count": 3386,
+    "lift": 1.517
+   },
+   {
+    "aisle": "cocoa drink mixes",
+    "count": 334,
+    "lift": 1.481
+   },
+   {
+    "aisle": "muscles joints pain relief",
+    "count": 461,
+    "lift": 1.457
+   },
+   {
+    "aisle": "paper goods",
+    "count": 3796,
+    "lift": 1.364
+   },
+   {
+    "aisle": "juice nectars",
+    "count": 4867,
+    "lift": 1.351
+   },
+   {
+    "aisle": "tea",
+    "count": 3422,
+    "lift": 1.326
+   },
+   {
+    "aisle": "more household",
+    "count": 355,
+    "lift": 1.319
+   },
+   {
+    "aisle": "food storage",
+    "count": 851,
+    "lift": 1.268
+   },
+   {
+    "aisle": "refrigerated pudding desserts",
+    "count": 350,
+    "lift": 1.251
+   },
+   {
+    "aisle": "body lotions soap",
+    "count": 627,
+    "lift": 1.245
+   },
+   {
+    "aisle": "trash bags liners",
+    "count": 531,
+    "lift": 1.216
+   },
+   {
+    "aisle": "cold flu allergy",
+    "count": 475,
+    "lift": 1.215
+   },
+   {
+    "aisle": "ice cream ice",
+    "count": 5672,
+    "lift": 1.204
+   }
+  ],
+  "crackers": [
+   {
+    "aisle": "specialty cheeses",
+    "count": 1314,
+    "lift": 2.686
+   },
+   {
+    "aisle": "trail mix snack mix",
+    "count": 1128,
+    "lift": 2.646
+   },
+   {
+    "aisle": "cookies cakes",
+    "count": 3067,
+    "lift": 2.009
+   },
+   {
+    "aisle": "breakfast bars pastries",
+    "count": 862,
+    "lift": 2.0
+   },
+   {
+    "aisle": "fruit vegetable snacks",
+    "count": 1858,
+    "lift": 1.914
+   },
+   {
+    "aisle": "popcorn jerky",
+    "count": 2192,
+    "lift": 1.73
+   },
+   {
+    "aisle": "chips pretzels",
+    "count": 6105,
+    "lift": 1.548
+   },
+   {
+    "aisle": "fresh dips tapenades",
+    "count": 3067,
+    "lift": 1.541
+   },
+   {
+    "aisle": "energy granola bars",
+    "count": 3082,
+    "lift": 1.46
+   },
+   {
+    "aisle": "candy chocolate",
+    "count": 3098,
+    "lift": 1.396
+   },
+   {
+    "aisle": "canned fruit applesauce",
+    "count": 405,
+    "lift": 1.324
+   },
+   {
+    "aisle": "cereal",
+    "count": 2608,
+    "lift": 1.295
+   },
+   {
+    "aisle": "bulk dried fruits vegetables",
+    "count": 234,
+    "lift": 1.294
+   },
+   {
+    "aisle": "mint gum",
+    "count": 313,
+    "lift": 1.267
+   },
+   {
+    "aisle": "nuts seeds dried fruit",
+    "count": 2743,
+    "lift": 1.262
+   },
+   {
+    "aisle": "lunch meat",
+    "count": 2302,
+    "lift": 1.216
+   },
+   {
+    "aisle": "packaged cheese",
+    "count": 5642,
+    "lift": 1.205
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 999,
+    "lift": 1.201
+   }
+  ],
+  "frozen pizza": [
+   {
+    "aisle": "frozen meals",
+    "count": 1940,
+    "lift": 3.627
+   },
+   {
+    "aisle": "frozen appetizers sides",
+    "count": 902,
+    "lift": 3.308
+   },
+   {
+    "aisle": "frozen vegan vegetarian",
+    "count": 338,
+    "lift": 2.369
+   },
+   {
+    "aisle": "instant foods",
+    "count": 512,
+    "lift": 2.299
+   },
+   {
+    "aisle": "frozen breakfast",
+    "count": 686,
+    "lift": 2.272
+   },
+   {
+    "aisle": "cat food care",
+    "count": 239,
+    "lift": 2.094
+   },
+   {
+    "aisle": "doughs gelatins bake mixes",
+    "count": 273,
+    "lift": 1.868
+   },
+   {
+    "aisle": "ice cream ice",
+    "count": 1785,
+    "lift": 1.748
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 432,
+    "lift": 1.638
+   },
+   {
+    "aisle": "prepared meals",
+    "count": 324,
+    "lift": 1.463
+   },
+   {
+    "aisle": "frozen meat seafood",
+    "count": 242,
+    "lift": 1.433
+   },
+   {
+    "aisle": "pasta sauce",
+    "count": 367,
+    "lift": 1.348
+   },
+   {
+    "aisle": "breakfast bakery",
+    "count": 558,
+    "lift": 1.298
+   },
+   {
+    "aisle": "chips pretzels",
+    "count": 1570,
+    "lift": 1.256
+   },
+   {
+    "aisle": "cookies cakes",
+    "count": 600,
+    "lift": 1.239
+   },
+   {
+    "aisle": "preserved dips spreads",
+    "count": 208,
+    "lift": 1.205
+   }
+  ],
+  "deodorants": [
+   {
+    "aisle": "oral hygiene",
+    "count": 307,
+    "lift": 14.896
+   },
+   {
+    "aisle": "body lotions soap",
+    "count": 217,
+    "lift": 13.691
+   },
+   {
+    "aisle": "paper goods",
+    "count": 274,
+    "lift": 3.127
+   }
+  ],
+  "canned jarred vegetables": [
+   {
+    "aisle": "canned meals beans",
+    "count": 1939,
+    "lift": 4.467
+   },
+   {
+    "aisle": "latino foods",
+    "count": 363,
+    "lift": 3.032
+   },
+   {
+    "aisle": "dry pasta",
+    "count": 1315,
+    "lift": 2.896
+   },
+   {
+    "aisle": "spices seasonings",
+    "count": 1266,
+    "lift": 2.521
+   },
+   {
+    "aisle": "soup broth bouillon",
+    "count": 1788,
+    "lift": 2.464
+   },
+   {
+    "aisle": "fresh herbs",
+    "count": 2182,
+    "lift": 2.311
+   },
+   {
+    "aisle": "meat counter",
+    "count": 489,
+    "lift": 2.21
+   },
+   {
+    "aisle": "marinades meat preparation",
+    "count": 282,
+    "lift": 2.042
+   },
+   {
+    "aisle": "pasta sauce",
+    "count": 798,
+    "lift": 1.937
+   },
+   {
+    "aisle": "grains rice dried goods",
+    "count": 600,
+    "lift": 1.826
+   },
+   {
+    "aisle": "pickled goods olives",
+    "count": 466,
+    "lift": 1.804
+   },
+   {
+    "aisle": "fresh vegetables",
+    "count": 11785,
+    "lift": 1.781
+   },
+   {
+    "aisle": "poultry counter",
+    "count": 664,
+    "lift": 1.745
+   },
+   {
+    "aisle": "packaged meat",
+    "count": 206,
+    "lift": 1.68
+   },
+   {
+    "aisle": "canned meat seafood",
+    "count": 309,
+    "lift": 1.606
+   },
+   {
+    "aisle": "packaged poultry",
+    "count": 503,
+    "lift": 1.488
+   },
+   {
+    "aisle": "oils vinegars",
+    "count": 1144,
+    "lift": 1.327
+   },
+   {
+    "aisle": "asian foods",
+    "count": 499,
+    "lift": 1.203
+   }
+  ],
+  "baby accessories": [],
+  "fresh vegetables": [
+   {
+    "aisle": "fresh herbs",
+    "count": 28055,
+    "lift": 2.471
+   },
+   {
+    "aisle": "meat counter",
+    "count": 5113,
+    "lift": 1.921
+   },
+   {
+    "aisle": "seafood counter",
+    "count": 2396,
+    "lift": 1.902
+   },
+   {
+    "aisle": "canned jarred vegetables",
+    "count": 11785,
+    "lift": 1.781
+   },
+   {
+    "aisle": "poultry counter",
+    "count": 8149,
+    "lift": 1.781
+   },
+   {
+    "aisle": "tofu meat alternatives",
+    "count": 5500,
+    "lift": 1.651
+   },
+   {
+    "aisle": "grains rice dried goods",
+    "count": 6259,
+    "lift": 1.583
+   },
+   {
+    "aisle": "packaged poultry",
+    "count": 6357,
+    "lift": 1.564
+   },
+   {
+    "aisle": "bulk grains rice dried goods",
+    "count": 836,
+    "lift": 1.501
+   },
+   {
+    "aisle": "packaged vegetables fruits",
+    "count": 90190,
+    "lift": 1.468
+   },
+   {
+    "aisle": "canned meals beans",
+    "count": 7664,
+    "lift": 1.468
+   },
+   {
+    "aisle": "spices seasonings",
+    "count": 8561,
+    "lift": 1.417
+   },
+   {
+    "aisle": "latino foods",
+    "count": 1996,
+    "lift": 1.386
+   },
+   {
+    "aisle": "soup broth bouillon",
+    "count": 11834,
+    "lift": 1.356
+   },
+   {
+    "aisle": "packaged meat",
+    "count": 1936,
+    "lift": 1.313
+   },
+   {
+    "aisle": "marinades meat preparation",
+    "count": 2174,
+    "lift": 1.309
+   },
+   {
+    "aisle": "dry pasta",
+    "count": 7050,
+    "lift": 1.291
+   },
+   {
+    "aisle": "asian foods",
+    "count": 6380,
+    "lift": 1.279
+   },
+   {
+    "aisle": "pickled goods olives",
+    "count": 3971,
+    "lift": 1.278
+   },
+   {
+    "aisle": "fresh fruits",
+    "count": 148543,
+    "lift": 1.243
+   },
+   {
+    "aisle": "eggs",
+    "count": 21700,
+    "lift": 1.231
+   },
+   {
+    "aisle": "pasta sauce",
+    "count": 6059,
+    "lift": 1.223
+   }
+  ],
+  "milk": [
+   {
+    "aisle": "cream",
+    "count": 16216,
+    "lift": 1.789
+   },
+   {
+    "aisle": "cereal",
+    "count": 8701,
+    "lift": 1.344
+   },
+   {
+    "aisle": "yogurt",
+    "count": 28831,
+    "lift": 1.31
+   },
+   {
+    "aisle": "baby food formula",
+    "count": 4067,
+    "lift": 1.305
+   }
+  ],
+  "food storage": [
+   {
+    "aisle": "trash bags liners",
+    "count": 323,
+    "lift": 5.628
+   },
+   {
+    "aisle": "cleaning products",
+    "count": 667,
+    "lift": 3.87
+   },
+   {
+    "aisle": "paper goods",
+    "count": 1168,
+    "lift": 3.194
+   },
+   {
+    "aisle": "plates bowls cups flatware",
+    "count": 224,
+    "lift": 2.89
+   },
+   {
+    "aisle": "dish detergents",
+    "count": 358,
+    "lift": 2.822
+   },
+   {
+    "aisle": "laundry",
+    "count": 440,
+    "lift": 2.77
+   },
+   {
+    "aisle": "baking ingredients",
+    "count": 510,
+    "lift": 1.354
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 851,
+    "lift": 1.268
+   },
+   {
+    "aisle": "candy chocolate",
+    "count": 527,
+    "lift": 1.237
+   },
+   {
+    "aisle": "spices seasonings",
+    "count": 245,
+    "lift": 1.218
+   }
+  ],
+  "eggs": [
+   {
+    "aisle": "hot dogs bacon sausage",
+    "count": 3045,
+    "lift": 1.442
+   },
+   {
+    "aisle": "butter",
+    "count": 2819,
+    "lift": 1.322
+   },
+   {
+    "aisle": "poultry counter",
+    "count": 1290,
+    "lift": 1.273
+   },
+   {
+    "aisle": "packaged seafood",
+    "count": 205,
+    "lift": 1.256
+   },
+   {
+    "aisle": "bread",
+    "count": 5592,
+    "lift": 1.248
+   },
+   {
+    "aisle": "fresh vegetables",
+    "count": 21700,
+    "lift": 1.231
+   }
+  ],
+  "more household": [
+   {
+    "aisle": "cleaning products",
+    "count": 302,
+    "lift": 4.371
+   },
+   {
+    "aisle": "laundry",
+    "count": 202,
+    "lift": 3.172
+   },
+   {
+    "aisle": "paper goods",
+    "count": 455,
+    "lift": 3.103
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 355,
+    "lift": 1.319
+   }
+  ],
+  "spreads": [
+   {
+    "aisle": "honeys syrups nectars",
+    "count": 509,
+    "lift": 1.531
+   },
+   {
+    "aisle": "hot cereal pancake mixes",
+    "count": 910,
+    "lift": 1.477
+   },
+   {
+    "aisle": "bread",
+    "count": 3692,
+    "lift": 1.472
+   },
+   {
+    "aisle": "breakfast bakery",
+    "count": 1285,
+    "lift": 1.326
+   },
+   {
+    "aisle": "granola",
+    "count": 490,
+    "lift": 1.258
+   },
+   {
+    "aisle": "baking ingredients",
+    "count": 1723,
+    "lift": 1.229
+   },
+   {
+    "aisle": "condiments",
+    "count": 1022,
+    "lift": 1.213
+   }
+  ],
+  "salad dressing toppings": [
+   {
+    "aisle": "condiments",
+    "count": 524,
+    "lift": 2.25
+   },
+   {
+    "aisle": "frozen appetizers sides",
+    "count": 246,
+    "lift": 1.447
+   },
+   {
+    "aisle": "packaged vegetables fruits",
+    "count": 2944,
+    "lift": 1.399
+   },
+   {
+    "aisle": "other creams cheeses",
+    "count": 407,
+    "lift": 1.329
+   },
+   {
+    "aisle": "packaged cheese",
+    "count": 1219,
+    "lift": 1.317
+   },
+   {
+    "aisle": "asian foods",
+    "count": 224,
+    "lift": 1.31
+   },
+   {
+    "aisle": "soup broth bouillon",
+    "count": 379,
+    "lift": 1.268
+   },
+   {
+    "aisle": "pasta sauce",
+    "count": 215,
+    "lift": 1.267
+   }
+  ],
+  "cocoa drink mixes": [
+   {
+    "aisle": "baking ingredients",
+    "count": 335,
+    "lift": 2.648
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 334,
+    "lift": 1.481
+   },
+   {
+    "aisle": "cream",
+    "count": 249,
+    "lift": 1.369
+   }
+  ],
+  "soy lactosefree": [
+   {
+    "aisle": "granola",
+    "count": 1729,
+    "lift": 1.57
+   },
+   {
+    "aisle": "bulk grains rice dried goods",
+    "count": 289,
+    "lift": 1.482
+   },
+   {
+    "aisle": "protein meal replacements",
+    "count": 832,
+    "lift": 1.472
+   },
+   {
+    "aisle": "cream",
+    "count": 8211,
+    "lift": 1.442
+   },
+   {
+    "aisle": "tofu meat alternatives",
+    "count": 1623,
+    "lift": 1.391
+   },
+   {
+    "aisle": "hot cereal pancake mixes",
+    "count": 2351,
+    "lift": 1.35
+   },
+   {
+    "aisle": "cereal",
+    "count": 5410,
+    "lift": 1.33
+   },
+   {
+    "aisle": "frozen vegan vegetarian",
+    "count": 1115,
+    "lift": 1.226
+   },
+   {
+    "aisle": "honeys syrups nectars",
+    "count": 1137,
+    "lift": 1.209
+   },
+   {
+    "aisle": "frozen breads doughs",
+    "count": 528,
+    "lift": 1.201
+   }
+  ],
+  "baby food formula": [
+   {
+    "aisle": "diapers wipes",
+    "count": 615,
+    "lift": 6.96
+   },
+   {
+    "aisle": "canned fruit applesauce",
+    "count": 385,
+    "lift": 3.106
+   },
+   {
+    "aisle": "frozen breakfast",
+    "count": 700,
+    "lift": 1.814
+   },
+   {
+    "aisle": "frozen appetizers sides",
+    "count": 555,
+    "lift": 1.593
+   },
+   {
+    "aisle": "instant foods",
+    "count": 417,
+    "lift": 1.465
+   },
+   {
+    "aisle": "fruit vegetable snacks",
+    "count": 552,
+    "lift": 1.403
+   },
+   {
+    "aisle": "yogurt",
+    "count": 3810,
+    "lift": 1.374
+   },
+   {
+    "aisle": "dish detergents",
+    "count": 365,
+    "lift": 1.364
+   },
+   {
+    "aisle": "oral hygiene",
+    "count": 244,
+    "lift": 1.344
+   },
+   {
+    "aisle": "milk",
+    "count": 4067,
+    "lift": 1.305
+   }
+  ],
+  "breakfast bakery": [
+   {
+    "aisle": "other creams cheeses",
+    "count": 2725,
+    "lift": 3.102
+   },
+   {
+    "aisle": "bakery desserts",
+    "count": 304,
+    "lift": 1.495
+   },
+   {
+    "aisle": "bread",
+    "count": 2928,
+    "lift": 1.472
+   },
+   {
+    "aisle": "frozen breakfast",
+    "count": 790,
+    "lift": 1.463
+   },
+   {
+    "aisle": "breakfast bars pastries",
+    "count": 349,
+    "lift": 1.428
+   },
+   {
+    "aisle": "spreads",
+    "count": 1285,
+    "lift": 1.326
+   },
+   {
+    "aisle": "buns rolls",
+    "count": 488,
+    "lift": 1.302
+   },
+   {
+    "aisle": "frozen pizza",
+    "count": 558,
+    "lift": 1.298
+   },
+   {
+    "aisle": "cereal",
+    "count": 1384,
+    "lift": 1.212
+   }
+  ],
+  "tea": [
+   {
+    "aisle": "cold flu allergy",
+    "count": 476,
+    "lift": 2.412
+   },
+   {
+    "aisle": "honeys syrups nectars",
+    "count": 666,
+    "lift": 1.94
+   },
+   {
+    "aisle": "vitamins supplements",
+    "count": 571,
+    "lift": 1.886
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 1028,
+    "lift": 1.675
+   },
+   {
+    "aisle": "coffee",
+    "count": 2113,
+    "lift": 1.64
+   },
+   {
+    "aisle": "mint gum",
+    "count": 256,
+    "lift": 1.404
+   },
+   {
+    "aisle": "refrigerated",
+    "count": 3934,
+    "lift": 1.388
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 3422,
+    "lift": 1.326
+   },
+   {
+    "aisle": "granola",
+    "count": 527,
+    "lift": 1.31
+   },
+   {
+    "aisle": "water seltzer sparkling water",
+    "count": 7162,
+    "lift": 1.307
+   },
+   {
+    "aisle": "cream",
+    "count": 2666,
+    "lift": 1.282
+   },
+   {
+    "aisle": "plates bowls cups flatware",
+    "count": 381,
+    "lift": 1.279
+   },
+   {
+    "aisle": "digestion",
+    "count": 240,
+    "lift": 1.268
+   },
+   {
+    "aisle": "energy granola bars",
+    "count": 1952,
+    "lift": 1.253
+   },
+   {
+    "aisle": "candy chocolate",
+    "count": 2017,
+    "lift": 1.232
+   }
+  ],
+  "canned meat seafood": [
+   {
+    "aisle": "condiments",
+    "count": 407,
+    "lift": 2.059
+   },
+   {
+    "aisle": "canned meals beans",
+    "count": 270,
+    "lift": 1.778
+   },
+   {
+    "aisle": "canned jarred vegetables",
+    "count": 309,
+    "lift": 1.606
+   },
+   {
+    "aisle": "oils vinegars",
+    "count": 426,
+    "lift": 1.412
+   },
+   {
+    "aisle": "soup broth bouillon",
+    "count": 356,
+    "lift": 1.403
+   },
+   {
+    "aisle": "packaged produce",
+    "count": 886,
+    "lift": 1.266
+   }
+  ],
+  "lunch meat": [
+   {
+    "aisle": "specialty cheeses",
+    "count": 957,
+    "lift": 2.471
+   },
+   {
+    "aisle": "packaged cheese",
+    "count": 6632,
+    "lift": 1.79
+   },
+   {
+    "aisle": "bread",
+    "count": 4910,
+    "lift": 1.768
+   },
+   {
+    "aisle": "pickled goods olives",
+    "count": 637,
+    "lift": 1.495
+   },
+   {
+    "aisle": "frozen breads doughs",
+    "count": 256,
+    "lift": 1.486
+   },
+   {
+    "aisle": "hot dogs bacon sausage",
+    "count": 1911,
+    "lift": 1.461
+   },
+   {
+    "aisle": "tortillas flat bread",
+    "count": 868,
+    "lift": 1.367
+   },
+   {
+    "aisle": "prepared meals",
+    "count": 738,
+    "lift": 1.335
+   },
+   {
+    "aisle": "buns rolls",
+    "count": 696,
+    "lift": 1.331
+   },
+   {
+    "aisle": "crackers",
+    "count": 2302,
+    "lift": 1.216
+   },
+   {
+    "aisle": "prepared soups salads",
+    "count": 510,
+    "lift": 1.208
+   }
+  ],
+  "baking supplies decor": [
+   {
+    "aisle": "doughs gelatins bake mixes",
+    "count": 448,
+    "lift": 13.75
+   },
+   {
+    "aisle": "baking ingredients",
+    "count": 630,
+    "lift": 4.546
+   },
+   {
+    "aisle": "oils vinegars",
+    "count": 238,
+    "lift": 1.873
+   },
+   {
+    "aisle": "butter",
+    "count": 203,
+    "lift": 1.721
+   },
+   {
+    "aisle": "candy chocolate",
+    "count": 225,
+    "lift": 1.435
+   },
+   {
+    "aisle": "ice cream ice",
+    "count": 278,
+    "lift": 1.221
+   }
+  ],
+  "juice nectars": [
+   {
+    "aisle": "spirits",
+    "count": 783,
+    "lift": 1.84
+   },
+   {
+    "aisle": "refrigerated",
+    "count": 7071,
+    "lift": 1.786
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 1321,
+    "lift": 1.541
+   },
+   {
+    "aisle": "specialty wines champagnes",
+    "count": 263,
+    "lift": 1.434
+   },
+   {
+    "aisle": "canned fruit applesauce",
+    "count": 429,
+    "lift": 1.361
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 4867,
+    "lift": 1.351
+   }
+  ],
+  "canned fruit applesauce": [
+   {
+    "aisle": "baby food formula",
+    "count": 385,
+    "lift": 3.106
+   },
+   {
+    "aisle": "fruit vegetable snacks",
+    "count": 263,
+    "lift": 2.118
+   },
+   {
+    "aisle": "juice nectars",
+    "count": 429,
+    "lift": 1.361
+   },
+   {
+    "aisle": "crackers",
+    "count": 405,
+    "lift": 1.324
+   },
+   {
+    "aisle": "cereal",
+    "count": 319,
+    "lift": 1.238
+   },
+   {
+    "aisle": "soup broth bouillon",
+    "count": 236,
+    "lift": 1.22
+   }
+  ],
+  "air fresheners candles": [
+   {
+    "aisle": "cleaning products",
+    "count": 507,
+    "lift": 8.559
+   },
+   {
+    "aisle": "laundry",
+    "count": 273,
+    "lift": 5.0
+   },
+   {
+    "aisle": "paper goods",
+    "count": 515,
+    "lift": 4.096
+   }
+  ],
+  "baby bath body care": [],
+  "ice cream toppings": [
+   {
+    "aisle": "ice cream ice",
+    "count": 732,
+    "lift": 7.117
+   },
+   {
+    "aisle": "cream",
+    "count": 220,
+    "lift": 2.445
+   }
+  ],
+  "spices seasonings": [
+   {
+    "aisle": "oils vinegars",
+    "count": 2027,
+    "lift": 2.575
+   },
+   {
+    "aisle": "baking ingredients",
+    "count": 2196,
+    "lift": 2.557
+   },
+   {
+    "aisle": "canned jarred vegetables",
+    "count": 1266,
+    "lift": 2.521
+   },
+   {
+    "aisle": "fresh herbs",
+    "count": 2091,
+    "lift": 2.426
+   },
+   {
+    "aisle": "marinades meat preparation",
+    "count": 290,
+    "lift": 2.3
+   },
+   {
+    "aisle": "latino foods",
+    "count": 243,
+    "lift": 2.223
+   },
+   {
+    "aisle": "condiments",
+    "count": 1068,
+    "lift": 2.07
+   },
+   {
+    "aisle": "grains rice dried goods",
+    "count": 596,
+    "lift": 1.987
+   },
+   {
+    "aisle": "asian foods",
+    "count": 736,
+    "lift": 1.944
+   },
+   {
+    "aisle": "honeys syrups nectars",
+    "count": 391,
+    "lift": 1.919
+   },
+   {
+    "aisle": "soup broth bouillon",
+    "count": 1090,
+    "lift": 1.646
+   },
+   {
+    "aisle": "canned meals beans",
+    "count": 596,
+    "lift": 1.504
+   },
+   {
+    "aisle": "fresh vegetables",
+    "count": 8561,
+    "lift": 1.417
+   },
+   {
+    "aisle": "butter",
+    "count": 1015,
+    "lift": 1.389
+   },
+   {
+    "aisle": "dry pasta",
+    "count": 565,
+    "lift": 1.363
+   },
+   {
+    "aisle": "meat counter",
+    "count": 275,
+    "lift": 1.361
+   },
+   {
+    "aisle": "poultry counter",
+    "count": 447,
+    "lift": 1.287
+   },
+   {
+    "aisle": "pickled goods olives",
+    "count": 303,
+    "lift": 1.285
+   },
+   {
+    "aisle": "doughs gelatins bake mixes",
+    "count": 251,
+    "lift": 1.243
+   },
+   {
+    "aisle": "packaged poultry",
+    "count": 376,
+    "lift": 1.219
+   },
+   {
+    "aisle": "food storage",
+    "count": 245,
+    "lift": 1.218
+   }
+  ],
+  "doughs gelatins bake mixes": [
+   {
+    "aisle": "baking supplies decor",
+    "count": 448,
+    "lift": 13.75
+   },
+   {
+    "aisle": "baking ingredients",
+    "count": 925,
+    "lift": 2.446
+   },
+   {
+    "aisle": "instant foods",
+    "count": 262,
+    "lift": 1.935
+   },
+   {
+    "aisle": "frozen pizza",
+    "count": 273,
+    "lift": 1.868
+   },
+   {
+    "aisle": "frozen appetizers sides",
+    "count": 291,
+    "lift": 1.755
+   },
+   {
+    "aisle": "hot dogs bacon sausage",
+    "count": 548,
+    "lift": 1.719
+   },
+   {
+    "aisle": "frozen breakfast",
+    "count": 307,
+    "lift": 1.672
+   },
+   {
+    "aisle": "ice cream ice",
+    "count": 955,
+    "lift": 1.538
+   },
+   {
+    "aisle": "pasta sauce",
+    "count": 253,
+    "lift": 1.528
+   },
+   {
+    "aisle": "cookies cakes",
+    "count": 402,
+    "lift": 1.366
+   },
+   {
+    "aisle": "other creams cheeses",
+    "count": 401,
+    "lift": 1.342
+   },
+   {
+    "aisle": "butter",
+    "count": 416,
+    "lift": 1.293
+   },
+   {
+    "aisle": "spices seasonings",
+    "count": 251,
+    "lift": 1.243
+   },
+   {
+    "aisle": "dry pasta",
+    "count": 226,
+    "lift": 1.238
+   }
+  ],
+  "hot dogs bacon sausage": [
+   {
+    "aisle": "buns rolls",
+    "count": 1788,
+    "lift": 3.914
+   },
+   {
+    "aisle": "frozen meat seafood",
+    "count": 658,
+    "lift": 1.787
+   },
+   {
+    "aisle": "frozen breakfast",
+    "count": 1161,
+    "lift": 1.764
+   },
+   {
+    "aisle": "doughs gelatins bake mixes",
+    "count": 548,
+    "lift": 1.719
+   },
+   {
+    "aisle": "frozen appetizers sides",
+    "count": 956,
+    "lift": 1.608
+   },
+   {
+    "aisle": "lunch meat",
+    "count": 1911,
+    "lift": 1.461
+   },
+   {
+    "aisle": "eggs",
+    "count": 3045,
+    "lift": 1.442
+   },
+   {
+    "aisle": "packaged meat",
+    "count": 246,
+    "lift": 1.392
+   },
+   {
+    "aisle": "meat counter",
+    "count": 431,
+    "lift": 1.351
+   },
+   {
+    "aisle": "packaged poultry",
+    "count": 640,
+    "lift": 1.314
+   },
+   {
+    "aisle": "condiments",
+    "count": 1064,
+    "lift": 1.306
+   },
+   {
+    "aisle": "marinades meat preparation",
+    "count": 242,
+    "lift": 1.216
+   }
+  ],
+  "chips pretzels": [
+   {
+    "aisle": "preserved dips spreads",
+    "count": 3396,
+    "lift": 3.783
+   },
+   {
+    "aisle": "fresh dips tapenades",
+    "count": 9428,
+    "lift": 2.872
+   },
+   {
+    "aisle": "trail mix snack mix",
+    "count": 1400,
+    "lift": 1.991
+   },
+   {
+    "aisle": "cookies cakes",
+    "count": 4629,
+    "lift": 1.838
+   },
+   {
+    "aisle": "popcorn jerky",
+    "count": 3761,
+    "lift": 1.8
+   },
+   {
+    "aisle": "fruit vegetable snacks",
+    "count": 2619,
+    "lift": 1.636
+   },
+   {
+    "aisle": "candy chocolate",
+    "count": 5805,
+    "lift": 1.587
+   },
+   {
+    "aisle": "crackers",
+    "count": 6105,
+    "lift": 1.548
+   },
+   {
+    "aisle": "energy granola bars",
+    "count": 4548,
+    "lift": 1.307
+   },
+   {
+    "aisle": "breakfast bars pastries",
+    "count": 925,
+    "lift": 1.301
+   },
+   {
+    "aisle": "bakery desserts",
+    "count": 764,
+    "lift": 1.291
+   },
+   {
+    "aisle": "frozen pizza",
+    "count": 1570,
+    "lift": 1.256
+   },
+   {
+    "aisle": "beers coolers",
+    "count": 1095,
+    "lift": 1.233
+   },
+   {
+    "aisle": "bulk dried fruits vegetables",
+    "count": 359,
+    "lift": 1.204
+   }
+  ],
+  "other creams cheeses": [
+   {
+    "aisle": "breakfast bakery",
+    "count": 2725,
+    "lift": 3.102
+   },
+   {
+    "aisle": "packaged seafood",
+    "count": 249,
+    "lift": 3.007
+   },
+   {
+    "aisle": "latino foods",
+    "count": 422,
+    "lift": 2.609
+   },
+   {
+    "aisle": "tortillas flat bread",
+    "count": 841,
+    "lift": 1.618
+   },
+   {
+    "aisle": "preserved dips spreads",
+    "count": 542,
+    "lift": 1.537
+   },
+   {
+    "aisle": "butter",
+    "count": 1600,
+    "lift": 1.479
+   },
+   {
+    "aisle": "packaged cheese",
+    "count": 4444,
+    "lift": 1.465
+   },
+   {
+    "aisle": "doughs gelatins bake mixes",
+    "count": 401,
+    "lift": 1.342
+   },
+   {
+    "aisle": "salad dressing toppings",
+    "count": 407,
+    "lift": 1.329
+   },
+   {
+    "aisle": "baking ingredients",
+    "count": 1631,
+    "lift": 1.283
+   },
+   {
+    "aisle": "marinades meat preparation",
+    "count": 230,
+    "lift": 1.233
+   },
+   {
+    "aisle": "specialty cheeses",
+    "count": 388,
+    "lift": 1.224
+   }
+  ],
+  "skin care": [
+   {
+    "aisle": "soap",
+    "count": 206,
+    "lift": 16.635
+   }
+  ],
+  "pickled goods olives": [
+   {
+    "aisle": "condiments",
+    "count": 669,
+    "lift": 2.521
+   },
+   {
+    "aisle": "canned jarred vegetables",
+    "count": 466,
+    "lift": 1.804
+   },
+   {
+    "aisle": "buns rolls",
+    "count": 266,
+    "lift": 1.787
+   },
+   {
+    "aisle": "canned meals beans",
+    "count": 341,
+    "lift": 1.673
+   },
+   {
+    "aisle": "asian foods",
+    "count": 302,
+    "lift": 1.551
+   },
+   {
+    "aisle": "lunch meat",
+    "count": 637,
+    "lift": 1.495
+   },
+   {
+    "aisle": "fresh herbs",
+    "count": 623,
+    "lift": 1.406
+   },
+   {
+    "aisle": "tortillas flat bread",
+    "count": 239,
+    "lift": 1.323
+   },
+   {
+    "aisle": "pasta sauce",
+    "count": 251,
+    "lift": 1.298
+   },
+   {
+    "aisle": "dry pasta",
+    "count": 274,
+    "lift": 1.285
+   },
+   {
+    "aisle": "spices seasonings",
+    "count": 303,
+    "lift": 1.285
+   },
+   {
+    "aisle": "fresh vegetables",
+    "count": 3971,
+    "lift": 1.278
+   }
+  ],
+  "plates bowls cups flatware": [
+   {
+    "aisle": "paper goods",
+    "count": 1130,
+    "lift": 3.516
+   },
+   {
+    "aisle": "food storage",
+    "count": 224,
+    "lift": 2.89
+   },
+   {
+    "aisle": "beers coolers",
+    "count": 243,
+    "lift": 2.673
+   },
+   {
+    "aisle": "cleaning products",
+    "count": 380,
+    "lift": 2.509
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 1160,
+    "lift": 1.966
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 237,
+    "lift": 1.688
+   },
+   {
+    "aisle": "laundry",
+    "count": 232,
+    "lift": 1.662
+   },
+   {
+    "aisle": "tea",
+    "count": 381,
+    "lift": 1.279
+   },
+   {
+    "aisle": "water seltzer sparkling water",
+    "count": 1599,
+    "lift": 1.276
+   },
+   {
+    "aisle": "coffee",
+    "count": 375,
+    "lift": 1.273
+   }
+  ],
+  "bread": [
+   {
+    "aisle": "lunch meat",
+    "count": 4910,
+    "lift": 1.768
+   },
+   {
+    "aisle": "spreads",
+    "count": 3692,
+    "lift": 1.472
+   },
+   {
+    "aisle": "breakfast bakery",
+    "count": 2928,
+    "lift": 1.472
+   },
+   {
+    "aisle": "specialty cheeses",
+    "count": 1001,
+    "lift": 1.395
+   },
+   {
+    "aisle": "frozen breads doughs",
+    "count": 431,
+    "lift": 1.35
+   },
+   {
+    "aisle": "eggs",
+    "count": 5592,
+    "lift": 1.248
+   },
+   {
+    "aisle": "tortillas flat bread",
+    "count": 1456,
+    "lift": 1.237
+   }
+  ],
+  "frozen juice": [],
+  "cleaning products": [
+   {
+    "aisle": "laundry",
+    "count": 2705,
+    "lift": 8.715
+   },
+   {
+    "aisle": "air fresheners candles",
+    "count": 507,
+    "lift": 8.559
+   },
+   {
+    "aisle": "trash bags liners",
+    "count": 817,
+    "lift": 7.285
+   },
+   {
+    "aisle": "dish detergents",
+    "count": 1752,
+    "lift": 7.069
+   },
+   {
+    "aisle": "body lotions soap",
+    "count": 860,
+    "lift": 6.652
+   },
+   {
+    "aisle": "paper goods",
+    "count": 3691,
+    "lift": 5.165
+   },
+   {
+    "aisle": "first aid",
+    "count": 209,
+    "lift": 4.766
+   },
+   {
+    "aisle": "more household",
+    "count": 302,
+    "lift": 4.371
+   },
+   {
+    "aisle": "diapers wipes",
+    "count": 352,
+    "lift": 4.302
+   },
+   {
+    "aisle": "oral hygiene",
+    "count": 680,
+    "lift": 4.045
+   },
+   {
+    "aisle": "food storage",
+    "count": 667,
+    "lift": 3.87
+   },
+   {
+    "aisle": "feminine care",
+    "count": 240,
+    "lift": 3.528
+   },
+   {
+    "aisle": "hair care",
+    "count": 281,
+    "lift": 3.511
+   },
+   {
+    "aisle": "soap",
+    "count": 468,
+    "lift": 3.05
+   },
+   {
+    "aisle": "cat food care",
+    "count": 411,
+    "lift": 3.043
+   },
+   {
+    "aisle": "plates bowls cups flatware",
+    "count": 380,
+    "lift": 2.509
+   },
+   {
+    "aisle": "cold flu allergy",
+    "count": 232,
+    "lift": 2.312
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 382,
+    "lift": 1.224
+   }
+  ],
+  "water seltzer sparkling water": [
+   {
+    "aisle": "soft drinks",
+    "count": 18327,
+    "lift": 1.688
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 3650,
+    "lift": 1.413
+   },
+   {
+    "aisle": "paper goods",
+    "count": 7809,
+    "lift": 1.32
+   },
+   {
+    "aisle": "tea",
+    "count": 7162,
+    "lift": 1.307
+   },
+   {
+    "aisle": "mint gum",
+    "count": 983,
+    "lift": 1.281
+   },
+   {
+    "aisle": "trash bags liners",
+    "count": 1188,
+    "lift": 1.28
+   },
+   {
+    "aisle": "plates bowls cups flatware",
+    "count": 1599,
+    "lift": 1.276
+   },
+   {
+    "aisle": "coffee",
+    "count": 6598,
+    "lift": 1.217
+   }
+  ],
+  "frozen produce": [
+   {
+    "aisle": "tofu meat alternatives",
+    "count": 883,
+    "lift": 1.337
+   },
+   {
+    "aisle": "protein meal replacements",
+    "count": 425,
+    "lift": 1.328
+   },
+   {
+    "aisle": "canned meals beans",
+    "count": 1375,
+    "lift": 1.328
+   },
+   {
+    "aisle": "packaged vegetables fruits",
+    "count": 15306,
+    "lift": 1.257
+   },
+   {
+    "aisle": "grains rice dried goods",
+    "count": 979,
+    "lift": 1.249
+   },
+   {
+    "aisle": "poultry counter",
+    "count": 1122,
+    "lift": 1.236
+   },
+   {
+    "aisle": "packaged poultry",
+    "count": 980,
+    "lift": 1.216
+   },
+   {
+    "aisle": "packaged produce",
+    "count": 5781,
+    "lift": 1.211
+   }
+  ],
+  "nuts seeds dried fruit": [
+   {
+    "aisle": "trail mix snack mix",
+    "count": 1416,
+    "lift": 3.653
+   },
+   {
+    "aisle": "bulk dried fruits vegetables",
+    "count": 555,
+    "lift": 3.377
+   },
+   {
+    "aisle": "popcorn jerky",
+    "count": 2188,
+    "lift": 1.9
+   },
+   {
+    "aisle": "candy chocolate",
+    "count": 3812,
+    "lift": 1.89
+   },
+   {
+    "aisle": "fruit vegetable snacks",
+    "count": 1517,
+    "lift": 1.719
+   },
+   {
+    "aisle": "mint gum",
+    "count": 333,
+    "lift": 1.482
+   },
+   {
+    "aisle": "breakfast bars pastries",
+    "count": 549,
+    "lift": 1.401
+   },
+   {
+    "aisle": "energy granola bars",
+    "count": 2685,
+    "lift": 1.4
+   },
+   {
+    "aisle": "crackers",
+    "count": 2743,
+    "lift": 1.262
+   },
+   {
+    "aisle": "packaged produce",
+    "count": 4716,
+    "lift": 1.243
+   },
+   {
+    "aisle": "baking ingredients",
+    "count": 2147,
+    "lift": 1.204
+   }
+  ],
+  "first aid": [
+   {
+    "aisle": "cleaning products",
+    "count": 209,
+    "lift": 4.766
+   },
+   {
+    "aisle": "paper goods",
+    "count": 290,
+    "lift": 3.116
+   }
+  ],
+  "frozen dessert": [
+   {
+    "aisle": "ice cream ice",
+    "count": 411,
+    "lift": 2.56
+   }
+  ],
+  "yogurt": [
+   {
+    "aisle": "granola",
+    "count": 3634,
+    "lift": 2.33
+   },
+   {
+    "aisle": "baby food formula",
+    "count": 3810,
+    "lift": 1.374
+   },
+   {
+    "aisle": "milk",
+    "count": 28831,
+    "lift": 1.31
+   },
+   {
+    "aisle": "refrigerated pudding desserts",
+    "count": 659,
+    "lift": 1.203
+   }
+  ],
+  "cereal": [
+   {
+    "aisle": "granola",
+    "count": 965,
+    "lift": 2.103
+   },
+   {
+    "aisle": "breakfast bars pastries",
+    "count": 668,
+    "lift": 1.84
+   },
+   {
+    "aisle": "hot cereal pancake mixes",
+    "count": 1041,
+    "lift": 1.435
+   },
+   {
+    "aisle": "milk",
+    "count": 8701,
+    "lift": 1.344
+   },
+   {
+    "aisle": "soy lactosefree",
+    "count": 5410,
+    "lift": 1.33
+   },
+   {
+    "aisle": "trail mix snack mix",
+    "count": 476,
+    "lift": 1.326
+   },
+   {
+    "aisle": "crackers",
+    "count": 2608,
+    "lift": 1.295
+   },
+   {
+    "aisle": "canned fruit applesauce",
+    "count": 319,
+    "lift": 1.238
+   },
+   {
+    "aisle": "cookies cakes",
+    "count": 1587,
+    "lift": 1.235
+   },
+   {
+    "aisle": "breakfast bakery",
+    "count": 1384,
+    "lift": 1.212
+   }
+  ],
+  "meat counter": [
+   {
+    "aisle": "packaged poultry",
+    "count": 346,
+    "lift": 2.545
+   },
+   {
+    "aisle": "poultry counter",
+    "count": 352,
+    "lift": 2.3
+   },
+   {
+    "aisle": "canned jarred vegetables",
+    "count": 489,
+    "lift": 2.21
+   },
+   {
+    "aisle": "pasta sauce",
+    "count": 366,
+    "lift": 2.209
+   },
+   {
+    "aisle": "fresh vegetables",
+    "count": 5113,
+    "lift": 1.921
+   },
+   {
+    "aisle": "dry pasta",
+    "count": 323,
+    "lift": 1.769
+   },
+   {
+    "aisle": "fresh herbs",
+    "count": 644,
+    "lift": 1.696
+   },
+   {
+    "aisle": "buns rolls",
+    "count": 200,
+    "lift": 1.569
+   },
+   {
+    "aisle": "soup broth bouillon",
+    "count": 422,
+    "lift": 1.446
+   },
+   {
+    "aisle": "spices seasonings",
+    "count": 275,
+    "lift": 1.361
+   },
+   {
+    "aisle": "hot dogs bacon sausage",
+    "count": 431,
+    "lift": 1.351
+   },
+   {
+    "aisle": "canned meals beans",
+    "count": 232,
+    "lift": 1.329
+   },
+   {
+    "aisle": "frozen appetizers sides",
+    "count": 201,
+    "lift": 1.211
+   }
+  ],
+  "packaged vegetables fruits": [
+   {
+    "aisle": "fresh vegetables",
+    "count": 90190,
+    "lift": 1.468
+   },
+   {
+    "aisle": "salad dressing toppings",
+    "count": 2944,
+    "lift": 1.399
+   },
+   {
+    "aisle": "fresh fruits",
+    "count": 122640,
+    "lift": 1.33
+   },
+   {
+    "aisle": "frozen produce",
+    "count": 15306,
+    "lift": 1.257
+   },
+   {
+    "aisle": "seafood counter",
+    "count": 1217,
+    "lift": 1.252
+   },
+   {
+    "aisle": "fresh herbs",
+    "count": 10862,
+    "lift": 1.24
+   }
+  ],
+  "spirits": [
+   {
+    "aisle": "beers coolers",
+    "count": 1548,
+    "lift": 16.646
+   },
+   {
+    "aisle": "specialty wines champagnes",
+    "count": 460,
+    "lift": 14.973
+   },
+   {
+    "aisle": "red wines",
+    "count": 1005,
+    "lift": 13.263
+   },
+   {
+    "aisle": "white wines",
+    "count": 983,
+    "lift": 13.006
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 457,
+    "lift": 3.182
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 1651,
+    "lift": 2.736
+   },
+   {
+    "aisle": "juice nectars",
+    "count": 783,
+    "lift": 1.84
+   },
+   {
+    "aisle": "frozen meals",
+    "count": 406,
+    "lift": 1.394
+   },
+   {
+    "aisle": "paper goods",
+    "count": 450,
+    "lift": 1.369
+   }
+  ],
+  "trail mix snack mix": [
+   {
+    "aisle": "breakfast bars pastries",
+    "count": 361,
+    "lift": 4.697
+   },
+   {
+    "aisle": "popcorn jerky",
+    "count": 960,
+    "lift": 4.251
+   },
+   {
+    "aisle": "nuts seeds dried fruit",
+    "count": 1416,
+    "lift": 3.653
+   },
+   {
+    "aisle": "candy chocolate",
+    "count": 1391,
+    "lift": 3.517
+   },
+   {
+    "aisle": "fruit vegetable snacks",
+    "count": 505,
+    "lift": 2.918
+   },
+   {
+    "aisle": "crackers",
+    "count": 1128,
+    "lift": 2.646
+   },
+   {
+    "aisle": "energy granola bars",
+    "count": 976,
+    "lift": 2.594
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 1477,
+    "lift": 2.37
+   },
+   {
+    "aisle": "cookies cakes",
+    "count": 578,
+    "lift": 2.124
+   },
+   {
+    "aisle": "chips pretzels",
+    "count": 1400,
+    "lift": 1.991
+   },
+   {
+    "aisle": "packaged produce",
+    "count": 1480,
+    "lift": 1.99
+   },
+   {
+    "aisle": "cereal",
+    "count": 476,
+    "lift": 1.326
+   }
+  ],
+  "feminine care": [
+   {
+    "aisle": "oral hygiene",
+    "count": 238,
+    "lift": 7.009
+   },
+   {
+    "aisle": "paper goods",
+    "count": 510,
+    "lift": 3.533
+   },
+   {
+    "aisle": "cleaning products",
+    "count": 240,
+    "lift": 3.528
+   },
+   {
+    "aisle": "laundry",
+    "count": 202,
+    "lift": 3.222
+   }
+  ],
+  "body lotions soap": [
+   {
+    "aisle": "facial care",
+    "count": 275,
+    "lift": 15.952
+   },
+   {
+    "aisle": "hair care",
+    "count": 452,
+    "lift": 14.713
+   },
+   {
+    "aisle": "shave needs",
+    "count": 208,
+    "lift": 14.688
+   },
+   {
+    "aisle": "deodorants",
+    "count": 217,
+    "lift": 13.691
+   },
+   {
+    "aisle": "oral hygiene",
+    "count": 581,
+    "lift": 9.003
+   },
+   {
+    "aisle": "diapers wipes",
+    "count": 215,
+    "lift": 6.844
+   },
+   {
+    "aisle": "cleaning products",
+    "count": 860,
+    "lift": 6.652
+   },
+   {
+    "aisle": "dish detergents",
+    "count": 551,
+    "lift": 5.791
+   },
+   {
+    "aisle": "paper goods",
+    "count": 1359,
+    "lift": 4.953
+   },
+   {
+    "aisle": "laundry",
+    "count": 559,
+    "lift": 4.691
+   },
+   {
+    "aisle": "energy sports drinks",
+    "count": 266,
+    "lift": 2.22
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 627,
+    "lift": 1.245
+   }
+  ],
+  "tortillas flat bread": [
+   {
+    "aisle": "latino foods",
+    "count": 441,
+    "lift": 5.267
+   },
+   {
+    "aisle": "canned meals beans",
+    "count": 762,
+    "lift": 2.511
+   },
+   {
+    "aisle": "preserved dips spreads",
+    "count": 440,
+    "lift": 2.41
+   },
+   {
+    "aisle": "packaged cheese",
+    "count": 2562,
+    "lift": 1.632
+   },
+   {
+    "aisle": "fresh dips tapenades",
+    "count": 1082,
+    "lift": 1.621
+   },
+   {
+    "aisle": "other creams cheeses",
+    "count": 841,
+    "lift": 1.618
+   },
+   {
+    "aisle": "lunch meat",
+    "count": 868,
+    "lift": 1.367
+   },
+   {
+    "aisle": "packaged poultry",
+    "count": 323,
+    "lift": 1.367
+   },
+   {
+    "aisle": "pickled goods olives",
+    "count": 239,
+    "lift": 1.323
+   },
+   {
+    "aisle": "fresh herbs",
+    "count": 857,
+    "lift": 1.298
+   },
+   {
+    "aisle": "tofu meat alternatives",
+    "count": 243,
+    "lift": 1.255
+   },
+   {
+    "aisle": "bread",
+    "count": 1456,
+    "lift": 1.237
+   }
+  ],
+  "frozen appetizers sides": [
+   {
+    "aisle": "frozen pizza",
+    "count": 902,
+    "lift": 3.308
+   },
+   {
+    "aisle": "frozen meals",
+    "count": 1724,
+    "lift": 2.841
+   },
+   {
+    "aisle": "frozen meat seafood",
+    "count": 520,
+    "lift": 2.714
+   },
+   {
+    "aisle": "frozen breakfast",
+    "count": 904,
+    "lift": 2.64
+   },
+   {
+    "aisle": "frozen vegan vegetarian",
+    "count": 368,
+    "lift": 2.274
+   },
+   {
+    "aisle": "instant foods",
+    "count": 527,
+    "lift": 2.086
+   },
+   {
+    "aisle": "buns rolls",
+    "count": 480,
+    "lift": 2.019
+   },
+   {
+    "aisle": "doughs gelatins bake mixes",
+    "count": 291,
+    "lift": 1.755
+   },
+   {
+    "aisle": "hot dogs bacon sausage",
+    "count": 956,
+    "lift": 1.608
+   },
+   {
+    "aisle": "baby food formula",
+    "count": 555,
+    "lift": 1.593
+   },
+   {
+    "aisle": "salad dressing toppings",
+    "count": 246,
+    "lift": 1.447
+   },
+   {
+    "aisle": "ice cream ice",
+    "count": 1575,
+    "lift": 1.359
+   },
+   {
+    "aisle": "pasta sauce",
+    "count": 409,
+    "lift": 1.324
+   },
+   {
+    "aisle": "prepared meals",
+    "count": 321,
+    "lift": 1.278
+   },
+   {
+    "aisle": "condiments",
+    "count": 539,
+    "lift": 1.272
+   },
+   {
+    "aisle": "preserved dips spreads",
+    "count": 245,
+    "lift": 1.252
+   },
+   {
+    "aisle": "meat counter",
+    "count": 201,
+    "lift": 1.211
+   }
+  ],
+  "hot cereal pancake mixes": [
+   {
+    "aisle": "honeys syrups nectars",
+    "count": 365,
+    "lift": 2.177
+   },
+   {
+    "aisle": "granola",
+    "count": 343,
+    "lift": 1.747
+   },
+   {
+    "aisle": "baking ingredients",
+    "count": 1134,
+    "lift": 1.604
+   },
+   {
+    "aisle": "spreads",
+    "count": 910,
+    "lift": 1.477
+   },
+   {
+    "aisle": "cereal",
+    "count": 1041,
+    "lift": 1.435
+   },
+   {
+    "aisle": "soy lactosefree",
+    "count": 2351,
+    "lift": 1.35
+   },
+   {
+    "aisle": "grains rice dried goods",
+    "count": 313,
+    "lift": 1.268
+   }
+  ],
+  "dry pasta": [
+   {
+    "aisle": "pasta sauce",
+    "count": 2834,
+    "lift": 8.337
+   },
+   {
+    "aisle": "canned jarred vegetables",
+    "count": 1315,
+    "lift": 2.896
+   },
+   {
+    "aisle": "meat counter",
+    "count": 323,
+    "lift": 1.769
+   },
+   {
+    "aisle": "grains rice dried goods",
+    "count": 452,
+    "lift": 1.667
+   },
+   {
+    "aisle": "soup broth bouillon",
+    "count": 974,
+    "lift": 1.627
+   },
+   {
+    "aisle": "fresh herbs",
+    "count": 1246,
+    "lift": 1.599
+   },
+   {
+    "aisle": "instant foods",
+    "count": 431,
+    "lift": 1.55
+   },
+   {
+    "aisle": "specialty cheeses",
+    "count": 297,
+    "lift": 1.534
+   },
+   {
+    "aisle": "packaged cheese",
+    "count": 2820,
+    "lift": 1.522
+   },
+   {
+    "aisle": "packaged poultry",
+    "count": 393,
+    "lift": 1.409
+   },
+   {
+    "aisle": "spices seasonings",
+    "count": 565,
+    "lift": 1.363
+   },
+   {
+    "aisle": "canned meals beans",
+    "count": 480,
+    "lift": 1.34
+   },
+   {
+    "aisle": "fresh vegetables",
+    "count": 7050,
+    "lift": 1.291
+   },
+   {
+    "aisle": "pickled goods olives",
+    "count": 274,
+    "lift": 1.285
+   },
+   {
+    "aisle": "poultry counter",
+    "count": 396,
+    "lift": 1.261
+   },
+   {
+    "aisle": "doughs gelatins bake mixes",
+    "count": 226,
+    "lift": 1.238
+   },
+   {
+    "aisle": "tofu meat alternatives",
+    "count": 280,
+    "lift": 1.225
+   }
+  ],
+  "beauty": [],
+  "muscles joints pain relief": [
+   {
+    "aisle": "cold flu allergy",
+    "count": 292,
+    "lift": 12.065
+   },
+   {
+    "aisle": "paper goods",
+    "count": 358,
+    "lift": 2.077
+   },
+   {
+    "aisle": "soft drinks",
+    "count": 461,
+    "lift": 1.457
+   }
+  ],
+  "specialty wines champagnes": [
+   {
+    "aisle": "red wines",
+    "count": 822,
+    "lift": 25.167
+   },
+   {
+    "aisle": "white wines",
+    "count": 790,
+    "lift": 24.25
+   },
+   {
+    "aisle": "beers coolers",
+    "count": 628,
+    "lift": 15.667
+   },
+   {
+    "aisle": "spirits",
+    "count": 460,
+    "lift": 14.973
+   },
+   {
+    "aisle": "juice nectars",
+    "count": 263,
+    "lift": 1.434
+   },
+   {
+    "aisle": "refrigerated",
+    "count": 403,
+    "lift": 1.41
+   }
+  ]
+ }
+}
