@@ -12,3 +12,8 @@ tqdm>=4.66.1
 hydra-core>=1.3.2
 iopath>=0.1.10
 ultralytics
+# field.py: ../V-JEPA2 (V-JEPA 2.1) 의존성
+einops
+# grasp_clustering.py: Intel RealSense (공식 휠은 Linux/Windows만, macOS arm64는 커뮤니티 빌드)
+pyrealsense2; platform_system != "Darwin"
+pyrealsense2-macosx; platform_system == "Darwin"

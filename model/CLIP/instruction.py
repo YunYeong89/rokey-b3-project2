@@ -20,7 +20,6 @@ CLIP_DIR = Path(__file__).resolve().parent
 MODEL_DIR = CLIP_DIR.parent
 sys.path[:0] = [str(MODEL_DIR / "sam2"), str(MODEL_DIR.parents[1] / "webcam")]
 import clip
-from frame_shm import FrameShm
 
 
 class Sam2Segmenter:
@@ -188,8 +187,15 @@ class InstructionStream:
                         0.6, (0, 255, 255), 2, cv2.LINE_AA)
         return overlay
 
+    def open_source(self):
+        """read(timeout) → (frame_id, stamp_ns, frame), close(), frame(빈 화면 크기)를 갖는 스트림 소스를 엽니다.
+        웹캠 공유메모리는 스트림에서만 써서, webcam/이 없는 ROS 패키지에서도 import됩니다."""
+        from frame_shm import FrameShm
+        print(f"Source: shared memory '{self.args.shm_name}'.", flush=True)
+        return FrameShm(self.args.shm_name)
+
     def run(self):
-        self.source = FrameShm(self.args.shm_name)
+        self.source = self.open_source()
         window = f"{self.name} instruction"
         worker = Thread(target=self._infer, name="instruction-inference")
         reader = Thread(target=self._read_input, name="instruction-input")
@@ -197,7 +203,7 @@ class InstructionStream:
         cv2.namedWindow(window, cv2.WINDOW_NORMAL)
         worker.start()
         reader.start()
-        print(f"{self.name} + CLIP {self.args.clip_model} on {self.device}, shared memory '{self.args.shm_name}'.\n"
+        print(f"{self.name} + CLIP {self.args.clip_model} on {self.device}.\n"
               "Type an instruction and press Enter to change the target. Press Q or Esc in the window to exit.",
               flush=True)
         try:

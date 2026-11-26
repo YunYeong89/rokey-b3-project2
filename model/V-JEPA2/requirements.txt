@@ -1,0 +1,3 @@
+# vjepa2: V-JEPA 2.1 인코더 (upstream facebookresearch/vjepa2의 app/vjepa_2_1/models 발췌)
+torch>=2.5.1
+einops
