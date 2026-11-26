@@ -5,9 +5,9 @@ from webcam import Webcam
 
 
 class WebcamPublisher:
-    def __init__(self, name="webcam0", index=0, hz=30):
+    def __init__(self, name="webcam0", camera="C270", hz=30):
         self.period = 1.0 / hz
-        self.cam = Webcam(index, hz)
+        self.cam = Webcam(camera, hz)
         self.shm = FrameShm(name, self.cam.read().shape)
 
     def run(self):
