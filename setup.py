@@ -1,3 +1,6 @@
+from glob import glob
+import os
+
 from setuptools import find_packages, setup
 
 package_name = 'vision_project'
@@ -10,6 +13,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (os.path.join('share', package_name, 'resource'), glob('resource/*.npy')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -24,6 +28,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'detection = vision_project.detection:main',
+            'pick = vision_project.pick:main',
         ],
     },
 )

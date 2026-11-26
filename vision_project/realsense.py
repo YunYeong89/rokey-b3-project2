@@ -12,12 +12,13 @@ class ImgNode(Node):
         self.color_frame_stamp = None
         self.depth_frame = None
         self.intrinsics = None
+        # 큐 1: 추론 중 쌓인 옛 프레임 대신 spin_once 때 최신 프레임을 받습니다.
         self.color_subscription = self.create_subscription(
-            Image, '/camera/color/image_raw', self.color_callback, 10)
+            Image, '/camera/color/image_raw', self.color_callback, 1)
         self.depth_subscription = self.create_subscription(
-            Image, '/camera/aligned_depth_to_color/image_raw', self.depth_callback, 10)
+            Image, '/camera/aligned_depth_to_color/image_raw', self.depth_callback, 1)
         self.camera_info_subscription = self.create_subscription(
-            CameraInfo, '/camera/color/camera_info', self.camera_info_callback, 10)
+            CameraInfo, '/camera/color/camera_info', self.camera_info_callback, 1)
         self.get_logger().info("Waiting for client's call...")
         self._img_exec = SingleThreadedExecutor()
         self._img_exec.add_node(self)

@@ -1,105 +1,128 @@
-import numpy as np
-import rclpy
-from rclpy.node import Node
-from typing import Any, Callable, Optional, Tuple
+"""realsense 토픽 프레임으로 model/DINOv3/grasp_clustering.py(분할 → DINOv3 그룹 → CLIP --object 선택 → depth 가까운 순 라벨)를
+화면에 띄우고, 라벨 순번별 잡을 점(마스크 중심)을 base 좌표(mm)로 바꿔 /get_grasp_positions 서비스로 제공합니다.
+응답: Trigger.message = JSON {"0": [x, y, z], "1": [...], ...} (0 = 카메라에서 가장 가까운 물품)."""
+
+import json
+from pathlib import Path
+import sys
+from threading import Thread
+import time
 
 from ament_index_python.packages import get_package_share_directory
-from od_msg.srv import SrvDepthPosition
-from object_detection.realsense import ImgNode
-from object_detection.yolo import YoloModel
+import cv2
+import DR_init
+import numpy as np
+import rclpy
+from rclpy.executors import SingleThreadedExecutor
+from rclpy.utilities import remove_ros_args
+from scipy.spatial.transform import Rotation
+from std_srvs.srv import Trigger
+
+from vision_project.realsense import ImgNode
+
+ROBOT_ID, ROBOT_MODEL = "dsr01", "m0609"
+GRIPPER2CAM = Path(get_package_share_directory("vision_project")) / "resource" / "T_gripper2camera.npy"
+MODEL_DIR = Path(__file__).resolve().parents[1] / "model"  # colcon --symlink-install이면 소스의 vision_project/model
+
+# DRL API(DSR_ROBOT2)는 import 전에 DR_init에 로봇 ID·모델·노드가 등록되어 있어야 합니다.
+DR_init.__dsr__id, DR_init.__dsr__model = ROBOT_ID, ROBOT_MODEL
+rclpy.init()
+DR_init.__dsr__node = rclpy.create_node("grasp_detection_dsr", namespace=ROBOT_ID)
+from DSR_ROBOT2 import get_current_posx  # noqa: E402
+
+sys.path.insert(0, str(MODEL_DIR / "DINOv3"))
+from grasp_clustering import GraspStream, create_parser  # noqa: E402
 
 
-PACKAGE_NAME = 'object_detection'
-PACKAGE_PATH = get_package_share_directory(PACKAGE_NAME)
+def pose_matrix(x, y, z, rx, ry, rz):
+    """DRL posx (mm, ZYZ 오일러 deg) → base 기준 4x4 변환 행렬."""
+    matrix = np.eye(4)
+    matrix[:3, :3] = Rotation.from_euler("ZYZ", [rx, ry, rz], degrees=True).as_matrix()
+    matrix[:3, 3] = x, y, z
+    return matrix
 
 
-class ObjectDetectionNode(Node):
-    def __init__(self, model_name = 'yolo'):
-        super().__init__('object_detection_node')
-        self.img_node = ImgNode()
-        self.model = self._load_model(model_name)
-        self.intrinsics = self._wait_for_valid_data(
-            self.img_node.get_camera_intrinsic, "camera intrinsics"
-        )
-        self.create_service(
-            SrvDepthPosition,
-            'get_3d_position',
-            self.handle_get_depth
-        )
-        self.get_logger().info("ObjectDetectionNode initialized.")
+class RosCamera:
+    """realsense 노드 토픽(컬러 BGR, 정렬 depth mm)을 GraspStream 소스 인터페이스(read/close/frame)로 감쌉니다.
+    카메라는 realsense 노드가 점유하므로 grasp_clustering의 RealSenseCamera(pyrealsense2 직접 연결) 대신 씁니다."""
 
-    def _load_model(self, name):
-        if name.lower() == 'yolo':
-            return YoloModel()
-        raise ValueError(f"Unsupported model: {name}")
+    def __init__(self):
+        self.node = ImgNode()
+        while self.node.color_frame is None or self.node.depth_frame is None or self.node.intrinsics is None:
+            self.node.spin_once()
+        self.frame = self.node.color_frame  # InstructionStream.run 대기 화면 크기
+        self.intrinsics = self.node.intrinsics
 
-    def handle_get_depth(self, request, response):
-        self.get_logger().info(f"Received request: {request}")
-        coords = self._compute_position(request.target)
-        response.depth_position = [float(x) for x in coords]
+    def read(self, timeout=0.1):
+        """(frame_id, stamp, (BGR, depth m)). 컬러 프레임이 그대로면 같은 id라 InstructionStream._infer가 건너뜁니다."""
+        self.node.spin_once(timeout)
+        stamp = int(self.node.color_frame_stamp)
+        return stamp, stamp, (self.node.color_frame, self.node.depth_frame.astype(np.float32) / 1000)
+
+    def close(self):
+        self.node.destroy_node()
+
+
+class GraspDetector(GraspStream):
+    """grasp_clustering 화면(세그멘테이션·가까운 순 라벨)에 잡을 점을 더하고, 라벨별 base 좌표를 서비스로 제공합니다.
+    스레드: 메인 = OpenCV 화면, 추론 = 분할·base 변환(DRL get_current_posx), 서비스 = 별도 executor."""
+
+    def __init__(self, args):
+        super().__init__(args)
+        self.gripper2cam = np.load(GRIPPER2CAM)
+        self.positions, self.updated = {}, 0.0  # 최신 {순번: base [x, y, z] mm}, 그 추론을 시작한 시각
+        self.node = rclpy.create_node("grasp_detection")
+        self.node.create_service(Trigger, "get_grasp_positions", self.get_positions)
+        executor = SingleThreadedExecutor()
+        executor.add_node(self.node)
+        Thread(target=executor.spin, name="grasp-service", daemon=True).start()
+        self.name += " + base"
+
+    def open_source(self):
+        print("Source: ROS realsense topics.", flush=True)
+        return RosCamera()
+
+    def process(self, frame):
+        """가까운 순 마스크 → 마스크 중심 픽셀 + 마스크 depth → 카메라 좌표 → T_gripper2camera·현재 posx로 base 좌표."""
+        start = time.monotonic()
+        base2cam = pose_matrix(*get_current_posx()[0]) @ self.gripper2cam
+        masks, boxes, groups, depths, total = self.rank(frame)
+
+        k = self.source.intrinsics
+        points = np.array([np.argwhere(mask).mean(0)[::-1] for mask in masks]).reshape(-1, 2)  # (u, v)
+        z = depths * 1000  # m → mm (T_gripper2camera 단위)
+        camera = np.stack([(points[:, 0] - k["ppx"]) * z / k["fx"], (points[:, 1] - k["ppy"]) * z / k["fy"],
+                           z, np.ones_like(z)])
+        base = (base2cam @ camera)[:3].T
+        self.positions = {str(rank): xyz.round(1).tolist() for rank, xyz in enumerate(base)}
+        self.updated = start
+
+        overlay = self.render(frame[0], masks, boxes, groups, depths)
+        for u, v in points.astype(int):
+            cv2.circle(overlay, (u, v), 5, (0, 0, 255), -1)
+        coords = " ".join(f"{rank}:({x:.0f},{y:.0f},{h:.0f})" for rank, (x, y, h) in enumerate(base))
+        return overlay, f"Grasp {len(base)}/{total} | base mm {coords}"
+
+    def get_positions(self, request, response):
+        """요청 이후 시작한 추론 결과를 기다려 {순번: base [x, y, z] mm}를 JSON으로 돌려줍니다 (로봇 정지 후 프레임 보장)."""
+        start = time.monotonic()
+        while self.updated < start:
+            time.sleep(0.05)
+        response.success, response.message = bool(self.positions), json.dumps(self.positions)
         return response
 
-    def _compute_position(self, target):
-        self.img_node.spin_once()
 
-        box, score = self.model.get_best_detection(self.img_node, target)
-        if box is None or score is None:
-            self.get_logger().warn("No detection found.")
-            return 0.0, 0.0, 0.0
-        
-        self.get_logger().info(f"Detection: box={box}, score={score}")
-        cx, cy = map(int, [(box[0] + box[2]) / 2, (box[1] + box[3]) / 2])
-        cz = self._get_depth(cx, cy)
-        if cz is None:
-            self.get_logger().warn("Depth out of range.")
-            return 0.0, 0.0, 0.0
-
-        return self._pixel_to_camera_coords(cx, cy, cz)
-
-    def _get_depth(self, x, y, win=5):
-        frame = self._wait_for_valid_data(self.img_node.get_depth_frame, "depth frame")
-        h, w = frame.shape[:2]
-        if not (0 <= x < w and 0 <= y < h):
-            self.get_logger().warn(f"Coordinates ({x},{y}) out of range.")
-            return None
-        x0, x1 = max(0, x - win), min(w, x + win + 1)
-        y0, y1 = max(0, y - win), min(h, y + win + 1)
-        patch = frame[y0:y1, x0:x1]
-        valid = patch[patch > 0]
-        if valid.size == 0:
-            self.get_logger().warn(f"No valid depth around ({x},{y}).")
-            return None
-        return float(np.median(valid))
-
-    def _wait_for_valid_data(self, getter, description):
-        data = getter()
-        while data is None or (isinstance(data, np.ndarray) and not data.any()):
-            self.img_node.spin_once()
-            self.get_logger().info(f"Retry getting {description}.")
-            data = getter()
-        return data
-
-    def _pixel_to_camera_coords(self, x, y, z):
-        fx = self.intrinsics['fx']
-        fy = self.intrinsics['fy']
-        ppx = self.intrinsics['ppx']
-        ppy = self.intrinsics['ppy']
-        return (
-            (x - ppx) * z / fx,
-            (y - ppy) * z / fy,
-            z
-        )
+def parse_args():
+    parser = create_parser()
+    parser.add_argument("--object", dest="instruction",
+                        help="Target item in English, e.g. coke (same as --instruction; type a new one at runtime).")
+    return parser.parse_args(remove_ros_args(sys.argv)[1:])
 
 
-def main(args=None):
-    rclpy.init(args=args)
-    node = ObjectDetectionNode()
-    try:
-        rclpy.spin(node)
-    finally:
-        node.destroy_node()
-        rclpy.shutdown()
+def main():
+    GraspDetector(parse_args()).run()
+    rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

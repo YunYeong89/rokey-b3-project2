@@ -1,0 +1,4 @@
+# 모델 가중치는 push하지 않습니다 (model/*/checkpoints).
+*.pt
+*.pth
+__pycache__/

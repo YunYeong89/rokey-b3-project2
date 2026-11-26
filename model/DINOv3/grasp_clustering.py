@@ -5,7 +5,6 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-import pyrealsense2 as rs
 
 from group import DINO_DIR, GroupStream, add_group_arguments
 from instruction import create_parser as create_clip_parser
@@ -17,6 +16,7 @@ class RealSenseCamera:
     """RealSense 컬러(BGR)와 컬러에 정렬한 depth(m)를 FrameShm과 같은 read/close/frame 인터페이스로 제공합니다."""
 
     def __init__(self, width, height, fps):
+        import pyrealsense2 as rs  # 카메라를 직접 열 때만 필요해 ROS(토픽 입력) 환경에는 설치하지 않아도 됩니다.
         self.pipeline = rs.pipeline()
         config = rs.config()
         config.enable_stream(rs.stream.color, width, height, rs.format.bgr8, fps)
@@ -74,16 +74,21 @@ class GraspStream(GroupStream):
         print(f"Source: RealSense {self.args.width}x{self.args.height} @ {self.args.fps} fps.", flush=True)
         return RealSenseCamera(self.args.width, self.args.height, self.args.fps)
 
-    def process(self, frame):
-        """(BGR, depth m) → 가까운 순 라벨을 그린 (overlay, 상태 문자열)."""
+    def rank(self, frame):
+        """(BGR, depth m) → instruction 물품을 가까운 순으로 정렬한 (마스크, 박스, 그룹 ID, 거리 m)와 전체 마스크 수."""
         bgr, depth = frame
         rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
         masks, boxes = self.segmenter(rgb)
         hit_masks, hit_boxes, groups, _, _ = self.select(rgb, masks, boxes)
         order, z = self.ranker(depth, hit_masks)
-        overlay = self.render(bgr, hit_masks[order], hit_boxes[order], groups[order], z)
+        return hit_masks[order], hit_boxes[order], groups[order], z, len(masks)
+
+    def process(self, frame):
+        """(BGR, depth m) → 가까운 순 라벨을 그린 (overlay, 상태 문자열)."""
+        masks, boxes, groups, z, total = self.rank(frame)
+        overlay = self.render(frame[0], masks, boxes, groups, z)
         ranks = " ".join(f"{rank}:{dist:.2f}m" for rank, dist in enumerate(z))
-        return overlay, f"Groups: {len(np.unique(groups))} | Grasp {len(order)}/{len(masks)} | {ranks}"
+        return overlay, f"Groups: {len(np.unique(groups))} | Grasp {len(z)}/{total} | {ranks}"
 
     @classmethod
     def render(cls, bgr, masks, boxes, groups, depths):
