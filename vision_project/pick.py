@@ -71,12 +71,12 @@ def grasp_orientation(pose):
 
 
 def grasp_frame(pose):
-    """posx → 그리퍼 좌표계 (3, 3), 열 = [가로(손가락이 벌어지는 수평축), 세로, TCP 방향(툴 z축)]의 base 방향.
+    """posx → 그리퍼 좌표계 (3, 3), 열 = [가로(손가락이 벌어지는 수평축), 세로(+ = 위), TCP 방향(툴 z축)]의 base 방향.
     가로는 TCP 방향에 수직인 수평축으로 고정합니다 (TCP가 -y면 base x)."""
     approach = Rotation.from_euler("ZYZ", pose[3:], degrees=True).as_matrix()[:, 2]
     across = np.cross(approach, UP)
     across /= np.linalg.norm(across)
-    return np.stack([across, np.cross(approach, across), approach], axis=1)
+    return np.stack([across, np.cross(across, approach), approach], axis=1)
 
 
 class PathChecker:
@@ -91,12 +91,18 @@ class PathChecker:
         self.high = np.array([across / 2, height / 2, 0.0]) + MARGIN
 
     def blocked(self, *waypoints):
+        """경로에서 처음 겹치는 위치의 장애물 점 정보(TCP 기준 가로·세로·TCP 방향 범위, mm)를 문자열로, 안 겹치면 None.
+        세로가 음수면 TCP 아래(테이블 등), 가로가 크면 옆 물체, TCP 방향이 0 근처면 물체 자신의 가장자리일 가능성이 큽니다."""
         for start, end in zip(waypoints, waypoints[1:]):
             for position in np.linspace(start, end, int(np.linalg.norm(end - start) // STEP) + 2):
                 local = (self.points - position) @ self.frame  # base → 그리퍼 좌표
-                if ((local > self.low) & (local < self.high)).all(1).any():
-                    return True
-        return False
+                hit = ((local > self.low) & (local < self.high)).all(1)
+                if hit.any():
+                    low, high = local[hit].min(0), local[hit].max(0)
+                    return (f"{hit.sum()} obstacle points near TCP {np.round(position).astype(int).tolist()}: "
+                            f"across {low[0]:.0f}~{high[0]:.0f}, vertical {low[1]:.0f}~{high[1]:.0f}, "
+                            f"along {low[2]:.0f}~{high[2]:.0f} mm")
+        return None
 
 
 class Picker(Node):
@@ -129,15 +135,17 @@ class Picker(Node):
             return None, reason
         pregrasp = target - APPROACH * self.frame[:, 2]  # 물품 앞
         checker = PathChecker(result["obstacles"], self.frame)
-        if checker.blocked(pregrasp, target):
-            return None, "moving forward from the pre-grasp point to the target is blocked"
+        hit = checker.blocked(pregrasp, target)
+        if hit:
+            return None, f"moving forward from the pre-grasp point to the target {target.round(1).tolist()} is blocked: {hit}"
         lifted = np.r_[pregrasp[:2], max(scan[2], pregrasp[2] + APPROACH)]
         for name, route in {"direct": [pregrasp], "over": [lifted, pregrasp]}.items():
-            if not checker.blocked(scan, *route):
+            hit = checker.blocked(scan, *route)
+            if not hit:
                 self.get_logger().info(f"Target {target.round(1).tolist()}, pre-grasp {pregrasp.round(1).tolist()} "
                                        f"via '{name}' route")
                 return (target, pregrasp, route), None
-            self.get_logger().info(f"Route '{name}' to the pre-grasp point is blocked.")
+            self.get_logger().info(f"Route '{name}' to the pre-grasp point is blocked: {hit}")
         return None, f"every route to the pre-grasp point is blocked ({len(result['obstacles'])} obstacle points)"
 
     def correct(self, coarse, pregrasp):
@@ -150,8 +158,9 @@ class Picker(Node):
         shift = np.linalg.norm(target - coarse)
         if shift > CORRECTION_LIMIT:
             return None, f"corrected target moved {shift:.0f} mm from the first estimate (limit {CORRECTION_LIMIT:.0f})"
-        if PathChecker(result["obstacles"], self.frame).blocked(pregrasp, target):
-            return None, "moving forward to the corrected target is blocked"
+        hit = PathChecker(result["obstacles"], self.frame).blocked(pregrasp, target)
+        if hit:
+            return None, f"moving forward to the corrected target is blocked: {hit}"
         across = np.asarray(result["target_points"], dtype=float).reshape(-1, 3) @ self.frame[:, 0]
         width = float(np.subtract(*np.percentile(across, (95, 5))))  # 가로 폭 (5~95 백분위)
         opening = width + GRIP_MARGIN
