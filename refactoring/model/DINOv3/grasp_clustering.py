@@ -2,10 +2,12 @@
 컬러 시점에 정렬한 depth로 가까운 물체부터 0, 1, 2 … 라벨을 각 물체 상단에 표시합니다."""
 
 from pathlib import Path
+import sys
 
 import cv2
 import numpy as np
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # 어디서 불러와도(파일 경로 import 포함) 옆의 group.py를 찾도록
 from group import DINO_DIR, GroupStream, add_group_arguments
 from instruction import create_parser as create_clip_parser
 
