@@ -134,7 +134,8 @@ class CustomerHistory:
                           GROUP_CONCAT(product_id || ':' || quantity) AS items
                    FROM purchases WHERE customer_id=? GROUP BY order_uid ORDER BY purchased_at DESC LIMIT ?""",
                 (customer_id, limit)).fetchall()
-        return [{"order_id": r["order_id"], "order_status": r["order_status"], "purchased_at": r["purchased_at"],
+        return [{"order_id": r["order_id"], "order_uid": r["order_uid"], "order_status": r["order_status"],
+                 "purchased_at": r["purchased_at"],
                  "items": {k: int(v) for k, v in (x.split(":") for x in r["items"].split(","))}} for r in rows]
 
     # ------------------------------------------------------------ 추천 반응 기록

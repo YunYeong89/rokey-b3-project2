@@ -422,7 +422,8 @@ $("#orderBtn").addEventListener("click",async()=>{
 $("#myPickup").addEventListener("click",()=>my?openMy():toast("저장된 주문이 없어요"));
 
 function openMy(){lastState=null;seenStatus=null;$("#ov").classList.add("on");startPolling()}
-function closeMy(){$("#ov").classList.remove("on");pollGen++;clearTimeout(polling);clearInterval(countdown);loadProducts()}
+function closeMy(){$("#ov").classList.remove("on");pollGen++;clearTimeout(polling);clearInterval(countdown);loadProducts();
+  if(view==="history") loadHistory()}
 function startPolling(){clearTimeout(polling);tick(++pollGen)}
 async function tick(gen){
   if(gen!==pollGen||!my) return;
@@ -473,7 +474,8 @@ function renderOrder(o){
       <div class="pk-code"><small>픽업 번호 · 바구니 라벨</small><b>${o.pickup_code}</b></div>
       <div class="qrbox">${qr?`<img src="${qr}" alt="픽업 QR 코드" id="qrImg">`
         :`<div class="empty">브라우저 데모에서는<br>QR이 나오지 않아요</div>`}</div>
-      <div class="st-msg" style="margin:4px 0 10px;color:var(--ink);font-weight:700">가게의 픽업 키오스크에 이 QR을 보여 주세요</div>
+      <div class="st-msg" style="margin:4px 0 2px;color:var(--ink);font-weight:700">가게의 픽업 키오스크에 이 QR을 보여 주세요</div>
+      <p class="pk-hint" style="margin:0 0 10px">🔆 키오스크에 보여 줄 때 화면 밝기를 높여 주세요</p>
       <div class="pk-meta"><div>확인번호<b>${o.check}</b></div><div>만료까지<b id="pkLeft">-</b></div></div>
       <p class="pk-hint">QR이 안 되면 키오스크에 픽업 번호와 확인번호를 입력하세요</p>
       ${lists}${closeBtn("닫기")}`;
@@ -583,10 +585,18 @@ async function loadHistory(){
     :`<li class="empty">아직 구매 이력이 없어요. 주문하면 여기에 쌓여요</li>`;
   $("#hist-orders").innerHTML=d.orders.length?d.orders.map(o=>{const [cls,txt]=ORDER_ST[o.order_status]||["",o.order_status];
     const n=Object.values(o.items).reduce((a,b)=>a+b,0);
-    return `<li><div class="oh"><b>${ymdhm(o.purchased_at)}</b><span>${n}개</span><span class="tag ${cls}">${txt}</span></div>
-      <div class="oi">${Object.entries(o.items).map(([k,v])=>`<span>${m[k]?m[k].emoji+" "+m[k].name:k} ${v}개</span>`).join("")}</div></li>`}).join("")
+    const pk=o.pickup;  // 수령 대기 중이면 서버가 붙여 줌
+    return `<li><div class="oh"><b>${ymdhm(o.purchased_at)}</b><span>${n}개</span>${pk?`<span class="tag low">수령 대기 · ${pk.pickup_code}</span>`
+        :`<span class="tag ${cls}">${txt}</span>`}</div>
+      <div class="oi">${Object.entries(o.items).map(([k,v])=>`<span>${m[k]?m[k].emoji+" "+m[k].name:k} ${v}개</span>`).join("")}</div>
+      ${pk?`<button class="btn sm" style="margin-top:8px" data-qr="${pk.order_id}" data-sec="${pk.client_secret}">🎫 픽업 QR 보기</button>`:""}</li>`}).join("")
     :`<li class="empty">주문 내역이 없어요</li>`;
 }
+
+$("#hist-orders").addEventListener("click",e=>{
+  const b=e.target.closest("[data-qr]");if(!b)return;
+  my={order_id:+b.dataset.qr,client_secret:b.dataset.sec};saveMy();updateMyBtn();openMy();  // 이 주문을 "내 픽업"으로
+});
 
 /* ---------------- 회원 탭 (관리자만) */
 async function loadMembers(){

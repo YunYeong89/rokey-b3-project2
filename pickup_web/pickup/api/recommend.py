@@ -1,8 +1,11 @@
 """추천 (Switching Hybrid) + 추천 반응 기록 + 고객 구매 이력 조회"""
+import time
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..catalog import NAMES
 from ..history import clean_customer_id
+from ..orders import order_uid
 from .auth import current_user, require_admin
 from .schemas import RecEventReq
 
@@ -65,6 +68,18 @@ def build(svc):
         n = stats["n_orders"]
         items = sorted(({"id": pid, "name": NAMES.get(pid, pid), "orders": c, "r": round(c / n, 4)}
                         for pid, c in stats.get("counts", {}).items()), key=lambda x: -x["r"])
-        return {"customer_id": cid, "n_orders": n, "items": items, "orders": svc.hist("orders", cid) or []}
+        hist_orders = svc.hist("orders", cid) or []
+        # 수령 대기 중인 주문은 QR 을 다시 열 수 있게 pickup 정보를 붙임 (본인 주문일 때만 client_secret 포함)
+        with svc.store.lock:
+            svc.orders.sweep(time.time())
+            for h in hist_orders:
+                o = svc.orders.get(h["order_id"])
+                if (o and o["status"] == "ready_for_pickup" and o.get("customer_id") == cid
+                        and order_uid(o) == h.get("order_uid")):
+                    h["pickup"] = {"order_id": o["order_id"], "client_secret": o["client_secret"],
+                                   "pickup_code": o["pickup_code"], "expires_at": o["expires_at"]}
+        for h in hist_orders:
+            h.pop("order_uid", None)
+        return {"customer_id": cid, "n_orders": n, "items": items, "orders": hist_orders}
 
     return r
