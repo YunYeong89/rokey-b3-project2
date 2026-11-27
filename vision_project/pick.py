@@ -9,8 +9,8 @@
    J5는 계속 작아집니다.
 3. 보정: 숙인 자세에서 다시 검출해 0번으로 최종 grasp point를 정하고(1차 좌표와 CORRECTION_LIMIT 이상 다르면 거절),
    J5를 되돌려(movej) 집는 자세 GRASP_EULER(ZYZ, TCP ∥ -y, 손가락 수평)로 돌아온 뒤 스캔 위치와 다른 x(옆)만 movel로 맞춥니다.
-4. 그리퍼는 시작할 때 건드리지 않고, 잡기 직전에만 가로(base x)로 물체 가로 폭 + GRIP_MARGIN만큼 벌립니다(MAX_OPEN 초과면
-   거절). 그리퍼는 GripperWorker 스레드에서 돌아 로봇 이동과 분리됩니다: 벌리기를 시작하면서 동시에 -y로 movel해 들어가고,
+4. 그리퍼는 시작할 때 건드리지 않고, 잡기 직전에만 가로(base x)로 물체 가로 폭 + GRIP_MARGIN만큼 벌립니다(MAX_OPEN까지만,
+   넘으면 최대로). 그리퍼는 GripperWorker 스레드에서 돌아 로봇 이동과 분리됩니다: 벌리기를 시작하면서 동시에 -y로 movel해 들어가고,
    grasp point에서 벌리기 완료를 기다린 뒤 잡습니다.
 5. 잡으면 LIFT만큼 들어 올림 → 같은 높이로 잡기 직전 위치 위까지를 movesx 스플라인 하나로 빠지고, HOME_J로 movej해 엽니다.
 경로는 장애물 점(base)과 검사해 막히면 재시도하고, 이동마다 실제로 도착했는지 확인합니다. 동작은 DRL API(DSR_ROBOT2), 그리퍼는 Modbus TCP(onrobot.RG)입니다."""
@@ -289,9 +289,7 @@ class Picker(Node):
         if shift > CORRECTION_LIMIT:
             return None, f"corrected target moved {shift:.0f} mm from the first estimate (limit {CORRECTION_LIMIT:.0f})"
         width = self.width(result)
-        opening = width + GRIP_MARGIN
-        if opening > MAX_OPEN:
-            return None, f"object is {width:.0f} mm wide, needs {opening:.0f} mm opening (max {MAX_OPEN:.0f})"
+        opening = min(width + GRIP_MARGIN, MAX_OPEN)  # 최대치를 넘으면 거절하지 않고 최대로 벌림
         grasp = target + (width / 2 + GRASP_DEPTH) * self.frame[:, 2]  # 앞면 → 물체 중심 너머
         hit = PathChecker(result["obstacles"]).blocked(self.frame, pregrasp, grasp)
         if hit:
