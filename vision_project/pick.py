@@ -1,8 +1,9 @@
 """vision_project detection(docker)의 /get_grasp_positions로 장면을 받아 0번 물품을 잡아 HOME_J로 가져와 그리퍼를 엽니다 (호스트 실행).
 1. SCAN_J로 movej 후 검출 요청. 선택된 묶음(cluster)이 정확히 1개일 때만 진행하고, 아니면 RETRY_DELAY 뒤 재시도합니다.
-2. 가장 가까운 목표(0번) 앞(base +y로 APPROACH, 물품 높이)에 잡기 직전 위치(waypoint1)를 두고, 스캔 자세 그대로
-   스캔 위치 → waypoint0(스캔 위치와 waypoint1의 중간점) → waypoint1을 관절 공간 스플라인(ikin → movesj) 한 번으로
-   지나갑니다. 관절 보간이라 특이점 때문에 도중에 멈추지 않습니다.
+2. 가장 가까운 목표(0번) 앞(base +y로 APPROACH, 물품 높이)에 잡기 직전 위치를 두고, 스캔 자세 그대로
+   스캔 위치 → up(스캔 위치 바로 위) → over(잡기 직전 위치 바로 위) → 잡기 직전 위치로 높이 올라갔다가 내려갑니다.
+   높이는 스캔 위치·잡기 직전 위치 중 높은 쪽 + RISE이고, 관절 공간 스플라인(ikin → movesj) 한 번으로 지나가
+   관절 보간이라 특이점 때문에 도중에 멈추지 않습니다.
 3. 보정: 잡기 직전 위치에서 (카메라가 내려다보는 스캔 자세로) 다시 검출해 0번 segmentation 무게중심으로 최종 grasp point를
    정합니다 (1차 좌표와 CORRECTION_LIMIT 이상 다르면 거절).
 4. 잡기 직전에만 집는 자세 GRASP_EULER(ZYZ, TCP ∥ -y, 손가락 수평)로 정렬합니다. 관절 공간(ikin → movej)으로 돌려
@@ -36,6 +37,7 @@ GRIPPER_TIMEOUT = 10.0              # s, 그리퍼 동작을 기다리는 최대
 WIDTH_TOLERANCE = 3.0               # mm, 벌리기 완료로 볼 목표 폭과의 차이 (동작 중 비트가 안 풀려도 폭으로 판정)
 APPROACH = 100.0                    # mm, 물품에서 잡기 직전 위치까지 거리 (집는 자세 TCP 방향 반대, base +y)
 LIFT = 30.0                         # mm, 잡은 뒤 위로 올리는 높이
+RISE = 150.0                        # mm, 잡기 직전 위치로 갈 때 스캔 위치·잡기 직전 위치 중 높은 쪽보다 더 올라가는 높이
 CORRECTION_LIMIT = 50.0             # mm, 잡기 직전 위치에서 보정한 좌표가 1차 좌표와 달라도 되는 최대 거리
 GRIP_MARGIN = 20.0                  # mm, 물체 가로 폭보다 더 벌리는 여유 (양쪽 합)
 GRASP_DEPTH = 25.0                  # mm, 손가락 끝(TCP)을 물체 중심(앞면 + 가로 폭/2)보다 더 넣는 깊이
@@ -189,8 +191,8 @@ class Picker(Node):
         return joints
 
     def plan(self, scan):
-        """스캔 위치에서 검출해 1차 좌표와 잡기 직전 위치까지의 충돌 없는 경유점을 고릅니다.
-        ((1차 좌표, 잡기 직전 위치, waypoint0), None) 또는 (None, 거절 사유)."""
+        """스캔 위치에서 검출해 1차 좌표와 잡기 직전 위치까지 높이 올라갔다 내려가는 충돌 없는 경유점을 고릅니다.
+        ((1차 좌표, 잡기 직전 위치, 경유점 [up, over, 잡기 직전 위치]), None) 또는 (None, 거절 사유)."""
         result = self.request()
         target, reason = self.target(result)
         if target is None:
@@ -200,13 +202,14 @@ class Picker(Node):
         hit = PathChecker(result["obstacles"], self.frame).blocked(pregrasp, grasp)
         if hit:
             return None, f"moving forward from the pre-grasp point to the target {target.round(1).tolist()} is blocked: {hit}"
-        waypoint0 = (scan + pregrasp) / 2  # 스캔 위치 → waypoint1 중간점
-        hit = PathChecker(result["obstacles"], self.scan_frame).blocked(scan, waypoint0, pregrasp)
+        high = max(scan[2], pregrasp[2]) + RISE
+        route = [np.r_[scan[:2], high], np.r_[pregrasp[:2], high], pregrasp]  # up → over → 잡기 직전 위치
+        hit = PathChecker(result["obstacles"], self.scan_frame).blocked(scan, *route)
         if hit:
-            return None, f"route to waypoint1 (pre-grasp) is blocked: {hit}"
-        self.get_logger().info(f"Target {target.round(1).tolist()}, waypoint0 {waypoint0.round(1).tolist()}, "
-                               f"waypoint1 {pregrasp.round(1).tolist()}")
-        return (target, pregrasp, waypoint0), None
+            return None, f"route to the pre-grasp point (up, over, down) is blocked: {hit}"
+        self.get_logger().info(f"Target {target.round(1).tolist()}, route up {route[0].round(1).tolist()} → "
+                               f"over {route[1].round(1).tolist()} → pre-grasp {pregrasp.round(1).tolist()}")
+        return (target, pregrasp, route), None
 
     def correct(self, coarse, pregrasp):
         """잡기 직전 위치에서 다시 검출해 최종 grasp point와 그리퍼 벌림 폭을 정합니다.
@@ -296,8 +299,8 @@ class Picker(Node):
                 self.get_logger().warn(f"Attempt {attempt}/{RETRIES} rejected at scan pose: {reason}")
                 time.sleep(RETRY_DELAY)
                 continue
-            coarse, pregrasp, waypoint0 = plan
-            self.spline(waypoint0, pregrasp)  # 스캔 자세 그대로 잡기 직전 위치까지 (관절 공간 스플라인)
+            coarse, pregrasp, route = plan
+            self.spline(*route)  # 스캔 자세 그대로 up → over → 잡기 직전 위치 (관절 공간 스플라인)
 
             final, reason = self.correct(coarse, pregrasp)  # 내려다보는 자세로 다시 검출해 grasp point·벌림 폭 보정
             if final is None:
