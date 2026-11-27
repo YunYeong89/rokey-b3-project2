@@ -9,13 +9,15 @@
 3. 보정: 잡기 직전 위치에서 다시 검출해 0번 segmentation 무게중심을 최종 grasp point로 정합니다 (1차 좌표와
    CORRECTION_LIMIT 이상 다르면 거절). 보정된 좌표까지 앞으로 들어가는 구간도 새 장애물 점으로 다시 검사합니다.
 4. 그리퍼는 시작할 때 건드리지 않고, 잡기 직전에만 가로(TCP 방향에 수직인 수평축)로 물체 가로 폭 + GRIP_MARGIN만큼
-   벌립니다 (MAX_OPEN 초과면 거절). 앞으로 movel해 grasp point에 도착하면, TCP 방향(툴 z축)이 base -y와
-   AXIS_TOLERANCE 이내로 평행한지 확인하고 잡습니다. 로봇 이동과 그리퍼 동작은 각각 끝난 뒤 다음으로 넘어갑니다.
+   벌립니다 (MAX_OPEN 초과면 거절). 그리퍼는 GripperWorker 스레드에서 돌아 로봇 이동과 분리됩니다: 벌리기를 시작하면서
+   동시에 앞으로 movel하고, grasp point에 도착하면 벌리기 완료를 기다린 뒤 TCP 방향(툴 z축)이 base -y와
+   AXIS_TOLERANCE 이내로 평행한지 확인하고 잡습니다. 잡기는 완료를 기다린 뒤 들어 올립니다.
 5. 잡으면 LIFT만큼 위로 올린 뒤 같은 높이로 잡기 직전 위치 위까지 movel로 빠지고, HOME_J로 movej해 그리퍼를 엽니다.
 고정 자세(SCAN_J, HOME_J)는 movej, 집는 동작은 movel입니다.
 동작은 DRL API(DSR_ROBOT2), 그리퍼는 Modbus TCP(onrobot.RG)이며, 그리퍼가 안전 정지하거나 GRIPPER_TIMEOUT을 넘기면 중단합니다."""
 
 import json
+from threading import Thread
 import time
 
 import DR_init
@@ -33,6 +35,7 @@ SCAN_J = [-90.0, -54.91, 85.55, 0.0, 90.0, 90.0]  # 검출 자세 (movej), 테�
 HOME_J = [0, 0, 90, 0, 90, 90]                     # 잡은 물품을 가져와 그리퍼를 여는 자세
 GRASP_ROLL = 0.0                    # deg, 집는 자세를 TCP 축으로 더 돌리는 각도 (손가락이 세로로 벌어지면 90)
 GRIPPER_TIMEOUT = 10.0              # s, 그리퍼 동작을 기다리는 최대 시간
+WIDTH_TOLERANCE = 3.0               # mm, 벌리기 완료로 볼 목표 폭과의 차이 (동작 중 비트가 안 풀려도 폭으로 판정)
 APPROACH = 100.0                    # mm, 물품에서 잡기 직전 위치까지 거리 (TCP 방향 반대)
 LIFT = 30.0                         # mm, 잡은 뒤 위로 올리는 높이
 CORRECTION_LIMIT = 50.0             # mm, 잡기 직전 위치에서 보정한 좌표가 1차 좌표와 달라도 되는 최대 거리
@@ -107,10 +110,64 @@ class PathChecker:
         return None
 
 
+class GripperWorker:
+    """RG2 명령과 완료 확인을 별도 스레드에서 실행해 로봇 이동(메인 스레드)과 분리합니다. 그리퍼 결과가 필요한 시점에만
+    wait()로 기다립니다. 완료는 상태 레지스터(268)의 동작 중 비트가 풀리거나, 벌리기면 실제 폭(275)이 목표 ±WIDTH_TOLERANCE,
+    잡기면 잡힘 비트로 판정하고, 상태는 출력 없이 직접 읽습니다. 안전 회로 작동이나 GRIPPER_TIMEOUT이면 wait()에서 오류를 냅니다."""
+
+    BUSY, GRIPPED, SAFETY = 0b1, 0b10, 0b101000  # 동작 중, 잡힘, 안전 회로 1·2 작동
+
+    def __init__(self, gripper):
+        self.gripper = gripper
+        self.thread, self.error = None, None
+
+    def start(self, width=None):
+        """width(mm)로 벌리기, None이면 잡기를 백그라운드로 시작합니다 (이전 명령은 먼저 끝까지 기다림)."""
+        self.wait()
+        self.thread = Thread(target=self._run, args=(width,), name="gripper", daemon=True)
+        self.thread.start()
+
+    def wait(self):
+        if self.thread:
+            self.thread.join()
+            self.thread = None
+        error, self.error = self.error, None
+        if error:
+            raise error
+
+    def status(self):
+        return self.gripper.client.read_holding_registers(address=268, count=1, slave=65).registers[0]
+
+    def _run(self, width):
+        try:
+            if width is None:
+                self.gripper.close_gripper()
+            else:
+                self.gripper.move_gripper(int(round(width * 10)))  # RG 단위 0.1 mm
+            time.sleep(0.3)  # 명령이 반영돼 동작 중 비트가 켜질 시간
+            deadline = time.monotonic() + GRIPPER_TIMEOUT
+            while True:
+                status = self.status()
+                if status & self.SAFETY:
+                    raise RuntimeError("Gripper safety circuit is activated; remove the cause and power-cycle the gripper.")
+                if not status & self.BUSY:
+                    return
+                if width is None and status & self.GRIPPED:
+                    return
+                if width is not None and abs(self.gripper.get_width_with_offset() - width) <= WIDTH_TOLERANCE:
+                    return
+                if time.monotonic() > deadline:
+                    raise RuntimeError(f"Gripper did not finish within {GRIPPER_TIMEOUT:.0f} s "
+                                       f"(status {status:07b}, width {self.gripper.get_width_with_offset():.0f} mm).")
+                time.sleep(0.1)
+        except Exception as error:
+            self.error = error
+
+
 class Picker(Node):
     def __init__(self):
         super().__init__("vision_pick")
-        self.gripper = RG(GRIPPER_NAME, TOOLCHARGER_IP, TOOLCHARGER_PORT)
+        self.gripper = GripperWorker(RG(GRIPPER_NAME, TOOLCHARGER_IP, TOOLCHARGER_PORT))
         self.client = self.create_client(Trigger, "/get_grasp_positions")
         while not self.client.wait_for_service(timeout_sec=3.0):
             self.get_logger().info("Waiting for /get_grasp_positions service...")
@@ -197,19 +254,6 @@ class Picker(Node):
         movej(SCAN_J, vel=VELOCITY, acc=ACC)
         mwait()
 
-    def wait_gripper(self):
-        """그리퍼 동작이 끝날 때까지 기다립니다. 안전 회로가 작동했거나 GRIPPER_TIMEOUT을 넘으면 중단합니다."""
-        deadline = time.monotonic() + GRIPPER_TIMEOUT
-        while True:
-            status = self.gripper.get_status()  # [동작 중, 잡힘, S1 눌림, S1 작동, S2 눌림, S2 작동, 안전 오류]
-            if status[3] or status[5]:
-                raise RuntimeError("Gripper safety circuit is activated; remove the cause and power-cycle the gripper.")
-            if not status[0]:
-                return
-            if time.monotonic() > deadline:
-                raise RuntimeError(f"Gripper did not finish within {GRIPPER_TIMEOUT:.0f} s.")
-            time.sleep(0.5)
-
     def run(self):
         for attempt in range(1, RETRIES + 1):  # 그리퍼는 시작할 때 건드리지 않고 잡기 직전에만 벌림
             self.scan_pose()
@@ -234,10 +278,9 @@ class Picker(Node):
                 time.sleep(RETRY_DELAY)
                 continue
             grasp, opening = final
-            self.gripper.move_gripper(int(round(opening * 10)))  # RG 단위 0.1 mm
-            self.wait_gripper()
-
-            self.move(grasp)  # motion 2: 앞으로 들어가며 잡기
+            self.gripper.start(opening)  # 그리퍼 스레드: 벌리기 시작
+            self.move(grasp)  # 로봇: 동시에 앞으로 들어감 (벌리기는 1~2 s, 이동은 그보다 김)
+            self.gripper.wait()  # 잡기 전에 벌리기 완료 확인
             angle = angle_to_minus_y(get_current_posx()[0])  # 실제 TCP가 -y와 평행한지 잡기 직전에 확인
             if angle > AXIS_TOLERANCE:
                 self.get_logger().warn(f"Attempt {attempt}/{RETRIES} rejected at grasp: "
@@ -245,15 +288,15 @@ class Picker(Node):
                 self.move(pregrasp)
                 self.scan_pose()
                 continue
-            self.gripper.close_gripper()
-            self.wait_gripper()
+            self.gripper.start()  # 잡기
+            self.gripper.wait()  # 잡은 뒤에 들어 올림
 
             self.move(grasp + LIFT * UP)  # 살짝 들어 올리고
             self.move(pregrasp + LIFT * UP)  # 같은 높이로 잡기 직전 위치까지 빠짐
             movej(HOME_J, vel=VELOCITY, acc=ACC)
             mwait()
-            self.gripper.open_gripper()
-            self.wait_gripper()
+            self.gripper.start(MAX_OPEN)  # 홈에서 놓기
+            self.gripper.wait()
             self.get_logger().info("Released at home.")
             return
         self.get_logger().error(f"Gave up after {RETRIES} attempts.")
