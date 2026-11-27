@@ -3,8 +3,8 @@
    스캔 자세는 테이블을 내려다보도록 기울어도 되고, 집는 자세는 스캔 자세의 TCP 방향을 base -y로 맞추는 최소 회전
    (+ GRASP_ROLL)의 오일러각으로 계산합니다.
 2. 가장 가까운 목표(0번) 앞(base +y로 APPROACH)에 잡기 직전 위치(waypoint1)를 두고, 동작이 겹치지 않게 나눠 갑니다.
-   waypoint0: 스캔 위치와 waypoint1의 중간점으로 스캔 자세 그대로 movel (평행 이동만).
-   waypoint1: 집는 자세를 ikin으로 풀어 movej (남은 거리 + 축 정렬 TCP ∥ -y).
+   스캔 위치 → waypoint0(스캔 위치와 waypoint1의 중간점, 스캔 자세) → waypoint1(집는 자세, TCP ∥ -y)을
+   movesx 스플라인 한 번으로 연결해, 이동하면서 자세가 자연스럽게 축 정렬됩니다.
    두 구간(스캔·집는 자세 그리퍼)과 앞으로 들어가는 구간(집는 자세 그리퍼)을 장애물 점(base)으로 검사해, 막히면 재시도합니다.
 3. 보정: 잡기 직전 위치에서 다시 검출해 0번 segmentation 무게중심을 최종 grasp point로 정합니다 (1차 좌표와
    CORRECTION_LIMIT 이상 다르면 거절). 보정된 좌표까지 앞으로 들어가는 구간도 새 장애물 점으로 다시 검사합니다.
@@ -51,7 +51,7 @@ UP = np.array([0.0, 0.0, 1.0])
 DR_init.__dsr__id, DR_init.__dsr__model = ROBOT_ID, ROBOT_MODEL
 rclpy.init()
 DR_init.__dsr__node = rclpy.create_node("vision_pick_dsr", namespace=ROBOT_ID)
-from DSR_ROBOT2 import get_current_posx, ikin, movej, movel, mwait  # noqa: E402
+from DSR_ROBOT2 import get_current_posx, movej, movel, movesx, mwait, posx  # noqa: E402
 
 
 def angle_to_minus_y(pose):
@@ -116,7 +116,6 @@ class Picker(Node):
             self.get_logger().info("Waiting for /get_grasp_positions service...")
         self.scan_orientation, self.scan_frame = None, None  # 스캔 자세 (posx rx, ry, rz)와 그 grasp_frame (접근 경로용)
         self.orientation, self.frame = None, None            # 집는 자세 (TCP ∥ -y)와 그 grasp_frame (잡기·빠지기용)
-        self.solution = None                                  # 스캔 자세의 해 공간 (ikin용)
 
     def request(self):
         """detection 결과 {clusters, labels, targets{순번: base xyz}, target_points, obstacles} (mm)."""
@@ -185,13 +184,12 @@ class Picker(Node):
             raise RuntimeError(f"movel to {np.round(target, 1).tolist()} was rejected by the controller.")
         mwait()
 
-    def reach(self, position):
-        """position (base mm)의 집는 자세로 관절 이동합니다. 위치와 자세를 함께 바꾸는 movel은 경로 중 특이점·관절 한계로
-        거부될 수 있어, 스캔 자세의 해 공간(sol)으로 역기구학(ikin)을 풀어 movej합니다 (이동하며 자연스럽게 축 정렬)."""
-        target = np.asarray(position).tolist() + self.orientation
-        joints = [float(q) for q in ikin(target, self.solution)]
-        if movej(joints, vel=VELOCITY, acc=ACC) != 0:
-            raise RuntimeError(f"movej to {np.round(target, 1).tolist()} (joints {np.round(joints, 1).tolist()}) "
+    def spline(self, *waypoints):
+        """(position, orientation) 경유점들을 movesx 스플라인 한 번으로 이어서 지나갑니다 (자세도 경유점 사이에서 보간).
+        컨트롤러가 거부하면(반환 -1) 중단합니다."""
+        path = [posx(np.asarray(position).tolist() + list(orientation)) for position, orientation in waypoints]
+        if movesx(path, vel=VELOCITY, acc=ACC) != 0:
+            raise RuntimeError(f"movesx through {[np.round(list(p), 1).tolist() for p in path]} "
                                "was rejected by the controller.")
         mwait()
 
@@ -215,7 +213,7 @@ class Picker(Node):
     def run(self):
         for attempt in range(1, RETRIES + 1):  # 그리퍼는 시작할 때 건드리지 않고 잡기 직전에만 벌림
             self.scan_pose()
-            pose, self.solution = get_current_posx()  # posx와 해 공간(sol, ikin에 사용)
+            pose = get_current_posx()[0]
             scan, self.scan_orientation, self.scan_frame = np.array(pose[:3]), list(pose[3:]), grasp_frame(pose)
             self.orientation = grasp_orientation(pose)
             self.frame = grasp_frame(list(scan) + self.orientation)
@@ -226,8 +224,8 @@ class Picker(Node):
                 time.sleep(RETRY_DELAY)
                 continue
             coarse, pregrasp, waypoint0 = plan
-            self.move(waypoint0, self.scan_orientation)  # waypoint0: 스캔 자세 그대로 평행 이동
-            self.reach(pregrasp)  # waypoint1: 남은 거리 + 축 정렬 (ikin → movej)
+            # 스캔 위치 → waypoint0(스캔 자세) → waypoint1(집는 자세, TCP ∥ -y)을 movesx 한 번으로 연결
+            self.spline((waypoint0, self.scan_orientation), (pregrasp, self.orientation))
 
             final, reason = self.correct(coarse, pregrasp)  # 최종 grasp point·벌림 폭 보정
             if final is None:
