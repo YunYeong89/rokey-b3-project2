@@ -141,9 +141,9 @@ class Picker(Node):
         if hit:
             return None, f"moving forward from the pre-grasp point to the target {target.round(1).tolist()} is blocked: {hit}"
         route = [pregrasp]  # motion 1: 스캔 위치 → waypoint1, 이동 중 스캔 자세 → 집는 자세로 회전
-        obstacles = result["obstacles"]  # 회전 중 자세가 바뀌므로 시작·끝 자세 그리퍼 모두로 검사
-        hit = (PathChecker(obstacles, self.scan_frame).blocked(scan, *route)
-               or PathChecker(obstacles, self.frame).blocked(scan, *route))
+        middle = (scan + pregrasp) / 2  # 자세가 서서히 바뀌므로 앞 절반은 스캔 자세, 뒤 절반은 집는 자세 그리퍼로 검사
+        hit = (PathChecker(result["obstacles"], self.scan_frame).blocked(scan, middle)
+               or PathChecker(result["obstacles"], self.frame).blocked(middle, pregrasp))
         if hit:
             return None, f"motion 1 to waypoint1 (pre-grasp) is blocked: {hit}"
         self.get_logger().info(f"Target {target.round(1).tolist()}, waypoint1 {pregrasp.round(1).tolist()}")
