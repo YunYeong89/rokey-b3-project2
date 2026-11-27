@@ -27,7 +27,7 @@ from std_srvs.srv import Trigger
 from vision_project.onrobot import RG
 
 ROBOT_ID, ROBOT_MODEL = "dsr01", "m0609"
-VELOCITY, ACC = 60, 60
+VELOCITY, ACC = 12, 12  # movej deg/s·deg/s², movel mm/s·mm/s² (처음 60에서 1/5로 낮춤)
 SCAN_J = [-90.0, -54.91, 85.55, 0.0, 90.0, 90.0]  # 검출 자세 (movej), 테이블을 내려다봐도 됨
 HOME_J = [0, 0, 90, 0, 90, 90]                     # 잡은 물품을 가져와 그리퍼를 여는 자세
 GRASP_ROLL = 0.0                    # deg, 집는 자세를 TCP 축으로 더 돌리는 각도 (손가락이 세로로 벌어지면 90)
@@ -37,6 +37,7 @@ LIFT = 30.0                         # mm, 잡은 뒤 위로 올리는 높이
 CORRECTION_LIMIT = 50.0             # mm, 잡기 직전 위치에서 보정한 좌표가 1차 좌표와 달라도 되는 최대 거리
 AXIS_TOLERANCE = 5.0                # deg, 집을 때 TCP 방향(툴 z축)과 base -y 사이 허용 각도
 GRIP_MARGIN = 20.0                  # mm, 물체 가로 폭보다 더 벌리는 여유 (양쪽 합)
+GRASP_DEPTH = 15.0                  # mm, 손가락 끝(TCP)을 물체 중심(앞면 + 가로 폭/2)보다 더 넣는 깊이
 MAX_OPEN = 110.0                    # mm, RG2 최대 벌림
 GRIPPER_BOX = (120.0, 70.0, 180.0)  # mm, 그리퍼 상자: 가로 폭(손가락이 벌어지는 수평축), 세로 두께, TCP(손가락 끝)→손목 길이 — 실측해 조정
 MARGIN = 10.0                       # mm, 상자 여유
@@ -149,8 +150,9 @@ class Picker(Node):
         return None, f"every route to the pre-grasp point is blocked ({len(result['obstacles'])} obstacle points)"
 
     def correct(self, coarse, pregrasp):
-        """잡기 직전 위치에서 다시 검출해 최종 grasp point(0번 segmentation 무게중심)와 그리퍼 벌림 폭을 정합니다.
-        ((grasp point, 벌림 폭 mm), None) 또는 (None, 거절 사유)."""
+        """잡기 직전 위치에서 다시 검출해 최종 grasp point와 그리퍼 벌림 폭을 정합니다.
+        정면에서 본 segmentation 무게중심은 물체 앞면이라, TCP 방향으로 (가로 폭/2 + GRASP_DEPTH)만큼 더 들어가
+        손가락이 물체 중심을 감싸게 합니다. ((grasp point, 벌림 폭 mm), None) 또는 (None, 거절 사유)."""
         result = self.request()
         target, reason = self.target(result)
         if target is None:
@@ -158,17 +160,18 @@ class Picker(Node):
         shift = np.linalg.norm(target - coarse)
         if shift > CORRECTION_LIMIT:
             return None, f"corrected target moved {shift:.0f} mm from the first estimate (limit {CORRECTION_LIMIT:.0f})"
-        hit = PathChecker(result["obstacles"], self.frame).blocked(pregrasp, target)
-        if hit:
-            return None, f"moving forward to the corrected target is blocked: {hit}"
         across = np.asarray(result["target_points"], dtype=float).reshape(-1, 3) @ self.frame[:, 0]
         width = float(np.subtract(*np.percentile(across, (95, 5))))  # 가로 폭 (5~95 백분위)
         opening = width + GRIP_MARGIN
         if opening > MAX_OPEN:
             return None, f"object is {width:.0f} mm wide, needs {opening:.0f} mm opening (max {MAX_OPEN:.0f})"
-        self.get_logger().info(f"Grasp point corrected by {shift:.0f} mm: {target.round(1).tolist()}, "
-                               f"width {width:.0f} mm, opening {opening:.0f} mm")
-        return (target, opening), None
+        grasp = target + (width / 2 + GRASP_DEPTH) * self.frame[:, 2]  # 앞면 → 물체 중심 너머
+        hit = PathChecker(result["obstacles"], self.frame).blocked(pregrasp, grasp)
+        if hit:
+            return None, f"moving forward to the grasp point is blocked: {hit}"
+        self.get_logger().info(f"Front surface {target.round(1).tolist()} (corrected by {shift:.0f} mm), "
+                               f"width {width:.0f} mm → grasp point {grasp.round(1).tolist()}, opening {opening:.0f} mm")
+        return (grasp, opening), None
 
     def move(self, position):
         movel(np.asarray(position).tolist() + self.orientation, vel=VELOCITY, acc=ACC)
