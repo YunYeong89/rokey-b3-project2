@@ -149,16 +149,17 @@ class GraspStream(GroupStream):
     def process(self, frame):
         """(BGR, depth m) → 가까운 순 라벨을 그린 (overlay, 상태 문자열)."""
         masks, boxes, groups, z, total = self.rank(frame)
-        overlay = self.render(frame[0], masks, boxes, z)
+        overlay = self.render(frame[0], masks, boxes, groups, z)
         ranks = " ".join(f"{rank}:{dist:.2f}m" for rank, dist in enumerate(z))
         return overlay, f"Groups: {len(np.unique(groups))} | Merged {self.merged} | Grasp {len(z)}/{total} | {ranks}"
 
     @classmethod
-    def render(cls, bgr, masks, boxes, depths):
-        """가까운 순으로 정렬된 마스크를 순번 색(0번은 항상 같은 색)으로 칠하고 박스 상단 중앙에 '<순번> <거리>m'를 그립니다.
-        색을 DINOv3 그룹 번호가 아니라 순번으로 정해, 프레임마다 그룹 번호가 바뀌어도 화면은 가까운 순서만 따릅니다.
-        라벨이 겹치면 0이 맨 위에 보이도록 먼 것부터 그립니다."""
-        overlay, colors = cls.paint(bgr, masks, np.arange(len(masks)))
+    def render(cls, bgr, masks, boxes, groups, depths):
+        """가까운 순으로 정렬된 마스크를 칠하고 박스 상단 중앙에 '<순번> <거리>m'를 그립니다.
+        색은 같은 DINOv3 그룹이면 같은 색이되, 그룹 번호 대신 가까운 순으로 처음 나온 그룹 순서(첫째 색, 둘째 색 …)로 정해
+        프레임마다 그룹 번호가 새로 매겨져도 색이 흔들리지 않습니다. 라벨이 겹치면 0이 맨 위에 보이도록 먼 것부터 그립니다."""
+        slots = {group: slot for slot, group in enumerate(dict.fromkeys(groups.tolist()))}
+        overlay, colors = cls.paint(bgr, masks, np.array([slots[group] for group in groups.tolist()], dtype=int))
         for rank in reversed(range(len(masks))):
             x1, y1, x2, _ = boxes[rank].astype(int)
             text = f"{rank} {depths[rank]:.2f}m"
