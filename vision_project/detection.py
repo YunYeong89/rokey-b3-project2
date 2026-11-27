@@ -79,7 +79,9 @@ class GraspDetector(GraspStream):
         overlay = self.render(frame[0], masks, boxes, groups, depths)
         for u, v in points.astype(int):
             cv2.circle(overlay, (u, v), 5, (0, 0, 255), -1)
-        coords = " ".join(f"{rank}:({x:.0f},{y:.0f},{h:.0f})" for rank, (x, y, h) in enumerate(base))
+        # 서비스 키(전체 가까운 순 0, 1, …)와 화면 라벨(A0, B0 …)을 함께 표시합니다.
+        coords = " ".join(f"{rank}={label}:({x:.0f},{y:.0f},{h:.0f})"
+                          for rank, (label, (x, y, h)) in enumerate(zip(self.labels(groups)[1], base)))
         return overlay, f"Grasp {len(base)}/{total} | base mm {coords}"
 
     def get_positions(self, request, response):

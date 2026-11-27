@@ -150,19 +150,28 @@ class GraspStream(GroupStream):
         """(BGR, depth m) → 가까운 순 라벨을 그린 (overlay, 상태 문자열)."""
         masks, boxes, groups, z, total = self.rank(frame)
         overlay = self.render(frame[0], masks, boxes, groups, z)
-        ranks = " ".join(f"{rank}:{dist:.2f}m" for rank, dist in enumerate(z))
+        ranks = " ".join(f"{label}:{dist:.2f}m" for label, dist in zip(self.labels(groups)[1], z))
         return overlay, f"Groups: {len(np.unique(groups))} | Merged {self.merged} | Grasp {len(z)}/{total} | {ranks}"
+
+    @staticmethod
+    def labels(groups):
+        """가까운 순 그룹 ID (N,) → 마스크별 색 슬롯 (N,)과 라벨 목록.
+        그룹은 가까운 순으로 처음 나온 순서대로 A, B, …(= 색 슬롯 0, 1, …), 같은 그룹 안에서는 가까운 순으로 0, 1, …
+        예: [9, 5, 9] → 슬롯 [0, 1, 0], 라벨 ['A0', 'B0', 'A1']. 그룹 번호가 프레임마다 새로 매겨져도 결과는 같습니다."""
+        order = list(dict.fromkeys(groups.tolist()))
+        slots = [order.index(group) for group in groups.tolist()]
+        labels = [f"{chr(65 + slot % 26)}{slots[:k].count(slot)}" for k, slot in enumerate(slots)]
+        return np.array(slots, dtype=int), labels
 
     @classmethod
     def render(cls, bgr, masks, boxes, groups, depths):
-        """가까운 순으로 정렬된 마스크를 칠하고 박스 상단 중앙에 '<순번> <거리>m'를 그립니다.
-        색은 같은 DINOv3 그룹이면 같은 색이되, 그룹 번호 대신 가까운 순으로 처음 나온 그룹 순서(첫째 색, 둘째 색 …)로 정해
-        프레임마다 그룹 번호가 새로 매겨져도 색이 흔들리지 않습니다. 라벨이 겹치면 0이 맨 위에 보이도록 먼 것부터 그립니다."""
-        slots = {group: slot for slot, group in enumerate(dict.fromkeys(groups.tolist()))}
-        overlay, colors = cls.paint(bgr, masks, np.array([slots[group] for group in groups.tolist()], dtype=int))
+        """가까운 순으로 정렬된 마스크를 그룹 색(같은 그룹 = 같은 색)으로 칠하고 박스 상단 중앙에 '<그룹><그룹 안 순번> <거리>m'
+        (예: A0, A1, B0)를 그립니다. 라벨이 겹치면 가까운 것이 맨 위에 보이도록 먼 것부터 그립니다."""
+        slots, labels = cls.labels(groups)
+        overlay, colors = cls.paint(bgr, masks, slots)
         for rank in reversed(range(len(masks))):
             x1, y1, x2, _ = boxes[rank].astype(int)
-            text = f"{rank} {depths[rank]:.2f}m"
+            text = f"{labels[rank]} {depths[rank]:.2f}m"
             (w, h), base = cv2.getTextSize(text, FONT, 0.6, 2)
             x, y = (x1 + x2 - w) // 2, max(y1 - base - 4, h + 4)
             cv2.rectangle(overlay, (x - 4, y - h - 4), (x + w + 4, y + base + 2), colors[rank].tolist(), -1)
