@@ -16,7 +16,8 @@ import cv2
 from dsr_msgs2.srv import GetCurrentPosx
 import numpy as np
 import rclpy
-from rclpy.executors import SingleThreadedExecutor
+from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
 from rclpy.utilities import remove_ros_args
 from scipy.spatial.transform import Rotation
 from std_srvs.srv import Trigger
@@ -57,12 +58,14 @@ class GraspDetector(GraspStream):
         self.result = {"clusters": 0, "labels": [], "targets": {}, "target_points": [], "obstacles": []}  # 최신 응답
         self.updated = 0.0  # self.result를 만든 추론의 시작 시각
         self.node = rclpy.create_node("grasp_detection")
-        self.posx = self.node.create_client(GetCurrentPosx, POSX_SERVICE)
+        # get_positions가 새 추론을 기다리는 동안에도 posx 응답을 받도록 재진입 그룹 + 스레드 2개로 돌립니다.
+        group = ReentrantCallbackGroup()
+        self.posx = self.node.create_client(GetCurrentPosx, POSX_SERVICE, callback_group=group)
         while not self.posx.wait_for_service(timeout_sec=3.0):
             print(f"Waiting for {POSX_SERVICE} (is the robot bringup running and visible from this container?)",
                   flush=True)
-        self.node.create_service(Trigger, "get_grasp_positions", self.get_positions)
-        executor = SingleThreadedExecutor()
+        self.node.create_service(Trigger, "get_grasp_positions", self.get_positions, callback_group=group)
+        executor = MultiThreadedExecutor(num_threads=2)
         executor.add_node(self.node)
         Thread(target=executor.spin, name="grasp-service", daemon=True).start()
         self.name += " + base"
