@@ -24,6 +24,10 @@ RUN INDEX=$([ "$TARGETARCH" = arm64 ] && echo cpu || echo "$TORCH_CUDA") \
  && pip install "numpy<2" "opencv-python<4.12" pillow ftfy regex packaging tqdm hydra-core iopath \
       ultralytics scipy "pymodbus<3.7"
 
+# setuptools<80: torch가 최신 setuptools를 끌어오는데, 80부터 develop --editable이 빠져 colcon --symlink-install이
+# 실행 파일(lib/vision_project/*)을 설치하지 못합니다 (ros2 run에서 안 보임). 위 torch 층 캐시를 살리려고 따로 둡니다.
+RUN pip install "setuptools<80"
+
 # DRL API: 메시지와 DR_init·DSR_ROBOT2(dsr_common2/imp)만 별도 underlay(/opt/dsr_ws)에 빌드합니다.
 # /ros2_ws(마운트한 vision_project)에서 colcon build를 어떻게 돌려도 dsr 패키지를 다시 빌드하지 않도록 분리합니다
 # (같은 워크스페이스면 --symlink-install 재빌드가 이미 설치된 dsr_msgs2와 충돌). bringup(roboton)은 호스트에서 띄웁니다.
