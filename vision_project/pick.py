@@ -2,9 +2,9 @@
 1. SCAN_J로 movej 후 검출 요청. 선택된 묶음(cluster)이 정확히 1개일 때만 진행하고, 아니면 RETRY_DELAY 뒤 재시도합니다.
    스캔 자세는 테이블을 내려다보도록 기울어도 되고, 집는 자세는 스캔 자세의 TCP 방향을 base -y로 맞추는 최소 회전
    (+ GRASP_ROLL)으로 계산해 스캔 위치에서 제자리로 돌린 뒤 끝까지 고정합니다.
-2. 1차 좌표: 물품 앞(TCP 방향 반대로 APPROACH)에 잡기 직전 위치를 두고, 장애물 점(base)과 그리퍼 상자로
-   '스캔 위치 → 잡기 직전 위치'(바로 / 위로 돌아서) 경로와 '잡기 직전 위치 → 물품'(앞으로) 구간의 충돌을 검사해
-   막히지 않은 경로로 잡기 직전 위치까지 movel합니다. 모두 막히면 재시도합니다.
+2. 1차 좌표: 물품 앞(TCP 방향 반대로 APPROACH)에 잡기 직전 위치를 두고, 스캔 높이를 유지한 채 base -y로 먼저
+   다가간 뒤(물품 앞 위) 수직으로 내려 잡기 직전 위치에 도착합니다. 처음부터 팔을 내리지 않아 이후 동작이 막히지 않게 합니다.
+   이 경로와 '잡기 직전 위치 → 물품'(앞으로) 구간을 장애물 점(base)과 그리퍼 상자로 검사해, 막히면 재시도합니다.
 3. 보정: 잡기 직전 위치에서 다시 검출해 0번 segmentation 무게중심을 최종 grasp point로 정합니다 (1차 좌표와
    CORRECTION_LIMIT 이상 다르면 거절). 보정된 좌표까지 앞으로 들어가는 구간도 새 장애물 점으로 다시 검사합니다.
 4. 그리퍼는 가로(TCP 방향에 수직인 수평축)로 열고 닫도록 고정합니다. 물체 점의 가로 폭 + GRIP_MARGIN만큼 벌린 뒤
@@ -27,7 +27,7 @@ from std_srvs.srv import Trigger
 from vision_project.onrobot import RG
 
 ROBOT_ID, ROBOT_MODEL = "dsr01", "m0609"
-VELOCITY, ACC = 12, 12  # movej deg/s·deg/s², movel mm/s·mm/s² (처음 60에서 1/5로 낮춤)
+VELOCITY, ACC = 4, 4  # movej deg/s·deg/s², movel mm/s·mm/s² (60 → 12 → 4로 낮춤)
 SCAN_J = [-90.0, -54.91, 85.55, 0.0, 90.0, 90.0]  # 검출 자세 (movej), 테이블을 내려다봐도 됨
 HOME_J = [0, 0, 90, 0, 90, 90]                     # 잡은 물품을 가져와 그리퍼를 여는 자세
 GRASP_ROLL = 0.0                    # deg, 집는 자세를 TCP 축으로 더 돌리는 각도 (손가락이 세로로 벌어지면 90)
@@ -139,15 +139,14 @@ class Picker(Node):
         hit = checker.blocked(pregrasp, target)
         if hit:
             return None, f"moving forward from the pre-grasp point to the target {target.round(1).tolist()} is blocked: {hit}"
-        lifted = np.r_[pregrasp[:2], max(scan[2], pregrasp[2] + APPROACH)]
-        for name, route in {"direct": [pregrasp], "over": [lifted, pregrasp]}.items():
-            hit = checker.blocked(scan, *route)
-            if not hit:
-                self.get_logger().info(f"Target {target.round(1).tolist()}, pre-grasp {pregrasp.round(1).tolist()} "
-                                       f"via '{name}' route")
-                return (target, pregrasp, route), None
-            self.get_logger().info(f"Route '{name}' to the pre-grasp point is blocked: {hit}")
-        return None, f"every route to the pre-grasp point is blocked ({len(result['obstacles'])} obstacle points)"
+        above = np.r_[pregrasp[:2], scan[2]]  # 스캔 높이 그대로 -y(물품 앞 위)로 먼저 다가감
+        route = [above, pregrasp]             # 그 뒤 수직으로 내려 잡기 직전 위치
+        hit = checker.blocked(scan, *route)
+        if hit:
+            return None, f"route to the pre-grasp point (-y at scan height, then down) is blocked: {hit}"
+        self.get_logger().info(f"Target {target.round(1).tolist()}, above {above.round(1).tolist()}, "
+                               f"pre-grasp {pregrasp.round(1).tolist()}")
+        return (target, pregrasp, route), None
 
     def correct(self, coarse, pregrasp):
         """잡기 직전 위치에서 다시 검출해 최종 grasp point와 그리퍼 벌림 폭을 정합니다.
