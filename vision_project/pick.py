@@ -2,7 +2,9 @@
 1. SCAN_J로 movej 후 검출 요청. 선택된 묶음(cluster)이 정확히 1개일 때만 진행하고, 아니면 RETRY_DELAY 뒤 재시도합니다.
    그리퍼 배향은 스캔 자세 그대로 끝까지 유지하고(축 정렬 없음), 모든 이동은 위치만 바꿉니다.
 2. 가장 가까운 목표(0번)에서 TCP 방향 반대로 APPROACH만큼 물러난 곳에 잡기 직전 위치(waypoint1)를 두고,
-   스캔 위치 → waypoint0(스캔 위치와 waypoint1의 중간점) → waypoint1을 movesx 스플라인 한 번으로 지나갑니다.
+   스캔 위치 → waypoint0(스캔 위치와 waypoint1의 중간점) → waypoint1을 관절 공간 스플라인(각 경유점을 스캔 자세의
+   해 공간으로 ikin → movesj) 한 번으로 지나갑니다. 작업 공간 스플라인(movesx)은 특이점 근처에서 실행 중 멈춰서
+   관절 공간으로 보간하고, 직선 이동(movel)은 특이점 근처에서 멈추지 않고 감속하도록 DR_VAR_VEL로 둡니다.
    두 구간과 앞으로 들어가는 구간을 그리퍼 상자로 장애물 점(base)과 검사해, 막히면 재시도합니다.
 3. 보정: 잡기 직전 위치에서 다시 검출해 0번 segmentation 무게중심을 최종 grasp point로 정합니다 (1차 좌표와
    CORRECTION_LIMIT 이상 다르면 거절). 보정된 좌표까지 앞으로 들어가는 구간도 새 장애물 점으로 다시 검사합니다.
@@ -10,7 +12,7 @@
    벌립니다 (MAX_OPEN 초과면 거절). 그리퍼는 GripperWorker 스레드에서 돌아 로봇 이동과 분리됩니다: 벌리기를 시작하면서
    동시에 TCP 방향으로 movel해 들어가고, grasp point에 도착하면 벌리기 완료를 기다린 뒤 잡습니다.
 5. 잡으면 LIFT만큼 위로 올린 뒤 같은 높이로 잡기 직전 위치 위까지 movel로 빠지고, HOME_J로 movej해 그리퍼를 엽니다.
-고정 자세(SCAN_J, HOME_J)는 movej, 집는 동작은 movel·movesx이며, 이동마다 실제로 도착했는지 확인합니다.
+고정 자세(SCAN_J, HOME_J)는 movej, 집는 동작은 movel·movesj이며, 이동마다 실제로 도착했는지 확인합니다.
 동작은 DRL API(DSR_ROBOT2), 그리퍼는 Modbus TCP(onrobot.RG)이며, 그리퍼가 안전 정지하거나 GRIPPER_TIMEOUT을 넘기면 중단합니다."""
 
 import json
@@ -43,8 +45,9 @@ MARGIN = 5.0                        # mm, 상자 여유
 MIN_HITS = 10                       # 상자 안 장애물 점이 이 개수 이상일 때만 막힘으로 판정 (depth 잡음 무시)
 STEP = 10.0                         # mm, 경로를 따라 상자를 검사하는 간격
 RETRIES, RETRY_DELAY = 10, 2.0      # 재시도 횟수, 간격(s)
-ARRIVAL_POSITION, ARRIVAL_ANGLE = 5.0, 2.0  # mm, deg: movel·movesx 뒤 목표와 이만큼 넘게 다르면 도중에 멈춘 것으로 봄
+ARRIVAL_POSITION, ARRIVAL_ANGLE = 5.0, 2.0  # mm, deg: movel·movesj 뒤 목표와 이만큼 넘게 다르면 도중에 멈춘 것으로 봄
 ARRIVAL_JOINT = 1.0                 # deg: movej 뒤 각 관절이 목표와 이만큼 넘게 다르면 도중에 멈춘 것으로 봄
+WRIST_SINGULAR = 10.0               # deg: 경유점의 |J5|가 이보다 작으면 손목 특이점 근처라고 경고
 GRIPPER_NAME, TOOLCHARGER_IP, TOOLCHARGER_PORT = "rg2", "192.168.1.1", "502"
 UP = np.array([0.0, 0.0, 1.0])
 
@@ -52,7 +55,8 @@ UP = np.array([0.0, 0.0, 1.0])
 DR_init.__dsr__id, DR_init.__dsr__model = ROBOT_ID, ROBOT_MODEL
 rclpy.init()
 DR_init.__dsr__node = rclpy.create_node("vision_pick_dsr", namespace=ROBOT_ID)
-from DSR_ROBOT2 import get_current_posj, get_current_posx, movej, movel, movesx, mwait, posx  # noqa: E402
+from DSR_ROBOT2 import (DR_VAR_VEL, get_current_posj, get_current_posx, ikin, movej, movel, movesj,  # noqa: E402
+                        mwait, posj, set_singularity_handling)
 
 
 def grasp_frame(pose):
@@ -152,6 +156,7 @@ class Picker(Node):
         while not self.client.wait_for_service(timeout_sec=3.0):
             self.get_logger().info("Waiting for /get_grasp_positions service...")
         self.orientation, self.frame = None, None  # 스캔 자세의 그리퍼 배향 (posx rx, ry, rz)과 그 grasp_frame
+        self.solution = None                       # 스캔 자세의 해 공간 (ikin으로 같은 팔 모양 유지)
 
     def request(self):
         """detection 결과 {clusters, labels, targets{순번: base xyz}, target_points, obstacles} (mm)."""
@@ -221,14 +226,24 @@ class Picker(Node):
         self.arrived("movel", target)
 
     def spline(self, *positions):
-        """positions (base mm)를 스캔 자세 배향 그대로 movesx 스플라인 한 번으로 지나갑니다.
-        거부되거나(반환 -1) 마지막 경유점에 닿기 전에 멈추면 중단합니다."""
-        path = [posx(np.asarray(position).tolist() + self.orientation) for position in positions]
-        if movesx(path, vel=VELOCITY, acc=ACC) != 0:
-            raise RuntimeError(f"movesx through {[np.round(list(p), 1).tolist() for p in path]} "
-                               "was rejected by the controller.")
+        """positions (base mm)를 스캔 자세 배향 그대로, 각 경유점을 ikin(스캔 자세 해 공간)으로 관절값으로 바꿔
+        movesj 관절 공간 스플라인 한 번으로 지나갑니다. 경유점에서는 정확히 그 posx이고, 사이는 관절 보간이라
+        특이점 때문에 실행 중 멈추지 않습니다. 경유점의 J5가 0°에 가까우면(손목 특이점) 경고하고,
+        ikin이 실패하거나 거부·도중 정지 시 중단합니다."""
+        targets = [np.asarray(position).tolist() + self.orientation for position in positions]
+        joints = []
+        for target in targets:
+            solved = ikin(target, self.solution)
+            if isinstance(solved, int):
+                raise RuntimeError(f"ikin failed for {np.round(target, 1).tolist()} (unreachable?).")
+            joints.append([float(q) for q in solved])
+            level = "warn" if abs(joints[-1][4]) < WRIST_SINGULAR else "info"
+            getattr(self.get_logger(), level)(f"Waypoint {np.round(target[:3], 1).tolist()} joints "
+                                              f"{np.round(joints[-1], 1).tolist()} (J5 {joints[-1][4]:.1f} deg)")
+        if movesj([posj(q) for q in joints], vel=VELOCITY, acc=ACC) != 0:
+            raise RuntimeError(f"movesj through {[np.round(q, 1).tolist() for q in joints]} was rejected by the controller.")
         mwait()
-        self.arrived("movesx", list(path[-1]))
+        self.arrived("movesj", targets[-1])
 
     def arrived(self, name, target):
         """DRL 반환값 0은 '명령 접수'일 뿐이라 실행 중 특이점·관절 한계로 멈춰도 알 수 없으므로, 이동 뒤 실제 posx를
@@ -257,9 +272,11 @@ class Picker(Node):
         self.move_joints(SCAN_J, "SCAN_J")
 
     def run(self):
+        set_singularity_handling(DR_VAR_VEL)  # 직선 이동(movel)이 특이점 근처에서 멈추지 않고 감속하며 통과
         for attempt in range(1, RETRIES + 1):  # 그리퍼는 시작할 때 건드리지 않고 잡기 직전에만 벌림
             self.scan_pose()
-            pose = list(get_current_posx()[0])
+            pose, self.solution = get_current_posx()
+            pose = list(pose)
             scan, self.orientation, self.frame = np.array(pose[:3]), pose[3:], grasp_frame(pose)
 
             plan, reason = self.plan(scan)
@@ -268,7 +285,7 @@ class Picker(Node):
                 time.sleep(RETRY_DELAY)
                 continue
             coarse, pregrasp, waypoint0 = plan
-            self.spline(waypoint0, pregrasp)  # 스캔 위치 → waypoint0 → waypoint1, 배향 유지
+            self.spline(waypoint0, pregrasp)  # 스캔 위치 → waypoint0 → waypoint1, 배향 유지 (관절 공간 스플라인)
 
             final, reason = self.correct(coarse, pregrasp)  # 최종 grasp point·벌림 폭 보정
             if final is None:
