@@ -44,4 +44,6 @@ RUN git clone -b "$DOOSAN_BRANCH" --depth 1 "$DOOSAN_REPO" /tmp/doosan \
 WORKDIR /ros2_ws
 RUN mkdir -p src && echo 'source /opt/ros/jazzy/setup.bash && source /opt/dsr_ws/install/setup.bash && \
 [ -f /ros2_ws/install/setup.bash ] && source /ros2_ws/install/setup.bash' >> /root/.bashrc
+# vision_project 노드가 model을 찾는 위치 (run.sh가 vision_project를 여기에 마운트). 소스 기준 경로 추정 대신 명시합니다.
+ENV VISION_MODEL_DIR=/ros2_ws/src/vision_project/model
 CMD ["sleep", "infinity"]

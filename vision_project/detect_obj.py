@@ -4,7 +4,6 @@
   ros2 run vision_project detect_obj --object coke              # 창 + 토픽
   ros2 run vision_project detect_obj --object coke --headless   # 토픽만 (호스트에서 rqt_image_view /detect_obj/image)"""
 
-from pathlib import Path
 import sys
 from threading import Thread
 
@@ -13,11 +12,11 @@ import rclpy
 from rclpy.utilities import remove_ros_args
 from sensor_msgs.msg import Image
 
+from vision_project.model_loader import load_grasp_clustering
 from vision_project.realsense import RosCamera
 
-MODEL_DIR = Path(__file__).resolve().parents[1] / "model"  # colcon --symlink-install이면 소스의 vision_project/model
-sys.path.insert(0, str(MODEL_DIR / "DINOv3"))
-from grasp_clustering import GraspStream, create_parser  # noqa: E402
+grasp_clustering = load_grasp_clustering()
+GraspStream, create_parser = grasp_clustering.GraspStream, grasp_clustering.create_parser
 
 
 class ObjectDetector(GraspStream):

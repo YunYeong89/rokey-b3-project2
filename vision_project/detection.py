@@ -18,11 +18,11 @@ from rclpy.utilities import remove_ros_args
 from scipy.spatial.transform import Rotation
 from std_srvs.srv import Trigger
 
+from vision_project.model_loader import load_grasp_clustering
 from vision_project.realsense import RosCamera
 
 ROBOT_ID, ROBOT_MODEL = "dsr01", "m0609"
 GRIPPER2CAM = Path(get_package_share_directory("vision_project")) / "resource" / "T_gripper2camera.npy"
-MODEL_DIR = Path(__file__).resolve().parents[1] / "model"  # colcon --symlink-install이면 소스의 vision_project/model
 
 # DRL API(DSR_ROBOT2)는 import 전에 DR_init에 로봇 ID·모델·노드가 등록되어 있어야 합니다.
 DR_init.__dsr__id, DR_init.__dsr__model = ROBOT_ID, ROBOT_MODEL
@@ -30,8 +30,8 @@ rclpy.init()
 DR_init.__dsr__node = rclpy.create_node("grasp_detection_dsr", namespace=ROBOT_ID)
 from DSR_ROBOT2 import get_current_posx  # noqa: E402
 
-sys.path.insert(0, str(MODEL_DIR / "DINOv3"))
-from grasp_clustering import GraspStream, create_parser  # noqa: E402
+grasp_clustering = load_grasp_clustering()
+GraspStream, create_parser = grasp_clustering.GraspStream, grasp_clustering.create_parser
 
 
 def pose_matrix(x, y, z, rx, ry, rz):
