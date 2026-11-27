@@ -6,14 +6,12 @@
   "target_points": [[x, y, z], …] (0번 물체 점, 그리퍼 벌림 폭 계산용), "obstacles": [[x, y, z], …] (0번을 뺀 depth 점)}."""
 
 import json
-from pathlib import Path
 import sys
 from threading import Thread
 import time
 
-from ament_index_python.packages import get_package_share_directory
 import cv2
-from dsr_msgs2.srv import GetCurrentPosx
+from dsr_msgs2.srv import GetCurrentPosx, SetCurrentTcp, SetCurrentTool
 import numpy as np
 import rclpy
 from rclpy.callback_groups import ReentrantCallbackGroup
@@ -22,13 +20,14 @@ from rclpy.utilities import remove_ros_args
 from scipy.spatial.transform import Rotation
 from std_srvs.srv import Trigger
 
+from vision_project import calibration
 from vision_project.model_loader import load_grasp_clustering
 from vision_project.realsense import RosCamera
 
-GRIPPER2CAM = Path(get_package_share_directory("vision_project")) / "resource" / "T_gripper2camera.npy"
-# 두산 컨트롤러의 현재 TCP 자세 서비스. DRL(DSR_ROBOT2)을 쓰지 않고 직접 불러 이미지 안 DRL 버전·실행기와 무관하게 합니다.
-POSX_SERVICE = "/dsr01/dsr_controller2/aux_control/get_current_posx"
-POSX_TIMEOUT = 2.0              # s, 응답을 기다리는 최대 시간 (넘으면 그 프레임은 건너뜀)
+# 두산 컨트롤러 서비스. DRL(DSR_ROBOT2)을 쓰지 않고 직접 불러 이미지 안 DRL 버전·실행기와 무관하게 합니다.
+DSR = "/dsr01/dsr_controller2/"
+POSX_SERVICE = DSR + "aux_control/get_current_posx"  # 현재 TCP 자세
+POSX_TIMEOUT = 2.0              # s, 컨트롤러 서비스 응답을 기다리는 최대 시간 (posx는 넘으면 그 프레임을 건너뜀)
 OBSTACLE_STRIDE = 4             # px, 장애물 점을 뽑는 간격
 OBSTACLE_VOXEL = 15             # mm, 장애물 점을 줄이는 격자 크기
 OBSTACLE_RANGE = (0.2, 1.5)     # m, 그리퍼가 비치는 가까운 점과 먼 배경을 뺀 depth 범위
@@ -54,7 +53,8 @@ class GraspDetector(GraspStream):
 
     def __init__(self, args):
         super().__init__(args)
-        self.gripper2cam = np.load(GRIPPER2CAM)
+        self.gripper2cam = calibration.load()
+        print(f"T_gripper2camera from {calibration.FILE}:\n{np.round(self.gripper2cam, 3)}", flush=True)
         self.result = {"clusters": 0, "labels": [], "targets": {}, "target_points": [], "obstacles": []}  # 최신 응답
         self.updated = 0.0  # self.result를 만든 추론의 시작 시각
         self.node = rclpy.create_node("grasp_detection")
@@ -68,6 +68,14 @@ class GraspDetector(GraspStream):
         executor = MultiThreadedExecutor(num_threads=2)
         executor.add_node(self.node)
         Thread(target=executor.spin, name="grasp-service", daemon=True).start()
+        # posx가 T_gripper2camera와 같은 기준이 되도록 보정 때의 공구·TCP를 켭니다 (calibration.py).
+        for srv_type, service, name in ((SetCurrentTool, "tool/set_current_tool", calibration.TOOL_NAME),
+                                        (SetCurrentTcp, "tcp/set_current_tcp", calibration.TCP_NAME)):
+            client = self.node.create_client(srv_type, DSR + service, callback_group=group)
+            ready = client.wait_for_service(timeout_sec=3.0)
+            response = self.wait(client.call_async(srv_type.Request(name=name))) if ready else None
+            print(f"{service} '{name}': "
+                  f"{'ok' if response and response.success else 'FAILED (check the name on the teach pendant)'}", flush=True)
         self.name += " + base"
 
     def open_source(self):
@@ -108,11 +116,16 @@ class GraspDetector(GraspStream):
     def current_pose(self):
         """두산 컨트롤러의 현재 TCP posx [x, y, z, rx, ry, rz] (base, mm·ZYZ deg). POSX_TIMEOUT 안에 응답이 없으면 None.
         응답은 서비스 executor 스레드가 받고, 추론 스레드는 future가 끝나기만 기다립니다."""
-        future = self.posx.call_async(GetCurrentPosx.Request(ref=0))
+        response = self.wait(self.posx.call_async(GetCurrentPosx.Request(ref=0)))
+        return list(response.task_pos_info[0].data[:6]) if response else None
+
+    @staticmethod
+    def wait(future):
+        """서비스 응답을 POSX_TIMEOUT까지 기다려 돌려줍니다 (없으면 None). 응답은 서비스 executor 스레드가 받습니다."""
         deadline = time.monotonic() + POSX_TIMEOUT
         while not future.done() and time.monotonic() < deadline:
             time.sleep(0.005)
-        return list(future.result().task_pos_info[0].data[:6]) if future.done() else None
+        return future.result() if future.done() else None
 
     def to_base(self, u, v, z, base2cam):
         """픽셀 (u, v)와 depth z (m) → base 좌표 점 (N, 3) mm (T_gripper2camera 단위)."""

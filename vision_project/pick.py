@@ -17,6 +17,7 @@ import rclpy
 from rclpy.node import Node
 from std_srvs.srv import Trigger
 
+from vision_project.calibration import TCP_NAME, TOOL_NAME  # T_gripper2camera 보정 때의 TCP·공구 (detection과 같은 기준)
 from vision_project.onrobot import RG
 
 ROBOT_ID, ROBOT_MODEL = "dsr01", "m0609"
@@ -30,8 +31,6 @@ OPEN_WIDTH = 100.0                                 # mm, 잡기 전에 벌리는
 GRIPPER_TIMEOUT = 5.0                              # s, 그리퍼 동작을 기다리는 최대 시간
 SHOULDER_Z, UPPER, FOREARM = 134.5, 411.0, 368.0  # mm, M0609 base→J2 높이, J2→J3(상완), J3→J5(전완) (URDF)
 GRIPPER_NAME, TOOLCHARGER_IP, TOOLCHARGER_PORT = "rg2", "192.168.1.1", "502"
-# 티치 펜던트에 등록된 공구 무게·TCP 이름. T_gripper2camera 보정 때와 같아야 posx(→ detection base 좌표)가 맞습니다.
-TOOL_WEIGHT, TCP_NAME = "Tool Weight", "GripperDA_v1"
 
 # DRL API(DSR_ROBOT2)는 import 전에 DR_init에 로봇 ID·모델·노드가 등록되어 있어야 합니다.
 DR_init.__dsr__id, DR_init.__dsr__model = ROBOT_ID, ROBOT_MODEL
@@ -129,7 +128,7 @@ class Picker(Node):
         self.move_joints(SCAN_J, "SCAN_J")
 
     def run(self):
-        set_tool(TOOL_WEIGHT)  # 공구 무게 (충돌 감지)
+        set_tool(TOOL_NAME)  # 공구 무게 (충돌 감지)
         set_tcp(TCP_NAME)      # posx 기준점 = 보정 때 TCP
         self.get_logger().info(f"Tool '{get_tool()}', TCP '{get_tcp()}'")
         set_singularity_handling(DR_VAR_VEL)  # 작업 공간 이동이 특이점 근처에서 멈추지 않고 감속
