@@ -1,0 +1,435 @@
+<title>Packing Planning 진행 현황</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: 단일 읽기 컬럼(본문 ~68ch) + 표·도식만 넓게. 로봇 작업 시트처럼 mm·g 단위와 상태 칩을 전면에 */
+:root {
+  --bg: #f6f7f8;
+  --surface: #ffffff;
+  --fg: #1b2127;
+  --muted: #5b6672;
+  --line: #dde2e7;
+  --accent: #0f6e78;
+  --accent-soft: #e2f1f2;
+  --ok: #1f7a45;   --ok-soft: #e3f3ea;
+  --warn: #9a6200; --warn-soft: #fbf0dc;
+  --bad: #b3261e;  --bad-soft: #fbe6e4;
+  --c-collision: #c2410c;
+  --c-boundary: #7c3aed;
+  --c-support: #0e7490;
+  --font-display: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-body: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --s-1: .8125rem; --s0: 1rem; --s1: 1.1875rem; --s2: 1.5rem; --s3: 2rem;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12161a; --surface: #1a2026; --fg: #e4e9ee; --muted: #9aa6b2; --line: #2c343c;
+  --accent: #5cc2cc; --accent-soft: #163338;
+  --ok: #6fd39a; --ok-soft: #173225; --warn: #f0b85a; --warn-soft: #3a2c12; --bad: #f2867d; --bad-soft: #3d1c1a;
+  --c-collision: #fb923c; --c-boundary: #a78bfa; --c-support: #38bdf8;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12161a; --surface: #1a2026; --fg: #e4e9ee; --muted: #9aa6b2; --line: #2c343c;
+  --accent: #5cc2cc; --accent-soft: #163338;
+  --ok: #6fd39a; --ok-soft: #173225; --warn: #f0b85a; --warn-soft: #3a2c12; --bad: #f2867d; --bad-soft: #3d1c1a;
+  --c-collision: #fb923c; --c-boundary: #a78bfa; --c-support: #38bdf8;
+  color-scheme: dark }
+
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: var(--s0); line-height: 1.7; }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 2.5rem 4rem;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 3rem; }
+section { display: grid; gap: 1rem; min-width: 0; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.3; margin: 0; }
+h1 { font-size: clamp(1.75rem, 4vw, 2.4rem); font-weight: 700; }
+h2 { font-size: var(--s2); font-weight: 700; padding-top: .25rem; border-top: 2px solid var(--fg); }
+h3 { font-size: var(--s1); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font-family: var(--font-mono); font-size: var(--s-1); letter-spacing: .06em; color: var(--accent); text-transform: uppercase; }
+.lede { font-size: var(--s1); color: var(--muted); max-width: 62ch; }
+.muted { color: var(--muted); }
+.small { font-size: var(--s-1); }
+code, .mono { font-family: var(--font-mono); font-size: .9em; }
+code { background: var(--accent-soft); padding: .05em .35em; border-radius: 4px; word-break: break-word; }
+ul, ol { margin: 0; padding-left: 1.3rem; display: grid; gap: .35rem; max-width: 70ch; }
+a { color: var(--accent); }
+
+header.top { display: grid; gap: .75rem; }
+.meta { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; font-size: var(--s-1); color: var(--muted); }
+
+/* 핵심 결론 박스 */
+.verdict { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 1.25rem 1.4rem; display: grid; gap: .9rem; }
+.verdict ol { gap: .6rem; }
+.verdict li::marker { font-family: var(--font-mono); color: var(--accent); }
+
+/* 숫자 3개 */
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.stat { background: var(--surface); padding: 1rem 1.1rem; display: grid; gap: .2rem; align-content: start; }
+.stat b { font-family: var(--font-display); font-size: var(--s3); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stat span { font-size: var(--s-1); color: var(--muted); }
+@media (max-width: 620px) { .stats { grid-template-columns: 1fr; } }
+
+/* 칩 */
+.chip { display: inline-block; font-size: .78rem; font-weight: 700; padding: .1rem .55rem; border-radius: 999px; white-space: nowrap; font-family: var(--font-body); }
+.chip.ok { background: var(--ok-soft); color: var(--ok); }
+.chip.warn { background: var(--warn-soft); color: var(--warn); }
+.chip.bad { background: var(--bad-soft); color: var(--bad); }
+.chip.info { background: var(--accent-soft); color: var(--accent); }
+
+/* 표 */
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: .55rem .75rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--font-display); font-weight: 600; font-size: .82rem; color: var(--muted); background: var(--bg); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; }
+td.best { font-weight: 700; color: var(--ok); }
+.diff-bad { color: var(--bad); font-weight: 700; }
+.diff-ok { color: var(--ok); }
+
+/* 실험 카드 3개 */
+.trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+@media (max-width: 760px) { .trio { grid-template-columns: 1fr; } }
+.exp { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.1rem; display: grid; gap: .5rem; align-content: start; min-width: 0; }
+.exp .tag { font-family: var(--font-mono); font-size: var(--s-1); color: var(--muted); }
+.exp h3 { font-size: 1.05rem; }
+.exp ul { font-size: .9rem; padding-left: 1.1rem; }
+.exp.hl { border-color: var(--accent); box-shadow: inset 0 3px 0 var(--accent); }
+
+/* 진행 단계 */
+.steps { list-style: none; padding: 0; display: grid; gap: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; max-width: none; }
+.steps li { display: grid; grid-template-columns: 2.2rem minmax(0, 1fr) auto; gap: .75rem; align-items: baseline; padding: .6rem .9rem; border-bottom: 1px solid var(--line); }
+.steps li:last-child { border-bottom: 0; }
+.steps .n { font-family: var(--font-mono); color: var(--muted); font-size: var(--s-1); }
+.steps .t { min-width: 0; }
+.steps .t small { display: block; color: var(--muted); font-size: var(--s-1); line-height: 1.5; }
+
+/* 도식 */
+.figure { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 1rem; overflow-x: auto; display: grid; gap: .6rem; }
+.figure figcaption { font-size: var(--s-1); color: var(--muted); }
+figure { margin: 0; }
+.flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .5rem; align-items: stretch; min-width: 640px; }
+.flow .box { border: 1px solid var(--line); border-radius: 8px; padding: .65rem .7rem; font-size: .85rem; line-height: 1.5; background: var(--bg); display: grid; gap: .2rem; align-content: start; position: relative; }
+.flow .box b { font-family: var(--font-display); font-size: .92rem; }
+.flow .box.key { border-color: var(--accent); background: var(--accent-soft); }
+.flow .box:not(:last-child)::after { content: "→"; position: absolute; right: -.62rem; top: 50%; transform: translateY(-50%); color: var(--muted); font-weight: 700; }
+
+/* 막대 차트 */
+.chart svg { width: 100%; height: auto; display: block; min-width: 560px; }
+.chart text { fill: var(--fg); font-family: var(--font-body); }
+.chart .axis { stroke: var(--line); }
+.legend { display: flex; flex-wrap: wrap; gap: .4rem 1.1rem; font-size: var(--s-1); color: var(--muted); }
+.legend i { display: inline-block; width: .8rem; height: .8rem; border-radius: 2px; vertical-align: -1px; margin-right: .35rem; }
+
+.callout { border-left: 3px solid var(--warn); background: var(--warn-soft); padding: .8rem 1rem; border-radius: 0 8px 8px 0; display: grid; gap: .4rem; }
+.callout.info { border-left-color: var(--accent); background: var(--accent-soft); }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+@media (max-width: 760px) { .two { grid-template-columns: 1fr; } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.1rem; display: grid; gap: .5rem; align-content: start; min-width: 0; }
+img.plot { border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+.paths { font-family: var(--font-mono); font-size: .82rem; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: .9rem 1rem; overflow-x: auto; white-space: pre; line-height: 1.65; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">ROKEY 편의점 자동 포장 로봇 · Packing Planning</div>
+  <h1>LLM 포장 계획 비교 실험: 지금까지의 진행 상황</h1>
+  <p class="lede">주문 상품 7개를 봉투에 어떻게 담을지 LLM(OpenAI API)에게 계획하게 했습니다. 상품 정보를 어떻게 주느냐에 따라 계획 품질이 달라지는지 비교한 기록입니다.</p>
+  <div class="meta"><span>작성일 2026-11-27</span><span>모델 gpt-4o (gpt-4o-2024-08-06)</span><span>브랜치 feature/pickup-web · <code>packing_planning/</code></span></div>
+</header>
+
+<section>
+  <h2>한눈에 보기</h2>
+  <div class="verdict">
+    <ol>
+      <li><b>세 가지 실험을 모두 실제로 실행했습니다.</b> Text-only, Text + 사진, Text + 물리 특성 DB, 각 조건별 2회(본 실험 1회 + 예비 1회)입니다.</li>
+      <li><b>물리 특성 DB를 준 경우가 가장 좋았습니다.</b> 규칙 위반이 18건에서 4~7건으로 줄었습니다.</li>
+      <li><b>하지만 검증을 통과한 계획은 아직 0개입니다.</b> 정보를 정확히 줘도 LLM이 좌표(mm) 계산을 자주 틀렸습니다.</li>
+      <li><b>다음 방향:</b> LLM은 순서와 쌓을 관계만 정하고, 좌표는 Python 배치기가 계산하는 구조로 바꾸는 것을 권장합니다.</li>
+    </ol>
+  </div>
+  <div class="stats">
+    <div class="stat"><b>18 → 7</b><span>위반 건수 (Text-only → Text + 물리 특성, 본 실험)</span></div>
+    <div class="stat"><b>0 / 6</b><span>Validator를 통과한 계획 수 (총 6회 호출)</span></div>
+    <div class="stat"><b>약 $0.08</b><span>API 비용 추정치, 6회 합계 (청구액 아님)</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>무엇을 실험했나</h2>
+  <p>로봇은 Doosan M0609 팔과 RG2 그리퍼로 상품을 비닐봉투에 담습니다. 봉투는 고정 용기에 끼워 모양을 유지하고, 안쪽 공간은 직육면체로 단순화했습니다. 이번 단계는 로봇 없이 <b>계획만</b> 비교합니다.</p>
+
+  <div class="two">
+    <div class="panel">
+      <h3>테스트 주문 (총 7개)</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>상품</th><th class="num">수량</th><th>DB 치수 W×D×H (mm)</th><th class="num">무게</th><th>위에 쌓기</th></tr></thead>
+        <tbody>
+          <tr><td>코카콜라 355mL 캔</td><td class="num">2</td><td class="mono">66×66×122</td><td class="num">370 g</td><td><span class="chip ok">가능 · 200 g</span></td></tr>
+          <tr><td>참치캔</td><td class="num">1</td><td class="mono">85×85×40</td><td class="num">165 g</td><td><span class="chip ok">가능 · 300 g</span></td></tr>
+          <tr><td>스팸 200g</td><td class="num">1</td><td class="mono">100×60×55</td><td class="num">230 g</td><td><span class="chip ok">가능 · 300 g</span></td></tr>
+          <tr><td>신라면 컵</td><td class="num">1</td><td class="mono">100×100×110</td><td class="num">80 g</td><td><span class="chip bad">금지</span></td></tr>
+          <tr><td>아몬드 빼빼로</td><td class="num">1</td><td class="mono">85×25×155</td><td class="num">48 g</td><td><span class="chip bad">금지</span></td></tr>
+          <tr><td>쫄병스낵</td><td class="num">1</td><td class="mono">150×115×55</td><td class="num">87 g</td><td><span class="chip bad">금지</span></td></tr>
+        </tbody>
+      </table></div>
+      <p class="small muted">DB 수치는 개발용 근사값이며 실측값이 아닙니다. "가능 · 200 g"은 그 상품 위에 올려도 되는 최대 무게입니다.</p>
+    </div>
+    <div class="panel">
+      <h3>담는 공간 (모든 실험 동일)</h3>
+      <ul>
+        <li>사용 공간 <b class="mono">320 × 260 mm</b>, 안전 적재 높이 <b class="mono">200 mm</b></li>
+        <li>x·y 벽에서 <b class="mono">10 mm</b> 여유 확보 → 실제 배치 가능 범위 x 10~310, y 10~250</li>
+        <li>최대 <b>2층</b>까지 적재</li>
+        <li>좌표 원점은 바닥 왼쪽 앞 모서리이고 x는 오른쪽, y는 뒤쪽, z는 위쪽입니다. 단위는 mm이며 위치는 상품 중심입니다.</li>
+        <li>바닥에 놓은 상품은 z = 높이 ÷ 2, 위에 쌓은 상품은 z = 아래 상품 윗면 + 높이 ÷ 2입니다.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>세 가지 조건: 바꾼 것은 "상품 정보"뿐</h3>
+  <div class="trio">
+    <div class="exp">
+      <div class="tag">Experiment 1</div>
+      <h3>Text-only</h3>
+      <ul><li>상품명 + 수량 + 공간 정보</li><li>크기·무게는 LLM이 알아서 추측</li></ul>
+    </div>
+    <div class="exp">
+      <div class="tag">Experiment 2</div>
+      <h3>Text + Vision</h3>
+      <ul><li>위 정보 + 실제 상품 사진 1장 (<code>basket.jpg</code>)</li><li>사진을 보고 크기·형태·파손 위험을 추론</li></ul>
+    </div>
+    <div class="exp hl">
+      <div class="tag">Experiment 3</div>
+      <h3>Text + 물리 특성</h3>
+      <ul><li>위 정보(사진 제외) + 주문한 6종의 DB 값만 전달</li><li>치수, 무게, 허용 자세, 허용 하중, 적재 가능 여부</li></ul>
+    </div>
+  </div>
+  <p class="small muted">모델, 주문, 공간, 프롬프트, 출력 형식(JSON 스키마), 생성 설정(temperature 0)은 세 조건 모두 같습니다. 요청은 각각 독립적으로 보내 이전 결과를 전달하지 않았습니다. Experiment 1·2 요청에 DB 값이 섞이지 않았는지 코드로 확인했습니다.</p>
+</section>
+
+<section>
+  <h2>실험은 이렇게 돌아갑니다</h2>
+  <figure class="figure">
+    <div class="flow">
+      <div class="box"><b>① 입력 준비</b>주문 7개 → 개별 ID 부여<br><span class="mono small">coca_cola_1, coca_cola_2 …</span></div>
+      <div class="box"><b>② OpenAI 호출</b>조건별 상품 정보만 다르게 해서 gpt-4o에 요청</div>
+      <div class="box"><b>③ 포장 계획 (JSON)</b>순서, 위치 x·y·z, 자세, 회전, 층, 지지 상품, 이유, 가정</div>
+      <div class="box key"><b>④ 독립 Validator</b>DB 실제 치수로 11개 규칙 검사 (LLM 자체 평가 아님)</div>
+      <div class="box"><b>⑤ 결과 저장</b>원문 응답, 평가, CSV, 3D 그림, 보고서</div>
+    </div>
+    <figcaption>Structured Outputs로 출력 형식을 강제했기 때문에 6번 모두 형식에 맞는 계획이 나왔습니다. 재계획(실패 시 다시 시키기)은 이번 실험에서는 하지 않았습니다.</figcaption>
+  </figure>
+
+  <h3>Validator가 검사하는 11개 규칙</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>규칙</th><th>쉽게 말하면</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>누락</td><td>주문한 7개가 모두 들어갔나</td></tr>
+      <tr><td>2</td><td>중복</td><td>같은 상품을 두 번 넣지 않았나</td></tr>
+      <tr><td>3</td><td>경계</td><td>벽 여유 10 mm 안쪽, 바닥 위, 높이 200 mm 이하인가</td></tr>
+      <tr><td>4</td><td>충돌</td><td>상품끼리 겹치지 않나 (상자 모양으로 근사)</td></tr>
+      <tr><td>5</td><td>자세</td><td>캔을 눕히는 등 허용되지 않는 자세가 없나</td></tr>
+      <tr><td>6</td><td>적재 금지</td><td>신라면·빼빼로·쫄병스낵 위에 무언가를 올리지 않았나</td></tr>
+      <tr><td>7</td><td>하중</td><td>아래 상품이 견딜 수 있는 무게를 넘지 않나</td></tr>
+      <tr><td>8</td><td>지지면</td><td>바닥이나 아래 상품에 실제로 닿아 있나, 바닥 면적의 30% 이상 받쳐지나</td></tr>
+      <tr><td>9</td><td>무게중심</td><td>상품 중심이 받쳐 주는 영역 안에 있나 (근사)</td></tr>
+      <tr><td>10</td><td>층수</td><td>3층 이상 쌓지 않았나</td></tr>
+      <tr><td>11</td><td>순서</td><td>아래 상품을 위 상품보다 먼저 담았나</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small muted">구현하지 않은 것: 실제 무게중심, 원통의 정확한 모양(상자로 근사), 마찰과 변형, 그리퍼가 들어갈 공간, 봉투 입구 통과 경로. 따라서 "통과"가 실제 안전을 보장하지는 않습니다.</p>
+</section>
+
+<section>
+  <h2>결과</h2>
+  <figure class="figure chart">
+    <svg viewBox="0 0 640 250" role="img" aria-label="실험별 위반 건수 막대 그래프">
+      <!-- scale: 0~20건 → x 150~610 (23 px/건) -->
+      <g class="axis">
+        <line x1="150" y1="20" x2="150" y2="215"/>
+        <line x1="265" y1="20" x2="265" y2="215" stroke-dasharray="2 4"/>
+        <line x1="380" y1="20" x2="380" y2="215" stroke-dasharray="2 4"/>
+        <line x1="495" y1="20" x2="495" y2="215" stroke-dasharray="2 4"/>
+        <line x1="610" y1="20" x2="610" y2="215" stroke-dasharray="2 4"/>
+      </g>
+      <g font-size="11" text-anchor="middle" opacity=".7">
+        <text x="150" y="232">0</text><text x="265" y="232">5</text><text x="380" y="232">10</text><text x="495" y="232">15</text><text x="610" y="232">20건</text>
+      </g>
+      <g font-size="13" text-anchor="end">
+        <text x="140" y="52">Text-only</text>
+        <text x="140" y="117">Text + Vision</text>
+        <text x="140" y="182" font-weight="700">Text + 물리 특성</text>
+      </g>
+      <!-- Exp1: 충돌5 경계6 지지7 = 18 -->
+      <rect x="150" y="34" width="115" height="26" style="fill:var(--c-collision)"/>
+      <rect x="265" y="34" width="138" height="26" style="fill:var(--c-boundary)"/>
+      <rect x="403" y="34" width="161" height="26" style="fill:var(--c-support)"/>
+      <text x="572" y="52" font-size="13" font-weight="700">18</text>
+      <!-- Exp2: 3 6 7 = 16 -->
+      <rect x="150" y="99" width="69" height="26" style="fill:var(--c-collision)"/>
+      <rect x="219" y="99" width="138" height="26" style="fill:var(--c-boundary)"/>
+      <rect x="357" y="99" width="161" height="26" style="fill:var(--c-support)"/>
+      <text x="526" y="117" font-size="13" font-weight="700">16</text>
+      <!-- Exp3: 1 4 2 = 7 -->
+      <rect x="150" y="164" width="23" height="26" style="fill:var(--c-collision)"/>
+      <rect x="173" y="164" width="92" height="26" style="fill:var(--c-boundary)"/>
+      <rect x="265" y="164" width="46" height="26" style="fill:var(--c-support)"/>
+      <text x="319" y="182" font-size="13" font-weight="700">7</text>
+      <!-- 예비 실행 표시 -->
+      <g font-size="11" opacity=".75">
+        <text x="150" y="76">예비 실행 18건</text>
+        <text x="150" y="141">예비 실행 16건</text>
+        <text x="150" y="206">예비 실행 4건</text>
+      </g>
+    </svg>
+    <div class="legend"><span><i style="background:var(--c-collision)"></i>상품 간 충돌</span><span><i style="background:var(--c-boundary)"></i>공간 경계 위반</span><span><i style="background:var(--c-support)"></i>지지면 부족 (떠 있음 / 바닥 아래로 파고듦)</span></div>
+    <figcaption>본 실험(Run 2) 위반 건수. 나머지 8개 규칙(누락, 중복, 자세, 적재 금지, 하중, 무게중심, 층수, 순서)은 세 조건 모두 0건이었습니다.</figcaption>
+  </figure>
+
+  <div class="tbl"><table>
+    <thead><tr><th>지표 (본 실험)</th><th class="num">Text-only</th><th class="num">Text + Vision</th><th class="num">Text + 물리 특성</th></tr></thead>
+    <tbody>
+      <tr><td>계획 생성</td><td class="num"><span class="chip ok">성공</span></td><td class="num"><span class="chip ok">성공</span></td><td class="num"><span class="chip ok">성공</span></td></tr>
+      <tr><td>검증 통과</td><td class="num"><span class="chip bad">실패</span></td><td class="num"><span class="chip bad">실패</span></td><td class="num"><span class="chip bad">실패</span></td></tr>
+      <tr><td>총 위반 (예비 실행)</td><td class="num">18 (18)</td><td class="num">16 (16)</td><td class="num best">7 (4)</td></tr>
+      <tr><td>바닥이나 아래 상품에 닿지 않은 상품</td><td class="num">7 / 7</td><td class="num">7 / 7</td><td class="num best">2 / 7</td></tr>
+      <tr><td>2층 적재 시도</td><td class="num">없음</td><td class="num">없음</td><td class="num">2개 시도 (실패)</td></tr>
+      <tr><td>최대 적재 높이</td><td class="num">121 mm</td><td class="num">125 mm</td><td class="num">122.5 mm</td></tr>
+      <tr><td>응답 시간</td><td class="num">4.7 s</td><td class="num">6.5 s</td><td class="num best">4.0 s</td></tr>
+      <tr><td>입력 / 출력 토큰</td><td class="num">1,502 / 859</td><td class="num">2,340 / 797</td><td class="num">2,242 / 708</td></tr>
+      <tr><td>추정 비용</td><td class="num">$0.0123</td><td class="num">$0.0138</td><td class="num">$0.0127</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small muted">비용은 gpt-4o 공개 단가(입력 $2.50, 출력 $10 / 100만 토큰)로 계산한 추정치입니다. 사진을 넣으면 입력 토큰이 약 840개, DB를 넣으면 약 740개 늘었습니다. 세 조건 모두 같은 상품을 같은 용기에 담으므로 "상품 부피 ÷ 용기 부피"는 동일하여 비교 지표로 쓰지 않았습니다.</p>
+
+  <figure class="figure">
+    <img class="plot" src="../results/20261127_125141/packing_plans_3d.png" alt="세 실험의 배치 결과를 같은 공간과 색상으로 그린 3D 그림과 위에서 본 그림">
+    <figcaption>세 계획을 DB 실제 치수로 그린 그림입니다. 공간, 좌표계, 상품 색상은 모두 같습니다. 빨간 테두리는 규칙을 위반한 상품, 빗금은 바닥에서 떠 있는 상품입니다. 위에서 본 그림의 점선이 벽 여유 10 mm 경계입니다.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>왜 실패했나: 쉽게 풀어 보기</h2>
+  <div class="two">
+    <div class="panel">
+      <h3>사진·상품명만 줄 때: 크기를 잘못 앎</h3>
+      <p>LLM이 상품 크기를 추측해서 z(높이 중심)를 정했는데 추측이 틀렸습니다. 그래서 상품이 공중에 뜨거나 바닥 아래로 파고들었습니다.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>상품</th><th class="num">LLM이 추측한 높이</th><th class="num">DB 높이</th><th>결과</th></tr></thead>
+        <tbody>
+          <tr><td>참치캔</td><td class="num">90 mm</td><td class="num">40 mm</td><td class="diff-bad">25 mm 떠 있음</td></tr>
+          <tr><td>신라면 컵</td><td class="num">70 mm</td><td class="num">110 mm</td><td class="diff-bad">20 mm 파고듦</td></tr>
+          <tr><td>스팸</td><td class="num">90 mm</td><td class="num">55 mm</td><td class="diff-bad">17.5 mm 떠 있음</td></tr>
+          <tr><td>코카콜라</td><td class="num">120 mm</td><td class="num">122 mm</td><td class="diff-bad">1 mm 파고듦</td></tr>
+        </tbody>
+      </table></div>
+      <p class="small muted">Text-only 기준입니다. 이 실행에서는 코카콜라를 "500ml 페트병"으로 가정하기도 했습니다. 사진을 넣었을 때는 콜라 크기(65×65×125)만 거의 맞혔고, 쫄병스낵은 빼빼로와 같은 크기로 적는 등 오히려 틀린 경우도 있었습니다.</p>
+    </div>
+    <div class="panel">
+      <h3>DB를 줄 때: 크기는 맞는데 계산이 틀림</h3>
+      <p>치수를 정확히 받아서 바닥 상품 5개는 높이가 모두 맞았습니다. 남은 실수는 계산 실수였습니다.</p>
+      <ul>
+        <li><b>벽 여유 계산 누락:</b> 폭이 다른 상품을 같은 x 위치에 두어 신라면이 x −7~93 mm로 벽을 넘었습니다.</li>
+        <li><b>눕힌 자세의 크기 변화 무시:</b> 빼빼로를 눕히면 앞뒤 길이가 155 mm가 되는데 반영하지 않아 벽 밖으로 나갔습니다.</li>
+        <li><b>2층 높이 계산 오류:</b> 참치캔(40 mm) 위 쫄병스낵의 z는 40 + 27.5 = <b>67.5</b>여야 하는데 77.5로 적었습니다.</li>
+        <li><b>적재 규칙은 지켰습니다:</b> 스팸·참치캔처럼 쌓아도 되는 상품 위에만 올렸고, 무게도 허용 하중보다 가벼웠습니다.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout info">
+    <b>추가 확인: "LLM 자기 치수"로 다시 검사해도 실패</b>
+    <p>LLM이 스스로 가정한 치수를 정답으로 놓고 다시 검사해도 세 조건 모두 4~11건이 위반됐습니다. 정보가 정확해도 gpt-4o는 mm 단위 좌표 계산을 안정적으로 하지 못한다는 뜻입니다. 같은 입력, temperature 0인데도 예비 실행(4건)과 본 실험(7건)의 결과가 달랐습니다.</p>
+  </div>
+</section>
+
+<section>
+  <h2>결론과 제안</h2>
+  <div class="two">
+    <div class="panel">
+      <h3>물리 특성 DB는 도움이 되나?</h3>
+      <p><span class="chip ok">도움 됨</span> 위반이 절반 이하로 줄었고, 크기를 잘못 알아서 생기는 실패가 사라졌습니다. 2층 적재도 DB 정보를 근거로 시도했습니다.</p>
+      <p><span class="chip warn">그것만으로는 부족</span> 검증을 통과한 계획은 0개입니다. 사진(Vision)은 효과가 작고 토큰만 가장 많이 썼습니다.</p>
+    </div>
+    <div class="panel">
+      <h3>권장 구조</h3>
+      <ol>
+        <li><b>LLM</b>: 담는 순서, 어떤 상품을 어떤 상품 위에 둘지 같은 <i>판단</i>만 출력</li>
+        <li><b>Python 배치기</b>: DB 치수로 x·y·z 좌표를 <i>계산</i></li>
+        <li><b>Validator</b>: 검사 후 실패하면 이유를 LLM에 돌려주고 재계획</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>진행 단계</h2>
+  <ol class="steps">
+    <li><span class="n">01</span><span class="t">폴더 구조·기존 코드·상품 DB 확인</span><span class="chip ok">완료</span></li>
+    <li><span class="n">02</span><span class="t">API Key 설정 확인 (값 출력 없이), <code>.env</code>가 .gitignore에 등록된 것 확인<small>결과 파일에 Key가 없는 것도 검사함</small></span><span class="chip ok">완료</span></li>
+    <li><span class="n">03</span><span class="t">라이브러리 설치 (<code>.venv</code>: openai, python-dotenv, matplotlib)</span><span class="chip ok">완료</span></li>
+    <li><span class="n">04</span><span class="t">모델 확인<small>기본값 gpt-5.5는 이 Key로 사용 불가(404). 조회 가능한 모델은 gpt-4o, whisper-1뿐이라 gpt-4o 사용</small></span><span class="chip warn">제약 있음</span></li>
+    <li><span class="n">05</span><span class="t">기존 코드 버그 수정과 출력 스키마 확장<small>DB 경로 오류, 사진 필수 인자, 층·지지 상품·이유·가정 치수 필드 추가</small></span><span class="chip ok">완료</span></li>
+    <li><span class="n">06</span><span class="t">독립 Validator 작성 (11개 규칙, 항목별 건수)<small>실행 중 "떠 있는 상품을 2층으로 계산"하던 버그를 찾아 수정</small></span><span class="chip ok">완료</span></li>
+    <li><span class="n">07</span><span class="t">예비 실행 (Run 1)<small>사진 설명 문구를 "주문 상품 사진"으로 잘못 넣음. 실제 사진에는 보유 상품 12개가 모두 찍혀 있음</small></span><span class="chip warn">보존 (참고용)</span></li>
+    <li><span class="n">08</span><span class="t">본 실험 (Run 2): 세 조건 각 1회</span><span class="chip ok">완료</span></li>
+    <li><span class="n">09</span><span class="t">비교 CSV, 3D 그림, 분석 보고서 생성</span><span class="chip ok">완료</span></li>
+    <li><span class="n">10</span><span class="t">담는 공간 모양 검토 (원형 vs 사각)<small>봉투 모양은 고정 용기를 따르므로 용기 모양에 맞추기로 함. 사각 바구니라면 직육면체에 모서리 여유를 두는 방식 권장. 실제 용기 형태 확인 필요</small></span><span class="chip info">논의 중</span></li>
+    <li><span class="n">11</span><span class="t">반복 실험 확대, 재계획 루프, 배치기 도입</span><span class="chip info">다음 단계</span></li>
+  </ol>
+</section>
+
+<section>
+  <h2>한계와 다음 할 일</h2>
+  <div class="two">
+    <div class="panel">
+      <h3>이번 실험의 한계</h3>
+      <ul>
+        <li>조건당 2회, 모델 1개(gpt-4o)뿐이라 통계적 결론은 아닙니다.</li>
+        <li>DB 치수·무게·허용 하중은 실측 전 근사값입니다.</li>
+        <li>Validator는 상자 모양 근사이고 접촉 허용 오차 0.5 mm로 엄격합니다. 같은 실수가 여러 규칙에 중복으로 집계될 수 있습니다.</li>
+        <li>사진에 주문하지 않은 상품도 찍혀 있고, 크기를 가늠할 기준 물체가 없습니다.</li>
+        <li>로봇 실제 동작, 상품 손상률, 작업 성공률은 아직 평가하지 않았습니다(실물 실험 단계).</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>다음 실험</h3>
+      <ol>
+        <li>실제 고정 용기 모양과 내부 치수를 확인하고 공간 모델에 반영</li>
+        <li>상품 실측(치수, 무게, 위에 올렸을 때 견디는 무게)으로 DB 갱신</li>
+        <li>조건당 10회 이상 반복 (<code>--repeats 10</code>)</li>
+        <li>주문 상품 7개만 자나 마커와 함께 다시 촬영</li>
+        <li>LLM 판단 + Python 배치기 구조와 비교</li>
+        <li>Validator 피드백으로 재계획 루프 추가</li>
+        <li>다른 주문 4종으로 일반화 확인</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>파일 위치</h2>
+  <div class="paths">packing_planning/
+├── run_experiment.py        세 조건 API 실행 (수정)
+├── packing_validator.py     독립 검증기 (신규)
+├── evaluate_run.py          재평가 · CSV · 보고서 생성 (신규)
+├── visualize.py             3D / 위에서 본 그림 (신규)
+├── data/test_baskets.json   테스트 주문 pilot_01 추가
+└── results/
+    ├── 20261127_125141/     본 실험 (Run 2)
+    │   ├── experiment_1_text_only.json
+    │   ├── experiment_2_text_vision.json
+    │   ├── experiment_3_text_properties.json
+    │   ├── comparison.csv
+    │   ├── experiment_report.md
+    │   ├── packing_plans_3d.png
+    │   └── raw_responses/   API 응답 원문
+    └── 20261127_124924/     예비 실행 (Run 1)</div>
+  <p class="small muted">아직 git 커밋은 하지 않았습니다. 상품 DB 값, 주문 웹, 추천, 재고, ROS2 코드는 수정하지 않았습니다.</p>
+</section>
+
+</div>

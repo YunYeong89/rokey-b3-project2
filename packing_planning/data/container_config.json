@@ -1,0 +1,40 @@
+{
+  "schema_version": "0.1",
+  "container_type": "supported_plastic_bag",
+  "fixture": "rigid rectangular basket with bag rim secured; bottom and sides supported",
+  "verified_for_robot": false,
+  "inner_dimensions_mm": null,
+  "opening_clear_dimensions_mm": null,
+  "safe_fill_height_mm": null,
+  "max_payload_g": null,
+  "prototype": {
+    "inner_dimensions_mm": [
+      320,
+      260,
+      250
+    ],
+    "opening_clear_dimensions_mm": [
+      300,
+      240
+    ],
+    "safe_fill_height_mm": 200,
+    "wall_clearance_mm": 10,
+    "max_layers": 1
+  },
+  "coordinate_system": {
+    "origin": "inner_bottom_front_left",
+    "x": "right",
+    "y": "back",
+    "z": "up",
+    "item_position_reference": "geometric_center"
+  },
+  "constraints": {
+    "bag_opening_fixed": true,
+    "bottom_supported": true,
+    "sides_supported": true,
+    "unknown_payload_blocks_robot_execution": true,
+    "unknown_top_load_blocks_stacking": true,
+    "check_gripper_swept_volume": true,
+    "check_lift_after_removal": true
+  }
+}

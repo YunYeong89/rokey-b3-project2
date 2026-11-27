@@ -1,0 +1,130 @@
+{
+  "schema_version": "0.1",
+  "note": "All quantities within stated stock; assumes one Narangd cider. Full-stock scenario may be infeasible and is not promised to fit.",
+  "orders": [
+    {
+      "order_id": "easy_01",
+      "items": [
+        {
+          "product_id": "coca_cola",
+          "quantity": 1
+        },
+        {
+          "product_id": "tuna_can",
+          "quantity": 1
+        },
+        {
+          "product_id": "spam",
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "order_id": "mixed_01",
+      "items": [
+        {
+          "product_id": "pepsi",
+          "quantity": 1
+        },
+        {
+          "product_id": "shin_ramyun",
+          "quantity": 1
+        },
+        {
+          "product_id": "almond_pepero",
+          "quantity": 1
+        },
+        {
+          "product_id": "jjolbyeong",
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "order_id": "duplicate_01",
+      "items": [
+        {
+          "product_id": "coca_cola",
+          "quantity": 2
+        },
+        {
+          "product_id": "shin_ramyun",
+          "quantity": 2
+        }
+      ]
+    },
+    {
+      "order_id": "all_stock",
+      "items": [
+        {
+          "product_id": "shin_ramyun",
+          "quantity": 2
+        },
+        {
+          "product_id": "coca_cola",
+          "quantity": 2
+        },
+        {
+          "product_id": "pepsi",
+          "quantity": 2
+        },
+        {
+          "product_id": "narangd_cider",
+          "quantity": 1
+        },
+        {
+          "product_id": "tuna_can",
+          "quantity": 2
+        },
+        {
+          "product_id": "jjolbyeong",
+          "quantity": 1
+        },
+        {
+          "product_id": "spam",
+          "quantity": 1
+        },
+        {
+          "product_id": "almond_pepero",
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "order_id": "pilot_01",
+      "note": "첫 비교 실험 주문 (7개). display_name은 고객 주문 표기이며 LLM 입력에 사용",
+      "items": [
+        {
+          "product_id": "coca_cola",
+          "display_name": "코카콜라",
+          "quantity": 2
+        },
+        {
+          "product_id": "tuna_can",
+          "display_name": "참치캔",
+          "quantity": 1
+        },
+        {
+          "product_id": "spam",
+          "display_name": "스팸",
+          "quantity": 1
+        },
+        {
+          "product_id": "shin_ramyun",
+          "display_name": "신라면 컵",
+          "quantity": 1
+        },
+        {
+          "product_id": "almond_pepero",
+          "display_name": "아몬드 빼빼로",
+          "quantity": 1
+        },
+        {
+          "product_id": "jjolbyeong",
+          "display_name": "쫄병스낵",
+          "quantity": 1
+        }
+      ]
+    }
+  ]
+}
