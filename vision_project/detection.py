@@ -14,6 +14,7 @@ import time
 from ament_index_python.packages import get_package_share_directory
 import cv2
 import DR_init
+from dsr_msgs2.srv import GetCurrentPosx
 import numpy as np
 import rclpy
 from rclpy.executors import SingleThreadedExecutor
@@ -61,6 +62,12 @@ class GraspDetector(GraspStream):
         self.result = {"clusters": 0, "labels": [], "targets": {}, "target_points": [], "obstacles": []}  # 최신 응답
         self.updated = 0.0  # self.result를 만든 추론의 시작 시각
         self.node = rclpy.create_node("grasp_detection")
+        # DRL get_current_posx는 응답이 올 때까지 무한정 기다려 화면이 검게 멈추므로, 시작할 때 컨트롤러 서비스를 먼저 확인합니다.
+        posx = self.node.create_client(GetCurrentPosx, f"/{ROBOT_ID}/dsr_controller2/aux_control/get_current_posx")
+        while not posx.wait_for_service(timeout_sec=3.0):
+            print(f"Waiting for {posx.srv_name} (is the robot bringup running and visible from this container?)",
+                  flush=True)
+        self.node.destroy_client(posx)
         self.node.create_service(Trigger, "get_grasp_positions", self.get_positions)
         executor = SingleThreadedExecutor()
         executor.add_node(self.node)
