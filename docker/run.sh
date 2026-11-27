@@ -10,5 +10,4 @@ xhost +local:docker >/dev/null  # OpenCV 창 (호스트 X11)
 docker run -d --name vision $GPU --network host --ipc host \
   -e DISPLAY -e ROS_DOMAIN_ID -e RMW_IMPLEMENTATION -v /tmp/.X11-unix:/tmp/.X11-unix \
   -v "$SRC":/ros2_ws/src/vision_project vision_project:jazzy
-docker exec vision bash -c "source /ros2_ws/install/setup.bash && cd /ros2_ws && \
-  colcon build --symlink-install --packages-select vision_project"
+docker exec vision bash -c "source /opt/dsr_ws/install/setup.bash && cd /ros2_ws && colcon build --symlink-install"

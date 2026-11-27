@@ -24,11 +24,15 @@ RUN INDEX=$([ "$TARGETARCH" = arm64 ] && echo cpu || echo "$TORCH_CUDA") \
  && pip install "numpy<2" "opencv-python<4.12" pillow ftfy regex packaging tqdm hydra-core iopath \
       ultralytics scipy "pymodbus<3.7"
 
-# DRL API: 메시지와 DR_init·DSR_ROBOT2(dsr_common2/imp)만 빌드합니다. bringup(roboton)은 호스트에서 띄웁니다.
-WORKDIR /ros2_ws
+# DRL API: 메시지와 DR_init·DSR_ROBOT2(dsr_common2/imp)만 별도 underlay(/opt/dsr_ws)에 빌드합니다.
+# /ros2_ws(마운트한 vision_project)에서 colcon build를 어떻게 돌려도 dsr 패키지를 다시 빌드하지 않도록 분리합니다
+# (같은 워크스페이스면 --symlink-install 재빌드가 이미 설치된 dsr_msgs2와 충돌). bringup(roboton)은 호스트에서 띄웁니다.
+WORKDIR /opt/dsr_ws
 RUN git clone -b "$DOOSAN_BRANCH" --depth 1 "$DOOSAN_REPO" /tmp/doosan \
  && mkdir -p src && mv /tmp/doosan/dsr_msgs2 /tmp/doosan/dsr_common2 src/ && rm -rf /tmp/doosan \
  && . /opt/ros/jazzy/setup.sh && colcon build --packages-select dsr_msgs2 dsr_common2 && rm -rf build log
 
-RUN echo 'source /opt/ros/jazzy/setup.bash && source /ros2_ws/install/setup.bash' >> /root/.bashrc
+WORKDIR /ros2_ws
+RUN mkdir -p src && echo 'source /opt/ros/jazzy/setup.bash && source /opt/dsr_ws/install/setup.bash && \
+[ -f /ros2_ws/install/setup.bash ] && source /ros2_ws/install/setup.bash' >> /root/.bashrc
 CMD ["sleep", "infinity"]
