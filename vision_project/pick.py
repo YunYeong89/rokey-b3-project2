@@ -1,6 +1,6 @@
 """vision_project detection(docker)의 /get_grasp_positions로 장면을 받아 0번 물품을 잡아 HOME_J로 가져와 그리퍼를 엽니다 (호스트 실행).
 1. SCAN_J로 movej 후 검출 요청. 선택된 묶음(cluster)이 정확히 1개일 때만 진행하고, 아니면 RETRY_DELAY 뒤 재시도합니다.
-2. 가장 가까운 목표(0번) 앞(base +y로 APPROACH, 물품 높이)에 잡기 직전 위치를 둡니다. 스캔 자세는 J5 > 0, 물품 높이에서
+2. 가장 가까운 목표(0번) 앞(base +y로 APPROACH, 물품 높이보다 PREGRASP_DROP 아래)에 잡기 직전 위치를 둡니다. 스캔 자세는 J5 > 0, 물품 높이에서
    TCP ∥ -y인 자세는 J5 < 0이라 작업 공간 이동(movel·movec·movesx)은 도중에 반드시 J5 = 0(손목 특이점)을 지나 멈춥니다.
    그래서 이 구간은 관절 공간으로 갑니다: J1·J4·J6를 스캔 값으로 고정하면 팔은 J2·J3·J5만 움직이는 수직 평면 팔이 되어,
    TCP를 수평(-y)으로 잡기 직전 위치의 높이·거리에 두는 J2·J3를 평면 기하로 바로 구하고 J5 = 90 - J2 - J3로 툴을 수평으로
@@ -39,6 +39,7 @@ PATH_SAMPLES = 20                   # 관절 경로 충돌 검사에 쓰는 TCP 
 GRIPPER_TIMEOUT = 10.0              # s, 그리퍼 동작을 기다리는 최대 시간
 WIDTH_TOLERANCE = 3.0               # mm, 벌리기 완료로 볼 목표 폭과의 차이 (동작 중 비트가 안 풀려도 폭으로 판정)
 APPROACH = 100.0                    # mm, 물품에서 잡기 직전 위치까지 거리 (집는 자세 TCP 방향 반대, base +y)
+PREGRASP_DROP = 80.0                # mm, 잡기 직전 위치를 스캔 추정 높이보다 내리는 양 (스캔 좌표가 높게 나와 재검출이 안 되는 문제 대응)
 LIFT = 30.0                         # mm, 잡은 뒤 위로 올리는 높이
 CORRECTION_LIMIT = 50.0             # mm, 잡기 직전 위치에서 보정한 좌표가 1차 좌표와 달라도 되는 최대 거리
 GRIP_MARGIN = 20.0                  # mm, 물체 가로 폭보다 더 벌리는 여유 (양쪽 합)
@@ -252,7 +253,7 @@ class Picker(Node):
         target, reason = self.target(result)
         if target is None:
             return None, reason
-        pregrasp = target - APPROACH * self.frame[:, 2]  # 물품 앞 (base +y)
+        pregrasp = target - APPROACH * self.frame[:, 2] - PREGRASP_DROP * UP  # 물품 앞 (base +y), PREGRASP_DROP 아래
         grasp = target + (self.width(result) / 2 + GRASP_DEPTH) * self.frame[:, 2]  # grasp point 추정
         end, last = self.arm.level(pregrasp), self.arm.level(grasp)
         if end is None or last is None:
