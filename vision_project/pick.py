@@ -4,11 +4,11 @@
    TCP ∥ -y인 자세는 J5 < 0이라 작업 공간 이동(movel·movec·movesx)은 도중에 반드시 J5 = 0(손목 특이점)을 지나 멈춥니다.
    그래서 이 구간은 관절 공간으로 갑니다: J1·J4·J6를 스캔 값으로 고정하면 팔은 J2·J3·J5만 움직이는 수직 평면 팔이 되어,
    TCP를 수평(-y)으로 잡기 직전 위치의 높이·거리에 두는 J2·J3를 평면 기하로 바로 구하고 J5 = 90 - J2 - J3로 툴을 수평으로
-   맞춥니다 (ikin 미사용). 두 자세를 잇는 관절 직선 위에 JOINT_WAYPOINTS개 waypoint를 찍어 movesj 하나로 지나가므로
-   J2·J3는 계속 커지고 J5는 계속 작아지며, 도착하면 집는 자세 GRASP_EULER(ZYZ, TCP ∥ -y, 손가락 수평)가 됩니다.
-   스캔 위치와 다른 x(옆)만 movel로 맞춥니다.
-3. 보정: 잡기 직전 위치에서 다시 검출해 0번 segmentation 무게중심으로 최종 grasp point를 정합니다
-   (1차 좌표와 CORRECTION_LIMIT 이상 다르면 거절).
+   맞춥니다 (ikin 미사용). 재검출 자세는 여기서 J5만 VIEW_TILT 더해 카메라(TCP보다 위)를 아래로 숙인 자세이고, 스캔
+   자세에서 이 자세까지 관절 직선 위에 JOINT_WAYPOINTS개 waypoint를 찍어 movesj 하나로 지나가므로 J2·J3는 계속 커지고
+   J5는 계속 작아집니다.
+3. 보정: 숙인 자세에서 다시 검출해 0번으로 최종 grasp point를 정하고(1차 좌표와 CORRECTION_LIMIT 이상 다르면 거절),
+   J5를 되돌려(movej) 집는 자세 GRASP_EULER(ZYZ, TCP ∥ -y, 손가락 수평)로 돌아온 뒤 스캔 위치와 다른 x(옆)만 movel로 맞춥니다.
 4. 그리퍼는 시작할 때 건드리지 않고, 잡기 직전에만 가로(base x)로 물체 가로 폭 + GRIP_MARGIN만큼 벌립니다(MAX_OPEN 초과면
    거절). 그리퍼는 GripperWorker 스레드에서 돌아 로봇 이동과 분리됩니다: 벌리기를 시작하면서 동시에 -y로 movel해 들어가고,
    grasp point에서 벌리기 완료를 기다린 뒤 잡습니다.
@@ -39,7 +39,8 @@ PATH_SAMPLES = 20                   # 관절 경로 충돌 검사에 쓰는 TCP 
 GRIPPER_TIMEOUT = 10.0              # s, 그리퍼 동작을 기다리는 최대 시간
 WIDTH_TOLERANCE = 3.0               # mm, 벌리기 완료로 볼 목표 폭과의 차이 (동작 중 비트가 안 풀려도 폭으로 판정)
 APPROACH = 100.0                    # mm, 물품에서 잡기 직전 위치까지 거리 (집는 자세 TCP 방향 반대, base +y)
-PREGRASP_DROP = 100.0               # mm, 잡기 직전 위치를 스캔 추정 높이보다 내리는 양 (스캔 좌표가 높게 나와 재검출이 안 되는 문제 대응)
+PREGRASP_DROP = 50.0                # mm, 잡기 직전 위치를 스캔 추정 높이보다 내리는 양 (스캔 좌표가 높게 나와 재검출이 안 되는 문제 대응)
+VIEW_TILT = 15.0                    # deg, 재검출할 때 잡기 직전 자세의 J5에 더해 카메라를 아래로 숙이는 각도
 LIFT = 30.0                         # mm, 잡은 뒤 위로 올리는 높이
 CORRECTION_LIMIT = 50.0             # mm, 잡기 직전 위치에서 보정한 좌표가 1차 좌표와 달라도 되는 최대 거리
 GRIP_MARGIN = 20.0                  # mm, 물체 가로 폭보다 더 벌리는 여유 (양쪽 합)
@@ -247,8 +248,8 @@ class Picker(Node):
         return float(np.subtract(*np.percentile(across, (95, 5))))
 
     def plan(self):
-        """스캔 위치에서 검출해 1차 좌표, 잡기 직전 위치, 잡기 직전 관절을 정하고 경로를 검사합니다.
-        ((1차 좌표, 잡기 직전 위치, 잡기 직전 관절), None) 또는 (None, 거절 사유)."""
+        """스캔 위치에서 검출해 1차 좌표, 잡기 직전 위치, 잡기 직전 관절, 재검출 관절을 정하고 경로를 검사합니다.
+        ((1차 좌표, 잡기 직전 위치, 잡기 직전 관절, 재검출 관절), None) 또는 (None, 거절 사유)."""
         result = self.request()
         target, reason = self.target(result)
         if target is None:
@@ -258,8 +259,11 @@ class Picker(Node):
         end, last = self.arm.level(pregrasp), self.arm.level(grasp)
         if end is None or last is None:
             return None, f"pre-grasp {pregrasp.round(1).tolist()} or grasp point {grasp.round(1).tolist()} is out of reach"
+        view = end.copy()
+        view[4] += VIEW_TILT  # 재검출 자세: J5만 더해 카메라를 아래로 숙임
         checker = PathChecker(result["obstacles"])
-        path = [self.arm.tcp(joints) for joints in np.linspace(self.arm.joints, end, PATH_SAMPLES)]
+        path = [self.arm.tcp(joints) for joints in np.vstack([np.linspace(self.arm.joints, view, PATH_SAMPLES),
+                                                             np.linspace(view, end, PATH_SAMPLES // 2)])]
         hit = next(filter(None, (checker.blocked(frame, start, stop)
                                  for (start, frame), (stop, _) in zip(path, path[1:]))), None)
         if hit:
@@ -269,8 +273,9 @@ class Picker(Node):
             return None, f"moving to the pre-grasp point and forward to the target {target.round(1).tolist()} is blocked: {hit}"
         self.get_logger().info(
             f"Target {target.round(1).tolist()}, pre-grasp {pregrasp.round(1).tolist()}, joints "
-            + ", ".join(f"J{i + 1} {self.arm.joints[i]:.1f}→{end[i]:.1f}" for i in (1, 2, 4)))
-        return (target, pregrasp, end), None
+            + ", ".join(f"J{i + 1} {self.arm.joints[i]:.1f}→{end[i]:.1f}" for i in (1, 2, 4))
+            + f" (view J5 {view[4]:.1f})")
+        return (target, pregrasp, end, view), None
 
     def correct(self, coarse, pregrasp):
         """잡기 직전 위치에서 다시 검출해 최종 grasp point와 그리퍼 벌림 폭을 정합니다.
@@ -364,17 +369,18 @@ class Picker(Node):
                 self.get_logger().warn(f"Attempt {attempt}/{RETRIES} rejected at scan pose: {reason}")
                 time.sleep(RETRY_DELAY)
                 continue
-            coarse, pregrasp, end = plan
-            self.sweep(end)      # movesj: J2·J3↑, J5↓로 물품 높이에서 TCP ∥ -y 자세가 됨
-            self.move(pregrasp)  # movel: 스캔 위치와 다른 x(옆)만 맞춤
+            coarse, pregrasp, end, view = plan
+            self.sweep(view)  # movesj: J2·J3↑, J5↓로 물품 앞에 가서 카메라를 숙인 자세가 됨
 
-            final, reason = self.correct(coarse, pregrasp)  # 다시 검출해 grasp point·벌림 폭 보정
+            final, reason = self.correct(coarse, pregrasp)  # 숙인 자세에서 다시 검출해 grasp point·벌림 폭 보정
             if final is None:
                 self.get_logger().warn(f"Attempt {attempt}/{RETRIES} rejected at pre-grasp: {reason}")
                 self.scan_pose()
                 time.sleep(RETRY_DELAY)
                 continue
             grasp, opening = final
+            self.move_joints(end.tolist(), "level pre-grasp")  # movej: J5만 되돌려 TCP ∥ -y
+            self.move(pregrasp)  # movel: 스캔 위치와 다른 x(옆)만 맞춤
             self.gripper.start(opening)  # 그리퍼 스레드: 벌리기 시작
             self.move(grasp)  # 로봇: 동시에 -y로 들어감 (벌리기는 1~2 s, 이동은 그보다 김)
             self.gripper.wait()  # 잡기 전에 벌리기 완료 확인
