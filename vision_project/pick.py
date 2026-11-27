@@ -9,8 +9,8 @@
    J5는 계속 작아집니다.
 3. 보정: 숙인 자세에서 다시 검출해 0번으로 최종 grasp point를 정하고(1차 좌표와 CORRECTION_LIMIT 이상 다르면 거절),
    J5를 되돌려(movej) 집는 자세 GRASP_EULER(ZYZ, TCP ∥ -y, 손가락 수평)로 돌아온 뒤 스캔 위치와 다른 x(옆)만 movel로 맞춥니다.
-4. 그리퍼는 시작할 때 건드리지 않고, 잡기 직전에만 가로(base x)로 물체 가로 폭 + GRIP_MARGIN만큼 벌립니다(MAX_OPEN까지만,
-   넘으면 최대로). 그리퍼는 GripperWorker 스레드에서 돌아 로봇 이동과 분리됩니다: 벌리기를 시작하면서 동시에 -y로 movel해 들어가고,
+4. 그리퍼는 시작할 때 건드리지 않고, 잡기 직전에만 가로(base x)로 물체 가로 폭 + GRIP_MARGIN만큼 벌립니다(그리퍼 최대
+   폭까지만, 넘으면 최대로). 그리퍼는 GripperWorker 스레드에서 돌아 로봇 이동과 분리됩니다: 벌리기를 시작하면서 동시에 -y로 movel해 들어가고,
    grasp point에서 벌리기 완료를 기다린 뒤 잡습니다.
 5. 잡으면 LIFT만큼 들어 올림 → 같은 높이로 잡기 직전 위치 위까지를 movesx 스플라인 하나로 빠지고, HOME_J로 movej해 엽니다.
 경로는 장애물 점(base)과 검사해 막히면 재시도하고, 이동마다 실제로 도착했는지 확인합니다. 동작은 DRL API(DSR_ROBOT2), 그리퍼는 Modbus TCP(onrobot.RG)입니다."""
@@ -45,7 +45,7 @@ LIFT = 30.0                         # mm, 잡은 뒤 위로 올리는 높이
 CORRECTION_LIMIT = 200.0            # mm, 잡기 직전 위치에서 보정한 좌표가 1차 좌표와 달라도 되는 최대 거리
 GRIP_MARGIN = 20.0                  # mm, 물체 가로 폭보다 더 벌리는 여유 (양쪽 합)
 GRASP_DEPTH = 25.0                  # mm, 손가락 끝(TCP)을 물체 중심(앞면 + 가로 폭/2)보다 더 넣는 깊이
-MAX_OPEN = 110.0                    # mm, RG2 최대 벌림
+RG2_STROKE = 110.0                  # mm, RG2 최대 폭 (손가락 끝 오프셋 없이, Modbus 목표 폭 0~1100)
 GRIPPER_BOX = (100.0, 50.0, 150.0)  # mm, 그리퍼 상자: 가로 폭(손가락이 벌어지는 수평축), 세로 두께, TCP(손가락 끝)→손목 길이 — 실측해 조정
 MARGIN = 5.0                        # mm, 상자 여유
 MIN_HITS = 10                       # 상자 안 장애물 점이 이 개수 이상일 때만 막힘으로 판정 (depth 잡음 무시)
@@ -211,7 +211,11 @@ class GripperWorker:
 class Picker(Node):
     def __init__(self):
         super().__init__("vision_pick")
-        self.gripper = GripperWorker(RG(GRIPPER_NAME, TOOLCHARGER_IP, TOOLCHARGER_PORT))
+        rg = RG(GRIPPER_NAME, TOOLCHARGER_IP, TOOLCHARGER_PORT)
+        # 폭은 control 16(손가락 끝 오프셋 반영)으로 보내므로, 최대 폭도 오프셋 없는 폭(267)과 반영한 폭(275)의 차이만큼 보정
+        self.max_open = RG2_STROKE - (rg.get_width() - rg.get_width_with_offset())
+        self.get_logger().info(f"Gripper max opening {self.max_open:.1f} mm (fingertip offset applied)")
+        self.gripper = GripperWorker(rg)
         self.client = self.create_client(Trigger, "/get_grasp_positions")
         while not self.client.wait_for_service(timeout_sec=3.0):
             self.get_logger().info("Waiting for /get_grasp_positions service...")
@@ -289,7 +293,7 @@ class Picker(Node):
         if shift > CORRECTION_LIMIT:
             return None, f"corrected target moved {shift:.0f} mm from the first estimate (limit {CORRECTION_LIMIT:.0f})"
         width = self.width(result)
-        opening = min(width + GRIP_MARGIN, MAX_OPEN)  # 최대치를 넘으면 거절하지 않고 최대로 벌림
+        opening = min(width + GRIP_MARGIN, self.max_open)  # 최대치를 넘으면 거절하지 않고 최대로 벌림
         grasp = target + (width / 2 + GRASP_DEPTH) * self.frame[:, 2]  # 앞면 → 물체 중심 너머
         hit = PathChecker(result["obstacles"]).blocked(self.frame, pregrasp, grasp)
         if hit:
@@ -387,7 +391,7 @@ class Picker(Node):
 
             self.spline(grasp + LIFT * UP, pregrasp + LIFT * UP)  # movesx: 들어 올리며 잡기 직전 위치 위로 빠짐
             self.move_joints(HOME_J, "HOME_J")
-            self.gripper.start(MAX_OPEN)  # 홈에서 놓기
+            self.gripper.start(self.max_open)  # 홈에서 놓기
             self.gripper.wait()
             self.get_logger().info("Released at home.")
             return
