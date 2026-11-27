@@ -1,6 +1,16 @@
-"""detection의 /get_grasp_positions로 가까운 순 base 좌표를 받아 0번 물품을 잡아 home으로 가져와 놓습니다.
-TCP가 base -y를 향한 HOME_J 자세를 끝까지 고정한 채 물품 앞(+y) 접근점으로 간 뒤, 재검출한 0번이 처음 좌표와
-TOLERANCE 이내면 처음 좌표까지 들어가 잡습니다. 동작은 DRL API(DSR_ROBOT2), 그리퍼는 Modbus TCP(onrobot.RG)입니다."""
+"""vision_project detection(docker)의 /get_grasp_positions로 장면을 받아 0번 물품을 잡아 HOME_J로 가져와 그리퍼를 엽니다 (호스트 실행).
+1. SCAN_J로 movej 후 검출 요청. 선택된 묶음(cluster)이 정확히 1개일 때만 진행하고, 아니면 RETRY_DELAY 뒤 재시도합니다.
+2. 1차 좌표: 물품 앞(TCP 방향 반대로 APPROACH)에 잡기 직전 위치를 두고, 장애물 점(base)과 그리퍼 상자로
+   '스캔 위치 → 잡기 직전 위치'(바로 / 위로 돌아서) 경로와 '잡기 직전 위치 → 물품'(앞으로) 구간의 충돌을 검사해
+   막히지 않은 경로로 잡기 직전 위치까지 movel합니다. 모두 막히면 재시도합니다.
+3. 보정: 잡기 직전 위치에서 다시 검출해 0번 segmentation 무게중심을 최종 grasp point로 정합니다 (1차 좌표와
+   CORRECTION_LIMIT 이상 다르면 거절). 보정된 좌표까지 앞으로 들어가는 구간도 새 장애물 점으로 다시 검사합니다.
+4. 그리퍼는 가로(TCP 방향에 수직인 수평축)로 열고 닫도록 고정합니다. 물체 점의 가로 폭 + GRIP_MARGIN만큼 벌린 뒤
+   (MAX_OPEN 초과면 거절) 앞으로 movel해 grasp point에 도착하면, TCP 방향(툴 z축)이 base -y와 AXIS_TOLERANCE 이내로
+   평행한지 확인하고 잡습니다.
+5. 잡으면 LIFT만큼 위로 올린 뒤 같은 높이로 잡기 직전 위치 위까지 movel로 빠지고, HOME_J로 movej해 그리퍼를 엽니다.
+고정 자세(SCAN_J, HOME_J)는 movej, 집는 동작은 movel이며 자세는 SCAN_J의 TCP 자세로 고정합니다.
+동작은 DRL API(DSR_ROBOT2), 그리퍼는 Modbus TCP(onrobot.RG)입니다."""
 
 import json
 import time
@@ -9,22 +19,68 @@ import DR_init
 import numpy as np
 import rclpy
 from rclpy.node import Node
+from scipy.spatial.transform import Rotation
 from std_srvs.srv import Trigger
 
 from vision_project.onrobot import RG
 
 ROBOT_ID, ROBOT_MODEL = "dsr01", "m0609"
 VELOCITY, ACC = 60, 60
-HOME_J = [0, 0, 90, 0, 90, 90]  # 관찰·복귀 자세 (TCP가 base -y를 향함)
-APPROACH = 100.0                # mm, 물품 좌표에서 +y로 떨어진 접근점 거리
-TOLERANCE = 30.0                # mm, 접근점에서 재검출한 0번이 처음 좌표와 달라도 되는 거리
+SCAN_J = [-90.0, -54.91, 85.55, 0.0, 90.0, 90.0]  # 검출 자세 (movej), 이 TCP 자세로 끝까지 고정
+HOME_J = [0, 0, 90, 0, 90, 90]                     # 잡은 물품을 가져와 그리퍼를 여는 자세
+APPROACH = 100.0                    # mm, 물품에서 잡기 직전 위치까지 거리 (TCP 방향 반대)
+LIFT = 30.0                         # mm, 잡은 뒤 위로 올리는 높이
+CORRECTION_LIMIT = 50.0             # mm, 잡기 직전 위치에서 보정한 좌표가 1차 좌표와 달라도 되는 최대 거리
+AXIS_TOLERANCE = 5.0                # deg, 집을 때 TCP 방향(툴 z축)과 base -y 사이 허용 각도
+GRIP_MARGIN = 20.0                  # mm, 물체 가로 폭보다 더 벌리는 여유 (양쪽 합)
+MAX_OPEN = 110.0                    # mm, RG2 최대 벌림
+GRIPPER_BOX = (120.0, 70.0, 180.0)  # mm, 그리퍼 상자: 가로 폭(손가락이 벌어지는 수평축), 세로 두께, TCP(손가락 끝)→손목 길이 — 실측해 조정
+MARGIN = 10.0                       # mm, 상자 여유
+STEP = 10.0                         # mm, 경로를 따라 상자를 검사하는 간격
+RETRIES, RETRY_DELAY = 10, 2.0      # 재시도 횟수, 간격(s)
 GRIPPER_NAME, TOOLCHARGER_IP, TOOLCHARGER_PORT = "rg2", "192.168.1.1", "502"
+UP = np.array([0.0, 0.0, 1.0])
 
 # DRL API(DSR_ROBOT2)는 import 전에 DR_init에 로봇 ID·모델·노드가 등록되어 있어야 합니다.
 DR_init.__dsr__id, DR_init.__dsr__model = ROBOT_ID, ROBOT_MODEL
 rclpy.init()
 DR_init.__dsr__node = rclpy.create_node("vision_pick_dsr", namespace=ROBOT_ID)
 from DSR_ROBOT2 import get_current_posx, movej, movel, mwait  # noqa: E402
+
+
+def angle_to_minus_y(pose):
+    """posx (mm, ZYZ deg) → TCP 방향(툴 z축)과 base -y 사이 각도 (deg). 0이면 TCP가 정확히 -y를 향합니다."""
+    axis = Rotation.from_euler("ZYZ", pose[3:], degrees=True).as_matrix()[:, 2]
+    return float(np.degrees(np.arccos(np.clip(-axis[1], -1.0, 1.0))))
+
+
+def grasp_frame(pose):
+    """posx → 그리퍼 좌표계 (3, 3), 열 = [가로(손가락이 벌어지는 수평축), 세로, TCP 방향(툴 z축)]의 base 방향.
+    가로는 TCP 방향에 수직인 수평축으로 고정합니다 (TCP가 -y면 base x)."""
+    approach = Rotation.from_euler("ZYZ", pose[3:], degrees=True).as_matrix()[:, 2]
+    across = np.cross(approach, UP)
+    across /= np.linalg.norm(across)
+    return np.stack([across, np.cross(approach, across), approach], axis=1)
+
+
+class PathChecker:
+    """장애물 점(base, mm)과 그리퍼를 그리퍼 좌표계의 상자(가로·세로로 GRIPPER_BOX 폭, TCP 방향으로 손가락 끝에서
+    손목 쪽 길이)로 보고, 자세를 고정한 직선 경유점 경로를 STEP 간격으로 따라가며 상자 안에 장애물 점이 있는지 검사합니다."""
+
+    def __init__(self, obstacles, frame):
+        self.points = np.asarray(obstacles, dtype=float).reshape(-1, 3)
+        self.frame = frame  # grasp_frame()
+        across, height, length = GRIPPER_BOX
+        self.low = np.array([-across / 2, -height / 2, -length]) - MARGIN
+        self.high = np.array([across / 2, height / 2, 0.0]) + MARGIN
+
+    def blocked(self, *waypoints):
+        for start, end in zip(waypoints, waypoints[1:]):
+            for position in np.linspace(start, end, int(np.linalg.norm(end - start) // STEP) + 2):
+                local = (self.points - position) @ self.frame  # base → 그리퍼 좌표
+                if ((local > self.low) & (local < self.high)).all(1).any():
+                    return True
+        return False
 
 
 class Picker(Node):
@@ -34,50 +90,124 @@ class Picker(Node):
         self.client = self.create_client(Trigger, "/get_grasp_positions")
         while not self.client.wait_for_service(timeout_sec=3.0):
             self.get_logger().info("Waiting for /get_grasp_positions service...")
+        self.orientation, self.frame = None, None  # SCAN_J의 TCP 자세 (posx rx, ry, rz)와 grasp_frame
 
-    def get_positions(self):
-        """detection에서 {순번: [x, y, z]} (base, mm, 0 = 가장 가까움)를 받습니다."""
+    def request(self):
+        """detection 결과 {clusters, labels, targets{순번: base xyz}, target_points, obstacles} (mm)."""
         future = self.client.call_async(Trigger.Request())
         rclpy.spin_until_future_complete(self, future)
-        positions = json.loads(future.result().message)
-        self.get_logger().info(f"Grasp positions: {positions}")
-        return positions
+        return json.loads(future.result().message)
+
+    def target(self, result):
+        """선택된 묶음이 정확히 1개면 (0번 무게중심, None), 아니면 (None, 거절 사유)."""
+        if result["clusters"] != 1:
+            return None, f"{result['clusters']} clusters selected ({' '.join(result['labels']) or 'none'}), need exactly 1"
+        return np.array(result["targets"]["0"]), None
+
+    def plan(self, scan):
+        """스캔 위치에서 검출해 1차 좌표와 잡기 직전 위치까지의 충돌 없는 경유점을 고릅니다.
+        ((1차 좌표, 잡기 직전 위치, 경유점 목록), None) 또는 (None, 거절 사유)."""
+        result = self.request()
+        target, reason = self.target(result)
+        if target is None:
+            return None, reason
+        pregrasp = target - APPROACH * self.frame[:, 2]  # 물품 앞
+        checker = PathChecker(result["obstacles"], self.frame)
+        if checker.blocked(pregrasp, target):
+            return None, "moving forward from the pre-grasp point to the target is blocked"
+        lifted = np.r_[pregrasp[:2], max(scan[2], pregrasp[2] + APPROACH)]
+        for name, route in {"direct": [pregrasp], "over": [lifted, pregrasp]}.items():
+            if not checker.blocked(scan, *route):
+                self.get_logger().info(f"Target {target.round(1).tolist()}, pre-grasp {pregrasp.round(1).tolist()} "
+                                       f"via '{name}' route")
+                return (target, pregrasp, route), None
+            self.get_logger().info(f"Route '{name}' to the pre-grasp point is blocked.")
+        return None, f"every route to the pre-grasp point is blocked ({len(result['obstacles'])} obstacle points)"
+
+    def correct(self, coarse, pregrasp):
+        """잡기 직전 위치에서 다시 검출해 최종 grasp point(0번 segmentation 무게중심)와 그리퍼 벌림 폭을 정합니다.
+        ((grasp point, 벌림 폭 mm), None) 또는 (None, 거절 사유)."""
+        result = self.request()
+        target, reason = self.target(result)
+        if target is None:
+            return None, reason
+        shift = np.linalg.norm(target - coarse)
+        if shift > CORRECTION_LIMIT:
+            return None, f"corrected target moved {shift:.0f} mm from the first estimate (limit {CORRECTION_LIMIT:.0f})"
+        if PathChecker(result["obstacles"], self.frame).blocked(pregrasp, target):
+            return None, "moving forward to the corrected target is blocked"
+        across = np.asarray(result["target_points"], dtype=float).reshape(-1, 3) @ self.frame[:, 0]
+        width = float(np.subtract(*np.percentile(across, (95, 5))))  # 가로 폭 (5~95 백분위)
+        opening = width + GRIP_MARGIN
+        if opening > MAX_OPEN:
+            return None, f"object is {width:.0f} mm wide, needs {opening:.0f} mm opening (max {MAX_OPEN:.0f})"
+        self.get_logger().info(f"Grasp point corrected by {shift:.0f} mm: {target.round(1).tolist()}, "
+                               f"width {width:.0f} mm, opening {opening:.0f} mm")
+        return (target, opening), None
+
+    def move(self, position):
+        movel(np.asarray(position).tolist() + self.orientation, vel=VELOCITY, acc=ACC)
+        mwait()
+
+    def scan_pose(self):
+        movej(SCAN_J, vel=VELOCITY, acc=ACC)
+        mwait()
 
     def wait_gripper(self):
         while self.gripper.get_status()[0]:  # 그리퍼 동작 중
             time.sleep(0.5)
 
     def run(self):
-        movej(HOME_J, vel=VELOCITY, acc=ACC)
         self.gripper.open_gripper()
         self.wait_gripper()
+        for attempt in range(1, RETRIES + 1):
+            self.scan_pose()
+            pose = get_current_posx()[0]
+            angle = angle_to_minus_y(pose)
+            if angle > AXIS_TOLERANCE:  # 자세는 SCAN_J로 고정이라 재시도해도 같으므로 바로 중단
+                self.get_logger().error(f"SCAN_J TCP is {angle:.1f} deg off -y (limit {AXIS_TOLERANCE}); fix SCAN_J.")
+                return
+            scan, self.orientation, self.frame = np.array(pose[:3]), list(pose[3:]), grasp_frame(pose)
 
-        positions = self.get_positions()
-        if "0" not in positions:
-            self.get_logger().warn("No target detected at home.")
-            return
-        target = np.array(positions["0"])
-        orientation = list(get_current_posx()[0][3:])  # HOME_J의 TCP 자세(-y)를 끝까지 고정
-        approach = target + (0, APPROACH, 0)
+            plan, reason = self.plan(scan)
+            if plan is None:
+                self.get_logger().warn(f"Attempt {attempt}/{RETRIES} rejected at scan pose: {reason}")
+                time.sleep(RETRY_DELAY)
+                continue
+            coarse, pregrasp, route = plan
+            for waypoint in route:  # 1차 이동: 물품 앞(잡기 직전 위치)에 도착
+                self.move(waypoint)
 
-        movel(approach.tolist() + orientation, vel=VELOCITY, acc=ACC)
-        mwait()
-        check = self.get_positions().get("0")
-        if check is None or np.linalg.norm(np.array(check) - target) > TOLERANCE:
-            self.get_logger().warn(f"Re-detection failed: {check} vs {target.tolist()}, returning home.")
+            final, reason = self.correct(coarse, pregrasp)  # 최종 grasp point·벌림 폭 보정
+            if final is None:
+                self.get_logger().warn(f"Attempt {attempt}/{RETRIES} rejected at pre-grasp: {reason}")
+                self.scan_pose()
+                time.sleep(RETRY_DELAY)
+                continue
+            grasp, opening = final
+            self.gripper.move_gripper(int(round(opening * 10)))  # RG 단위 0.1 mm
+            self.wait_gripper()
+
+            self.move(grasp)  # 앞으로 들어가며 잡기
+            angle = angle_to_minus_y(get_current_posx()[0])  # 실제 TCP가 -y와 평행한지 잡기 직전에 확인
+            if angle > AXIS_TOLERANCE:
+                self.get_logger().warn(f"Attempt {attempt}/{RETRIES} rejected at grasp: "
+                                       f"TCP is {angle:.1f} deg off -y (limit {AXIS_TOLERANCE}).")
+                self.move(pregrasp)
+                self.scan_pose()
+                continue
+            self.gripper.close_gripper()
+            self.wait_gripper()
+
+            self.move(grasp + LIFT * UP)  # 살짝 들어 올리고
+            self.move(pregrasp + LIFT * UP)  # 같은 높이로 잡기 직전 위치까지 빠짐
             movej(HOME_J, vel=VELOCITY, acc=ACC)
+            mwait()
+            self.gripper.open_gripper()
+            self.wait_gripper()
+            self.get_logger().info("Released at home.")
             return
-
-        movel(target.tolist() + orientation, vel=VELOCITY, acc=ACC)
-        mwait()
-        self.gripper.close_gripper()
-        self.wait_gripper()
-        movel(approach.tolist() + orientation, vel=VELOCITY, acc=ACC)  # 잡은 채 +y로 빼고 복귀
-        movej(HOME_J, vel=VELOCITY, acc=ACC)
-        mwait()
-        self.gripper.open_gripper()
-        self.wait_gripper()
-        self.get_logger().info("Released at home.")
+        self.get_logger().error(f"Gave up after {RETRIES} attempts.")
 
 
 def main():
