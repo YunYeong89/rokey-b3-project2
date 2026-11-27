@@ -65,7 +65,7 @@ class GraspDetector(GraspStream):
         """가까운 순 마스크 → 마스크 중심 픽셀 + 마스크 depth → 카메라 좌표 → T_gripper2camera·현재 posx로 base 좌표."""
         start = time.monotonic()
         base2cam = pose_matrix(*get_current_posx()[0]) @ self.gripper2cam
-        masks, boxes, groups, depths, total = self.rank(frame)
+        masks, boxes, _, depths, total = self.rank(frame)
 
         k = self.source.intrinsics
         points = np.array([np.argwhere(mask).mean(0)[::-1] for mask in masks]).reshape(-1, 2)  # (u, v)
@@ -76,7 +76,7 @@ class GraspDetector(GraspStream):
         self.positions = {str(rank): xyz.round(1).tolist() for rank, xyz in enumerate(base)}
         self.updated = start
 
-        overlay = self.render(frame[0], masks, boxes, groups, depths)
+        overlay = self.render(frame[0], masks, boxes, depths)
         for u, v in points.astype(int):
             cv2.circle(overlay, (u, v), 5, (0, 0, 255), -1)
         coords = " ".join(f"{rank}:({x:.0f},{y:.0f},{h:.0f})" for rank, (x, y, h) in enumerate(base))
