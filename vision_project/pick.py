@@ -1,19 +1,18 @@
 """vision_project detection(docker)의 /get_grasp_positions로 장면을 받아 0번 물품을 잡아 HOME_J로 가져와 그리퍼를 엽니다 (호스트 실행).
 1. SCAN_J로 movej 후 검출 요청. 선택된 묶음(cluster)이 정확히 1개일 때만 진행하고, 아니면 RETRY_DELAY 뒤 재시도합니다.
-   그리퍼 배향은 스캔 자세 그대로 끝까지 유지하고(축 정렬 없음), 모든 이동은 위치만 바꿉니다.
-2. 가장 가까운 목표(0번)에서 TCP 방향 반대로 APPROACH만큼 물러난 곳에 잡기 직전 위치(waypoint1)를 두고,
-   스캔 위치 → waypoint0(스캔 위치와 waypoint1의 중간점) → waypoint1을 관절 공간 스플라인(각 경유점을 스캔 자세의
-   해 공간으로 ikin → movesj) 한 번으로 지나갑니다. 작업 공간 스플라인(movesx)은 특이점 근처에서 실행 중 멈춰서
-   관절 공간으로 보간하고, 직선 이동(movel)은 특이점 근처에서 멈추지 않고 감속하도록 DR_VAR_VEL로 둡니다.
-   두 구간과 앞으로 들어가는 구간을 그리퍼 상자로 장애물 점(base)과 검사해, 막히면 재시도합니다.
-3. 보정: 잡기 직전 위치에서 다시 검출해 0번 segmentation 무게중심을 최종 grasp point로 정합니다 (1차 좌표와
-   CORRECTION_LIMIT 이상 다르면 거절). 보정된 좌표까지 앞으로 들어가는 구간도 새 장애물 점으로 다시 검사합니다.
-4. 그리퍼는 시작할 때 건드리지 않고, 잡기 직전에만 가로(TCP 방향에 수직인 수평축)로 물체 가로 폭 + GRIP_MARGIN만큼
-   벌립니다 (MAX_OPEN 초과면 거절). 그리퍼는 GripperWorker 스레드에서 돌아 로봇 이동과 분리됩니다: 벌리기를 시작하면서
-   동시에 TCP 방향으로 movel해 들어가고, grasp point에 도착하면 벌리기 완료를 기다린 뒤 잡습니다.
-5. 잡으면 LIFT만큼 위로 올린 뒤 같은 높이로 잡기 직전 위치 위까지 movel로 빠지고, HOME_J로 movej해 그리퍼를 엽니다.
-고정 자세(SCAN_J, HOME_J)는 movej, 집는 동작은 movel·movesj이며, 이동마다 실제로 도착했는지 확인합니다.
-동작은 DRL API(DSR_ROBOT2), 그리퍼는 Modbus TCP(onrobot.RG)이며, 그리퍼가 안전 정지하거나 GRIPPER_TIMEOUT을 넘기면 중단합니다."""
+2. 가장 가까운 목표(0번) 앞(base +y로 APPROACH, 물품 높이)에 잡기 직전 위치(waypoint1)를 두고, 스캔 자세 그대로
+   스캔 위치 → waypoint0(스캔 위치와 waypoint1의 중간점) → waypoint1을 관절 공간 스플라인(ikin → movesj) 한 번으로
+   지나갑니다. 관절 보간이라 특이점 때문에 도중에 멈추지 않습니다.
+3. 보정: 잡기 직전 위치에서 (카메라가 내려다보는 스캔 자세로) 다시 검출해 0번 segmentation 무게중심으로 최종 grasp point를
+   정합니다 (1차 좌표와 CORRECTION_LIMIT 이상 다르면 거절).
+4. 잡기 직전에만 집는 자세 GRASP_EULER(ZYZ, TCP ∥ -y, 손가락 수평)로 정렬합니다. 관절 공간(ikin → movej)으로 돌려
+   특이점 때문에 도중에 멈추지 않게 합니다.
+5. 그리퍼는 시작할 때 건드리지 않고, 정렬 뒤에만 가로(base x)로 물체 가로 폭 + GRIP_MARGIN만큼 벌립니다(MAX_OPEN 초과면
+   거절). 그리퍼는 GripperWorker 스레드에서 돌아 로봇 이동과 분리됩니다: 벌리기를 시작하면서 동시에 -y로 movel해 들어가고
+   (DR_VAR_VEL로 특이점 근처에서 멈추지 않고 감속), grasp point에서 벌리기 완료를 기다린 뒤 잡습니다.
+6. 잡으면 LIFT만큼 위로 올린 뒤 같은 높이로 잡기 직전 위치 위까지 movel로 빠지고, HOME_J로 movej해 그리퍼를 엽니다.
+경로(스캔 자세 그리퍼)와 앞으로 들어가는 구간(집는 자세 그리퍼)은 장애물 점(base)과 검사해 막히면 재시도하고, 이동마다
+실제로 도착했는지 확인합니다. 동작은 DRL API(DSR_ROBOT2), 그리퍼는 Modbus TCP(onrobot.RG)입니다."""
 
 import json
 from threading import Thread
@@ -30,11 +29,12 @@ from vision_project.onrobot import RG
 
 ROBOT_ID, ROBOT_MODEL = "dsr01", "m0609"
 VELOCITY, ACC = 24, 24  # movej deg/s·deg/s², movel mm/s·mm/s²
-SCAN_J = [-90.0, -54.91, 85.55, 0.0, 90.0, 90.0]  # 검출 자세 (movej), 이 그리퍼 배향을 끝까지 유지
+SCAN_J = [-90.0, -54.91, 85.55, 0.0, 90.0, 90.0]  # 검출 자세 (movej), 잡기 직전 위치까지 이 배향 유지
 HOME_J = [0, 0, 90, 0, 90, 90]                     # 잡은 물품을 가져와 그리퍼를 여는 자세
+GRASP_EULER = [90.0, -90.0, -90.0]  # deg ZYZ, 잡기 직전에만 맞추는 집는 자세 (TCP ∥ base -y, 툴 x = base x, 툴 y = 위)
 GRIPPER_TIMEOUT = 10.0              # s, 그리퍼 동작을 기다리는 최대 시간
 WIDTH_TOLERANCE = 3.0               # mm, 벌리기 완료로 볼 목표 폭과의 차이 (동작 중 비트가 안 풀려도 폭으로 판정)
-APPROACH = 100.0                    # mm, 물품에서 잡기 직전 위치까지 거리 (TCP 방향 반대)
+APPROACH = 100.0                    # mm, 물품에서 잡기 직전 위치까지 거리 (집는 자세 TCP 방향 반대, base +y)
 LIFT = 30.0                         # mm, 잡은 뒤 위로 올리는 높이
 CORRECTION_LIMIT = 50.0             # mm, 잡기 직전 위치에서 보정한 좌표가 1차 좌표와 달라도 되는 최대 거리
 GRIP_MARGIN = 20.0                  # mm, 물체 가로 폭보다 더 벌리는 여유 (양쪽 합)
@@ -45,9 +45,9 @@ MARGIN = 5.0                        # mm, 상자 여유
 MIN_HITS = 10                       # 상자 안 장애물 점이 이 개수 이상일 때만 막힘으로 판정 (depth 잡음 무시)
 STEP = 10.0                         # mm, 경로를 따라 상자를 검사하는 간격
 RETRIES, RETRY_DELAY = 10, 2.0      # 재시도 횟수, 간격(s)
-ARRIVAL_POSITION, ARRIVAL_ANGLE = 5.0, 2.0  # mm, deg: movel·movesj 뒤 목표와 이만큼 넘게 다르면 도중에 멈춘 것으로 봄
+ARRIVAL_POSITION, ARRIVAL_ANGLE = 5.0, 2.0  # mm, deg: 작업 공간 목표와 이만큼 넘게 다르면 도중에 멈춘 것으로 봄
 ARRIVAL_JOINT = 1.0                 # deg: movej 뒤 각 관절이 목표와 이만큼 넘게 다르면 도중에 멈춘 것으로 봄
-WRIST_SINGULAR = 10.0               # deg: 경유점의 |J5|가 이보다 작으면 손목 특이점 근처라고 경고
+WRIST_SINGULAR = 10.0               # deg: |J5|가 이보다 작으면 손목 특이점 근처라고 경고
 GRIPPER_NAME, TOOLCHARGER_IP, TOOLCHARGER_PORT = "rg2", "192.168.1.1", "502"
 UP = np.array([0.0, 0.0, 1.0])
 
@@ -59,10 +59,10 @@ from DSR_ROBOT2 import (DR_VAR_VEL, get_current_posj, get_current_posx, ikin, mo
                         mwait, posj, set_singularity_handling)
 
 
-def grasp_frame(pose):
-    """posx → 그리퍼 좌표계 (3, 3), 열 = [가로(손가락이 벌어지는 수평축), 세로, TCP 방향(툴 z축)]의 base 방향.
-    가로는 TCP 방향에 수직인 수평축으로 고정합니다 (TCP가 기울어 있어도 손가락은 수평으로 벌어짐)."""
-    approach = Rotation.from_euler("ZYZ", pose[3:], degrees=True).as_matrix()[:, 2]
+def grasp_frame(orientation):
+    """ZYZ deg 배향 → 그리퍼 좌표계 (3, 3), 열 = [가로(손가락이 벌어지는 수평축), 세로, TCP 방향(툴 z축)]의 base 방향.
+    가로는 TCP 방향에 수직인 수평축으로 고정합니다 (TCP가 -y면 base x)."""
+    approach = Rotation.from_euler("ZYZ", orientation, degrees=True).as_matrix()[:, 2]
     across = np.cross(approach, UP)
     across /= np.linalg.norm(across)
     return np.stack([across, np.cross(across, approach), approach], axis=1)
@@ -155,8 +155,9 @@ class Picker(Node):
         self.client = self.create_client(Trigger, "/get_grasp_positions")
         while not self.client.wait_for_service(timeout_sec=3.0):
             self.get_logger().info("Waiting for /get_grasp_positions service...")
-        self.orientation, self.frame = None, None  # 스캔 자세의 그리퍼 배향 (posx rx, ry, rz)과 그 grasp_frame
-        self.solution = None                       # 스캔 자세의 해 공간 (ikin으로 같은 팔 모양 유지)
+        self.frame = grasp_frame(GRASP_EULER)  # 집는 자세 그리퍼 좌표계 (가로 = base x, TCP = -y)
+        self.scan_orientation, self.scan_frame = None, None  # 스캔 자세 배향 (잡기 직전 위치까지)과 그 그리퍼 좌표계
+        self.solution = None                                 # 스캔 자세의 해 공간 (ikin으로 같은 팔 모양 유지)
 
     def request(self):
         """detection 결과 {clusters, labels, targets{순번: base xyz}, target_points, obstacles} (mm)."""
@@ -170,6 +171,23 @@ class Picker(Node):
             return None, f"{result['clusters']} clusters selected ({' '.join(result['labels']) or 'none'}), need exactly 1"
         return np.array(result["targets"]["0"]), None
 
+    def width(self, result):
+        """0번 물체 점들의 가로(손가락이 벌어지는 수평축, base x) 폭, 5~95 백분위 (mm)."""
+        across = np.asarray(result["target_points"], dtype=float).reshape(-1, 3) @ self.frame[:, 0]
+        return float(np.subtract(*np.percentile(across, (95, 5))))
+
+    def joints(self, position, orientation):
+        """position (base mm) + orientation(ZYZ deg)을 스캔 자세 해 공간으로 ikin한 관절값 [deg]. 실패하면 중단합니다.
+        |J5|가 WRIST_SINGULAR보다 작으면 손목 특이점 근처라고 경고합니다."""
+        target = np.asarray(position).tolist() + list(orientation)
+        solved = ikin(target, self.solution)
+        if isinstance(solved, int):
+            raise RuntimeError(f"ikin failed for {np.round(target, 1).tolist()} (unreachable?).")
+        joints = [float(q) for q in solved]
+        log = self.get_logger().warn if abs(joints[4]) < WRIST_SINGULAR else self.get_logger().info
+        log(f"Pose {np.round(target, 1).tolist()} → joints {np.round(joints, 1).tolist()} (J5 {joints[4]:.1f} deg)")
+        return joints
+
     def plan(self, scan):
         """스캔 위치에서 검출해 1차 좌표와 잡기 직전 위치까지의 충돌 없는 경유점을 고릅니다.
         ((1차 좌표, 잡기 직전 위치, waypoint0), None) 또는 (None, 거절 사유)."""
@@ -177,25 +195,22 @@ class Picker(Node):
         target, reason = self.target(result)
         if target is None:
             return None, reason
-        pregrasp = target - APPROACH * self.frame[:, 2]  # TCP 방향 반대로 물러난 물품 앞
-        checker = PathChecker(result["obstacles"], self.frame)
-        hit = checker.blocked(pregrasp, target)
+        pregrasp = target - APPROACH * self.frame[:, 2]  # 물품 앞 (base +y)
+        grasp = target + (self.width(result) / 2 + GRASP_DEPTH) * self.frame[:, 2]  # grasp point 추정
+        hit = PathChecker(result["obstacles"], self.frame).blocked(pregrasp, grasp)
         if hit:
             return None, f"moving forward from the pre-grasp point to the target {target.round(1).tolist()} is blocked: {hit}"
         waypoint0 = (scan + pregrasp) / 2  # 스캔 위치 → waypoint1 중간점
-        hit = checker.blocked(scan, waypoint0)
+        hit = PathChecker(result["obstacles"], self.scan_frame).blocked(scan, waypoint0, pregrasp)
         if hit:
-            return None, f"move to waypoint0 is blocked: {hit}"
-        hit = checker.blocked(waypoint0, pregrasp)
-        if hit:
-            return None, f"move to waypoint1 (pre-grasp) is blocked: {hit}"
+            return None, f"route to waypoint1 (pre-grasp) is blocked: {hit}"
         self.get_logger().info(f"Target {target.round(1).tolist()}, waypoint0 {waypoint0.round(1).tolist()}, "
                                f"waypoint1 {pregrasp.round(1).tolist()}")
         return (target, pregrasp, waypoint0), None
 
     def correct(self, coarse, pregrasp):
         """잡기 직전 위치에서 다시 검출해 최종 grasp point와 그리퍼 벌림 폭을 정합니다.
-        카메라에 보이는 segmentation 무게중심은 물체 앞면이라, TCP 방향으로 (가로 폭/2 + GRASP_DEPTH)만큼 더 들어가
+        카메라에 보이는 segmentation 무게중심은 물체 앞면이라, -y로 (가로 폭/2 + GRASP_DEPTH)만큼 더 들어가
         손가락이 물체 중심을 감싸게 합니다. ((grasp point, 벌림 폭 mm), None) 또는 (None, 거절 사유)."""
         result = self.request()
         target, reason = self.target(result)
@@ -204,8 +219,7 @@ class Picker(Node):
         shift = np.linalg.norm(target - coarse)
         if shift > CORRECTION_LIMIT:
             return None, f"corrected target moved {shift:.0f} mm from the first estimate (limit {CORRECTION_LIMIT:.0f})"
-        across = np.asarray(result["target_points"], dtype=float).reshape(-1, 3) @ self.frame[:, 0]
-        width = float(np.subtract(*np.percentile(across, (95, 5))))  # 가로 폭 (5~95 백분위)
+        width = self.width(result)
         opening = width + GRIP_MARGIN
         if opening > MAX_OPEN:
             return None, f"object is {width:.0f} mm wide, needs {opening:.0f} mm opening (max {MAX_OPEN:.0f})"
@@ -218,32 +232,30 @@ class Picker(Node):
         return (grasp, opening), None
 
     def move(self, position):
-        """position (base mm)으로 스캔 자세 배향 그대로 movel. 거부되거나(반환 -1) 도중에 멈추면 중단합니다."""
-        target = np.asarray(position).tolist() + self.orientation
+        """position (base mm)으로 집는 자세(GRASP_EULER) 그대로 movel. 거부되거나(반환 -1) 도중에 멈추면 중단합니다."""
+        target = np.asarray(position).tolist() + GRASP_EULER
         if movel(target, vel=VELOCITY, acc=ACC) != 0:
             raise RuntimeError(f"movel to {np.round(target, 1).tolist()} was rejected by the controller.")
         mwait()
         self.arrived("movel", target)
 
     def spline(self, *positions):
-        """positions (base mm)를 스캔 자세 배향 그대로, 각 경유점을 ikin(스캔 자세 해 공간)으로 관절값으로 바꿔
-        movesj 관절 공간 스플라인 한 번으로 지나갑니다. 경유점에서는 정확히 그 posx이고, 사이는 관절 보간이라
-        특이점 때문에 실행 중 멈추지 않습니다. 경유점의 J5가 0°에 가까우면(손목 특이점) 경고하고,
-        ikin이 실패하거나 거부·도중 정지 시 중단합니다."""
-        targets = [np.asarray(position).tolist() + self.orientation for position in positions]
-        joints = []
-        for target in targets:
-            solved = ikin(target, self.solution)
-            if isinstance(solved, int):
-                raise RuntimeError(f"ikin failed for {np.round(target, 1).tolist()} (unreachable?).")
-            joints.append([float(q) for q in solved])
-            level = "warn" if abs(joints[-1][4]) < WRIST_SINGULAR else "info"
-            getattr(self.get_logger(), level)(f"Waypoint {np.round(target[:3], 1).tolist()} joints "
-                                              f"{np.round(joints[-1], 1).tolist()} (J5 {joints[-1][4]:.1f} deg)")
+        """positions (base mm)를 스캔 자세 배향 그대로, ikin한 관절값으로 movesj 관절 공간 스플라인 한 번에 지나갑니다.
+        경유점에서는 정확히 그 posx이고, 사이는 관절 보간이라 특이점 때문에 도중에 멈추지 않습니다."""
+        joints = [self.joints(position, self.scan_orientation) for position in positions]
         if movesj([posj(q) for q in joints], vel=VELOCITY, acc=ACC) != 0:
             raise RuntimeError(f"movesj through {[np.round(q, 1).tolist() for q in joints]} was rejected by the controller.")
         mwait()
-        self.arrived("movesj", targets[-1])
+        self.arrived("movesj", np.asarray(positions[-1]).tolist() + self.scan_orientation)
+
+    def align(self, position):
+        """position (base mm)에서 제자리로 집는 자세 GRASP_EULER로 정렬합니다. ikin → movej라 특이점에서 멈추지 않습니다."""
+        joints = self.joints(position, GRASP_EULER)
+        if movej(joints, vel=VELOCITY, acc=ACC) != 0:
+            raise RuntimeError(f"movej to the grasp orientation (joints {np.round(joints, 1).tolist()}) "
+                               "was rejected by the controller.")
+        mwait()
+        self.arrived("align", np.asarray(position).tolist() + GRASP_EULER)
 
     def arrived(self, name, target):
         """DRL 반환값 0은 '명령 접수'일 뿐이라 실행 중 특이점·관절 한계로 멈춰도 알 수 없으므로, 이동 뒤 실제 posx를
@@ -277,25 +289,26 @@ class Picker(Node):
             self.scan_pose()
             pose, self.solution = get_current_posx()
             pose = list(pose)
-            scan, self.orientation, self.frame = np.array(pose[:3]), pose[3:], grasp_frame(pose)
+            self.scan_orientation, self.scan_frame = pose[3:], grasp_frame(pose[3:])
 
-            plan, reason = self.plan(scan)
+            plan, reason = self.plan(np.array(pose[:3]))
             if plan is None:
                 self.get_logger().warn(f"Attempt {attempt}/{RETRIES} rejected at scan pose: {reason}")
                 time.sleep(RETRY_DELAY)
                 continue
             coarse, pregrasp, waypoint0 = plan
-            self.spline(waypoint0, pregrasp)  # 스캔 위치 → waypoint0 → waypoint1, 배향 유지 (관절 공간 스플라인)
+            self.spline(waypoint0, pregrasp)  # 스캔 자세 그대로 잡기 직전 위치까지 (관절 공간 스플라인)
 
-            final, reason = self.correct(coarse, pregrasp)  # 최종 grasp point·벌림 폭 보정
+            final, reason = self.correct(coarse, pregrasp)  # 내려다보는 자세로 다시 검출해 grasp point·벌림 폭 보정
             if final is None:
                 self.get_logger().warn(f"Attempt {attempt}/{RETRIES} rejected at pre-grasp: {reason}")
                 self.scan_pose()
                 time.sleep(RETRY_DELAY)
                 continue
             grasp, opening = final
+            self.align(pregrasp)  # 잡기 직전에만 GRASP_EULER로 정렬 (관절 공간)
             self.gripper.start(opening)  # 그리퍼 스레드: 벌리기 시작
-            self.move(grasp)  # 로봇: 동시에 TCP 방향으로 들어감 (벌리기는 1~2 s, 이동은 그보다 김)
+            self.move(grasp)  # 로봇: 동시에 -y로 들어감 (벌리기는 1~2 s, 이동은 그보다 김)
             self.gripper.wait()  # 잡기 전에 벌리기 완료 확인
             self.gripper.start()  # 잡기
             self.gripper.wait()  # 잡은 뒤에 들어 올림
