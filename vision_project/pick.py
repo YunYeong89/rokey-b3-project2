@@ -13,8 +13,7 @@
    거절). 그리퍼는 GripperWorker 스레드에서 돌아 로봇 이동과 분리됩니다: 벌리기를 시작하면서 동시에 -y로 movel해 들어가고,
    grasp point에서 벌리기 완료를 기다린 뒤 잡습니다.
 5. 잡으면 LIFT만큼 들어 올림 → 같은 높이로 잡기 직전 위치 위까지를 movesx 스플라인 하나로 빠지고, HOME_J로 movej해 엽니다.
-잡기 직전·grasp point 자세의 |J5|가 WRIST_SINGULAR보다 작으면(특이점 근처 높이) 거절합니다. 경로는 장애물 점(base)과
-검사해 막히면 재시도하고, 이동마다 실제로 도착했는지 확인합니다. 동작은 DRL API(DSR_ROBOT2), 그리퍼는 Modbus TCP(onrobot.RG)입니다."""
+경로는 장애물 점(base)과 검사해 막히면 재시도하고, 이동마다 실제로 도착했는지 확인합니다. 동작은 DRL API(DSR_ROBOT2), 그리퍼는 Modbus TCP(onrobot.RG)입니다."""
 
 import json
 from threading import Thread
@@ -37,7 +36,6 @@ GRASP_EULER = [90.0, -90.0, -90.0]  # deg ZYZ, 집는 자세 (TCP ∥ base -y, �
 SHOULDER_Z, UPPER, FOREARM = 134.5, 411.0, 368.0  # mm, M0609 base→J2 높이, J2→J3(상완), J3→J5(전완) (URDF)
 JOINT_WAYPOINTS = 4                 # 스캔 자세 → 잡기 직전 자세 관절 직선을 나누는 waypoint 수 (movesj)
 PATH_SAMPLES = 20                   # 관절 경로 충돌 검사에 쓰는 TCP 샘플 수
-WRIST_SINGULAR = 10.0               # deg, 잡기 직전·grasp point 자세의 |J5|가 이보다 작으면 거절 (손목 특이점)
 GRIPPER_TIMEOUT = 10.0              # s, 그리퍼 동작을 기다리는 최대 시간
 WIDTH_TOLERANCE = 3.0               # mm, 벌리기 완료로 볼 목표 폭과의 차이 (동작 중 비트가 안 풀려도 폭으로 판정)
 APPROACH = 100.0                    # mm, 물품에서 잡기 직전 위치까지 거리 (집는 자세 TCP 방향 반대, base +y)
@@ -246,10 +244,6 @@ class Picker(Node):
         end, last = self.arm.level(pregrasp), self.arm.level(grasp)
         if end is None or last is None:
             return None, f"pre-grasp {pregrasp.round(1).tolist()} or grasp point {grasp.round(1).tolist()} is out of reach"
-        if min(abs(end[4]), abs(last[4])) < WRIST_SINGULAR or end[4] * last[4] < 0:
-            return None, (f"J5 is {end[4]:.0f} deg at the pre-grasp point and {last[4]:.0f} deg at the grasp point "
-                          f"(need |J5| >= {WRIST_SINGULAR:.0f} on one side); target height {target[2]:.0f} mm is "
-                          "near the wrist singularity")
         checker = PathChecker(result["obstacles"])
         path = [self.arm.tcp(joints) for joints in np.linspace(self.arm.joints, end, PATH_SAMPLES)]
         hit = next(filter(None, (checker.blocked(frame, start, stop)
