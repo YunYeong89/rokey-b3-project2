@@ -24,6 +24,10 @@
     {"id": "juice", "name": "주스", "emoji": "🧃", "price": 1800, "stock": 10, "warehouse": 10, "category": "음료", "aisle": "juice nectars", "robot": false, "shelf": null, "fragile": false, "deformable": false, "registered": true},
     {"id": "sausage", "name": "소시지", "emoji": "🌭", "price": 2500, "stock": 10, "warehouse": 10, "category": "식품", "aisle": "hot dogs bacon sausage", "robot": false, "shelf": null, "fragile": false, "deformable": false, "registered": true},
     {"id": "cracker", "name": "크래커", "emoji": "🍘", "price": 1500, "stock": 10, "warehouse": 10, "category": "간식", "aisle": "crackers", "robot": false, "shelf": null, "fragile": false, "deformable": false, "registered": true},
-    {"id": "lunchbox", "name": "도시락", "emoji": "🍱", "price": 4800, "stock": 10, "warehouse": 10, "category": "식품", "aisle": "prepared meals", "robot": false, "shelf": null, "fragile": false, "deformable": false, "registered": true}
+    {"id": "lunchbox", "name": "도시락", "emoji": "🍱", "price": 4800, "stock": 10, "warehouse": 10, "category": "식품", "aisle": "prepared meals", "robot": false, "shelf": null, "fragile": false, "deformable": false, "registered": true},
+    {"id": "tortilla_chips", "name": "나초·토르티야 칩", "emoji": "🌮", "price": 2000, "stock": 10, "warehouse": 10, "category": "간식", "aisle": "chips pretzels", "robot": false, "shelf": null, "fragile": false, "deformable": false, "registered": true},
+    {"id": "dark_chocolate", "name": "다크초콜릿", "emoji": "🍫", "price": 3500, "stock": 10, "warehouse": 10, "category": "간식", "aisle": "candy chocolate", "robot": false, "shelf": null, "fragile": false, "deformable": false, "registered": true},
+    {"id": "strawberry_yogurt", "name": "딸기 요구르트", "emoji": "🍓", "price": 1900, "stock": 10, "warehouse": 10, "category": "음료", "aisle": "yogurt", "robot": false, "shelf": null, "fragile": false, "deformable": false, "registered": true},
+    {"id": "orange_soda", "name": "오렌지 탄산음료", "emoji": "🍊", "price": 2000, "stock": 10, "warehouse": 10, "category": "음료", "aisle": "soft drinks", "robot": false, "shelf": null, "fragile": false, "deformable": false, "registered": true}
   ]
 }

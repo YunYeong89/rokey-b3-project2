@@ -1,0 +1,15 @@
+{
+  "all_train_orders": 131209,
+  "mapped_orders": 109070,
+  "eligible_orders": 76781,
+  "eligible_fraction": 0.5851808946032665,
+  "mapped_raw_line_fraction": 0.2729570704389734,
+  "validation_cases": 38390,
+  "test_cases": 38391,
+  "seed": 42,
+  "max_cases": null,
+  "mapping_review_file_used": false,
+  "baseline": "reconstructed Lift-only proxy, not original web engine",
+  "inventory": "all available",
+  "cold_start": "history masked"
+}

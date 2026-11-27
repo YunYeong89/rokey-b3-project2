@@ -11,6 +11,9 @@ web_server.py 가 보내는 /order 를 받아서
 
 products.json 의 robot: true 상품(실물)만 로봇이 처리하고,
 robot: false 상품(가상)은 직원이 준비하도록 완료 메시지의 staff_items 로 넘깁니다.
+
+done 을 보내면 web_server 가 픽업 번호(A-017)와 QR 을 만들고, 손님이 키오스크에서 수령하면
+/pickup {"order_id", "pickup_code"} 을 발행합니다 (on_pickup TODO).
 """
 import json
 import threading
@@ -19,12 +22,12 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-from recommender import PRODUCTS_FILE, Recommender
+from pickup.catalog import PRODUCTS
+from pickup.recommender import Recommender
 
-# 상품 정보는 web_server.py 와 같은 data/products.json 에서 읽음
-_CATALOG = json.loads(PRODUCTS_FILE.read_text(encoding="utf-8"))
+# 상품 정보는 웹 서버와 같은 data/products.json 에서 읽음 (pickup/catalog.py)
 # 상품 id -> 속성 (shelf, fragile, deformable, registered). pick_one 에서 그립 방식 결정에 사용
-PRODUCT_INFO = {p["id"]: p for p in _CATALOG["products"]}
+PRODUCT_INFO = {p["id"]: p for p in PRODUCTS}
 ROBOT_ITEMS = {pid for pid, p in PRODUCT_INFO.items() if p.get("robot")}  # 로봇이 집는 실물 상품
 # 대체 상품 후보 (our_recs.json). 최종 대체 상품은 web_server 가 실시간 재고로 다시 고름
 RECOMMENDER = Recommender()
@@ -43,6 +46,7 @@ class OrderNode(Node):
         self.create_subscription(String, "/order", self.on_order, 10)
         self.create_subscription(String, "/order_choice", self.on_choice, 10)
         self.create_subscription(String, "/scan_request", self.on_scan, 10)
+        self.create_subscription(String, "/pickup", self.on_pickup, 10)  # 손님이 키오스크에서 수령 완료
         self.choice_evt = threading.Event()
         self.choice = None
         self.busy = False
@@ -76,6 +80,13 @@ class OrderNode(Node):
     def on_choice(self, msg):
         self.choice = json.loads(msg.data)
         self.choice_evt.set()
+
+    def on_pickup(self, msg):
+        """/pickup {"order_id": 3, "pickup_code": "A-017"} - 손님이 키오스크에서 QR 확인 완료.
+        픽업 번호(pickup_code)는 web_server 가 만들어 바구니 라벨로 씀.
+        TODO: 바구니를 픽업대로 옮기는 동작 연결 (busy 이면 끝난 뒤 처리하도록 큐에 넣기 등)"""
+        data = json.loads(msg.data)
+        self.get_logger().info(f"픽업 완료: 주문 {data.get('order_id')} / 바구니 {data.get('pickup_code')}")
 
     def on_scan(self, msg):
         if self.busy:

@@ -1,0 +1,24 @@
+id,name,aisle_id,mapped_products
+tuna_can,참치캔,95,108
+spam_can,스팸 통조림,95,5
+milk_pack,소형 우유팩,84,243
+soap_box,비누 상자,25,525
+choco_box,초콜릿 상자,45,1246
+snack_bag,과자 봉지,107,989
+mini_tissue,미니 티슈,54,322
+egg_pack,계란 모형,86,125
+cup_ramen,컵라면,4,543
+cola,콜라,77,463
+water,생수,115,344
+can_coffee,캔커피,26,680
+yogurt,요구르트,120,1026
+bread,식빵,112,557
+cookie,쿠키,61,874
+ice_cream,아이스크림,37,1091
+cereal,시리얼,121,454
+nuts,견과류,117,582
+toothpaste,치약,20,565
+juice,주스,98,792
+sausage,소시지,106,387
+cracker,크래커,78,747
+lunchbox,도시락,13,317

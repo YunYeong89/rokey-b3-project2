@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>로키마트 픽업 키오스크</title>
+<meta name="theme-color" content="#0f766e">
+<!--
+  픽업 키오스크: 손님 휴대폰의 QR(ROKEY-PICKUP:{token})을 카메라로 읽어 /api/pickup/verify 호출.
+  카메라는 보안 연결(https)이나 localhost 에서만 열림 -> 가게 PC 에서 http://localhost:8000/kiosk 로 열기.
+  QR 인식: 브라우저 기본 BarcodeDetector, 없으면 static/vendor/jsQR.js (인터넷 없이 동작)
+-->
+<link rel="stylesheet" href="css/kiosk.css">
+</head>
+<body>
+<header>
+  <div class="logo">R</div>
+  <div><div class="title">로키마트 픽업 키오스크</div><div class="sub">주문한 상품을 여기서 받아 가세요</div></div>
+  <div class="clock" id="clock"></div>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>📱 QR을 카메라에 보여 주세요</h2>
+    <p class="lead">휴대폰 주문 화면의 픽업 QR을 아래 네모 안에 맞춰 주세요</p>
+    <div class="cam">
+      <video id="video" playsinline muted></video>
+      <div class="frame" id="frame"><i></i><div class="scanline"></div></div>
+      <div class="camerr" id="camerr"><b>📷 카메라를 열 수 없어요</b><span id="camerrMsg"></span></div>
+    </div>
+    <div class="engine" id="engine">카메라 준비 중…</div>
+  </section>
+
+  <section class="panel">
+    <h2>⌨️ QR이 안 되면</h2>
+    <p class="lead">픽업 번호와 확인번호 4자리를 입력하세요</p>
+    <form id="manual" autocomplete="off">
+      <label for="code">픽업 번호</label>
+      <input id="code" placeholder="A-017" maxlength="6" inputmode="text">
+      <label for="check">확인번호 (4자리)</label>
+      <input id="check" placeholder="0000" maxlength="4" inputmode="numeric" pattern="[0-9]*">
+      <button class="btn" id="manualBtn">확인</button>
+    </form>
+    <div class="note">
+      카메라는 <b>가게 PC에서 <code>http://localhost:8000/kiosk</code></b> 로 열었을 때 동작해요.
+      다른 기기(태블릿 등)에서 <code>http://IP주소</code>로 열면 브라우저가 카메라를 막을 수 있어요 — 그럴 땐 위 수동 입력을 쓰세요.
+    </div>
+  </section>
+</main>
+
+<div class="result" id="result"></div>
+
+<script src="vendor/jsQR.js"></script>
+<script src="js/kiosk.js"></script>
+</body>
+</html>

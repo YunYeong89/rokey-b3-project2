@@ -4,154 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>로키마트 픽업 주문</title>
-<link rel="manifest" href="/manifest.json">
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0f766e">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<style>
-  :root{
-    --bg:#f4f1ea; --card:#fffdf8; --ink:#1f2a28; --muted:#6b736f; --line:#e3ddd0;
-    --brand:#0f766e; --brand-2:#14b8a6; --accent:#f59e0b; --danger:#dc2626; --ok:#16a34a;
-    --radius:18px;
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;background:var(--bg);color:var(--ink);
-    font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
-    -webkit-font-smoothing:antialiased}
-  button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
-  header{position:sticky;top:0;z-index:5;background:var(--brand);color:#fff;
-    padding:14px 18px 0;box-shadow:0 2px 12px rgba(15,118,110,.25)}
-  .bar{display:flex;align-items:center;gap:10px;max-width:980px;margin:0 auto}
-  .logo{width:36px;height:36px;border-radius:11px;background:#fff;color:var(--brand);
-    display:grid;place-items:center;font-weight:800;font-size:18px}
-  .title{font-weight:800;font-size:18px;letter-spacing:-.02em}
-  .sub{font-size:12px;opacity:.8}
-  .mode{margin-left:auto;font-size:11px;padding:4px 9px;border-radius:99px;background:rgba(255,255,255,.18)}
-  .tabs{display:flex;gap:4px;max-width:980px;margin:12px auto 0}
-  .tab{padding:10px 16px;border-radius:12px 12px 0 0;font-weight:700;font-size:14px;opacity:.75}
-  .tab.on{background:var(--bg);color:var(--brand);opacity:1}
-  main{max-width:980px;margin:0 auto;padding:18px 16px calc(var(--cartH,90px) + 40px)}
-  .view{display:none}.view.on{display:block}
-  h2{font-size:17px;margin:4px 2px 12px;letter-spacing:-.02em}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;
-    display:flex;flex-direction:column;gap:8px;transition:transform .15s,box-shadow .15s}
-  .card.sel{border-color:var(--brand-2);box-shadow:0 0 0 3px rgba(20,184,166,.18)}
-  .card.out{opacity:.5}
-  .emoji{font-size:40px;line-height:1;height:56px;display:grid;place-items:center;background:#f1ede3;border-radius:14px}
-  .pname{font-weight:700;font-size:15px}
-  .meta{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
-  .stock.low{color:var(--accent);font-weight:700}.stock.zero{color:var(--danger);font-weight:700}
-  .qty{display:flex;align-items:center;justify-content:space-between;background:#f1ede3;border-radius:12px;padding:4px}
-  .qty button{width:34px;height:34px;border-radius:10px;background:#fff;font-size:20px;font-weight:700;color:var(--brand)}
-  .qty button:disabled{opacity:.35;cursor:default}
-  .qty span{font-weight:800;min-width:24px;text-align:center}
-  /* 함께 사면 좋아요: 아래 장바구니 바 안에 항상 보이게 */
-  .reco{max-width:980px;margin:0 auto 10px;display:none}
-  .reco b{font-size:13px;color:#92400e}
-  .chips{display:flex;gap:8px;overflow-x:auto;margin-top:6px;padding-bottom:2px;-webkit-overflow-scrolling:touch}
-  .chips .chip{flex:none}
-  .chip{background:#fff;border:1px solid #f3c46b;border-radius:99px;padding:7px 12px;font-size:13px;font-weight:600}
-  .cart{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-top:1px solid var(--line);
-    padding:12px 16px calc(12px + env(safe-area-inset-bottom));box-shadow:0 -6px 20px rgba(0,0,0,.06)}
-  .cart .in{max-width:980px;margin:0 auto;display:flex;align-items:center;gap:12px}
-  .sum{flex:1;font-size:13px;color:var(--muted);text-align:left}.sum b{display:block;font-size:19px;color:var(--ink)}
-  .sum u{display:inline-block;text-decoration:none;color:var(--brand);font-weight:700;font-size:12px;white-space:nowrap;
-    background:#e6f4f2;border-radius:99px;padding:2px 8px;margin-top:3px}
-  .sum:disabled{cursor:default}.sum:disabled u{display:none}
-  .btn{background:var(--brand);color:#fff;font-weight:800;padding:14px 22px;border-radius:14px;font-size:15px}
-  .btn:disabled{background:#a8b5b2;cursor:default}
-  .btn.ghost{background:#fff;color:var(--brand);border:1.5px solid var(--brand)}
-  .btn.warn{background:var(--accent)}.btn.sm{padding:9px 14px;font-size:13px;border-radius:11px}
-  /* 진행 상황 */
-  .overlay{position:fixed;inset:0;z-index:20;background:rgba(20,30,28,.55);display:none;align-items:flex-end;justify-content:center}
-  .overlay.on{display:flex}
-  .sheet{background:var(--card);width:100%;max-width:520px;border-radius:24px 24px 0 0;padding:22px 20px calc(24px + env(safe-area-inset-bottom));
-    animation:up .25s ease}
-  @keyframes up{from{transform:translateY(40px);opacity:0}}
-  .robot{width:88px;height:88px;margin:4px auto 10px;border-radius:26px;background:#e6f4f2;display:grid;place-items:center;font-size:46px}
-  .robot.busy{animation:bob 1.2s ease-in-out infinite}@keyframes bob{50%{transform:translateY(-6px)}}
-  .st-title{text-align:center;font-weight:800;font-size:19px}
-  .st-msg{text-align:center;color:var(--muted);font-size:14px;margin:6px 0 16px}
-  .steps{display:flex;justify-content:space-between;margin:0 6px 14px;position:relative}
-  .steps:before{content:"";position:absolute;left:12%;right:12%;top:13px;height:3px;background:var(--line)}
-  .step{position:relative;text-align:center;font-size:12px;color:var(--muted);flex:1}
-  .dot{width:28px;height:28px;border-radius:50%;margin:0 auto 6px;background:#fff;border:3px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:800}
-  .step.on .dot{border-color:var(--brand-2);color:var(--brand)}.step.on{color:var(--ink);font-weight:700}
-  .step.done .dot{background:var(--brand);border-color:var(--brand);color:#fff}
-  .prog{height:10px;background:#ece7dc;border-radius:99px;overflow:hidden}
-  .prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--brand-2));transition:width .4s}
-  .plist{margin:14px 0 4px;padding:0;list-style:none;font-size:14px}
-  .plist li{display:flex;justify-content:space-between;padding:7px 2px;border-bottom:1px dashed var(--line)}
-  .choices{display:grid;gap:8px;margin-top:6px}
-  /* 직원 화면 */
-  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
-  .kpi{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
-  .kpi small{color:var(--muted);font-size:12px}.kpi b{display:block;font-size:24px;margin-top:2px}
-  .kpi.red b{color:var(--danger)}.kpi.amber b{color:var(--accent)}
-  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:14px}
-  .ph{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-  .ph h3{margin:0;font-size:15px}.ph .r{margin-left:auto;display:flex;gap:6px}
-  table{width:100%;border-collapse:collapse;font-size:14px}
-  th{white-space:nowrap;text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:6px 6px;border-bottom:1px solid var(--line)}
-  td{padding:9px 6px;border-bottom:1px solid #efeadf}
-  td.n{text-align:center;font-variant-numeric:tabular-nums;font-weight:700}
-  .tag{font-size:12px;font-weight:700;padding:3px 8px;border-radius:99px;white-space:nowrap}
-  .tag.ok{background:#dcfce7;color:#166534}.tag.low{background:#fef3c7;color:#92400e}.tag.mismatch{background:#fee2e2;color:#991b1b}.tag.order{background:#ffedd5;color:#9a3412}
-  .tag.attr{font-size:10px;padding:2px 6px;margin-left:4px;vertical-align:middle;background:#eef2f1;color:var(--muted)}
-  .tag.fragile{background:#fee2e2;color:#991b1b}.tag.soft{background:#e0f2fe;color:#075985}.tag.unreg{background:#ede9fe;color:#5b21b6}
-  .mini{display:flex;gap:4px;flex-wrap:wrap}
-  @media (max-width:520px){td,th{padding-left:4px;padding-right:4px}}.mini button:disabled{opacity:.35;cursor:default}.mini button{background:#f1ede3;border-radius:8px;padding:5px 9px;font-size:12px;font-weight:700}
-  .alerts{list-style:none;margin:0;padding:0;font-size:13px;max-height:260px;overflow:auto}
-  .alerts li{display:flex;gap:8px;padding:8px 2px;border-bottom:1px solid #efeadf}
-  .alerts time{color:var(--muted);font-variant-numeric:tabular-nums}
-  .lv{width:8px;height:8px;border-radius:50%;margin-top:6px;flex:none}
-  .lv.warn{background:var(--accent)}.lv.error{background:var(--danger)}.lv.info{background:var(--brand-2)}
-  .empty{color:var(--muted);font-size:13px;padding:8px 2px}
-  .toast{position:fixed;left:50%;bottom:calc(var(--cartH,84px) + 12px);transform:translateX(-50%);background:#1f2a28;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;z-index:30;opacity:0;transition:opacity .2s;pointer-events:none}
-  .toast.on{opacity:1}
-  /* 오늘의 추천 */
-  .today{margin:0 0 18px}
-  .hscroll{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
-  .hcard{flex:0 0 132px;scroll-snap-align:start;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px;
-    display:flex;flex-direction:column;gap:6px;text-align:left}
-  .hcard .emoji{font-size:32px;height:46px}
-  .hcard .pname{font-size:14px}
-  .hcard small{font-size:11px;color:var(--muted)}
-  .hcard.new{border-color:#c4b5fd;background:#faf7ff}.hcard.new small{color:#5b21b6;font-weight:700}
-  /* 카테고리 탭 */
-  .cats{display:flex;gap:6px;overflow-x:auto;margin:0 0 12px;padding-bottom:2px}
-  .cat{flex:none;padding:7px 14px;border-radius:99px;background:#fff;border:1px solid var(--line);font-size:13px;font-weight:700;color:var(--muted)}
-  .cat.on{background:var(--brand);border-color:var(--brand);color:#fff}
-  .ptags{display:flex;gap:4px;flex-wrap:wrap;min-height:0}
-  .ptags .tag{font-size:10px;padding:2px 7px}
-  .tag.staff{background:#e0f2fe;color:#075985}.tag.real{background:#dcfce7;color:#166534}
-  /* 함께 사면 좋아요: level 색 구분 */
-  .chip{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left}
-  .chip small{font-size:11px;font-weight:600}
-  .chip.strong{background:#fde68a;border-color:#d97706;color:#78350f}
-  .chip.weak{background:#fffbeb;border-color:#f3c46b;color:#92400e}
-  .chip.popular{background:#f3f4f6;border-color:#d1d5db;color:#4b5563}
-  /* 장바구니 보기 */
-  .sheet-h{display:flex;align-items:center;margin-bottom:6px}.sheet-h .st-title{flex:1;text-align:left}
-  .x{width:34px;height:34px;border-radius:10px;background:#f1ede3;font-size:16px;font-weight:700}
-  .clist{list-style:none;margin:6px 0 0;padding:0;max-height:52vh;overflow:auto}
-  .clist li{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px dashed var(--line)}
-  .clist .ce{font-size:26px;width:40px;height:40px;display:grid;place-items:center;background:#f1ede3;border-radius:12px;flex:none}
-  .clist .cn{flex:1;min-width:0}.clist .cn b{display:block;font-size:14px}.clist .cn small{color:var(--muted);font-size:12px}
-  .clist .qty{padding:3px;gap:2px}.clist .qty button{width:30px;height:30px;font-size:18px}
-  .del{color:var(--danger);font-size:12px;font-weight:700;padding:6px 4px}
-  .ctot{display:flex;justify-content:space-between;align-items:center;margin:14px 2px 12px;font-size:14px;color:var(--muted)}
-  .ctot b{font-size:20px;color:var(--ink)}
-  .plist-h{font-size:13px;font-weight:800;color:var(--muted);margin:14px 2px -8px}
-  @media (min-width:720px){.grid{grid-template-columns:repeat(3,1fr)}}
-</style>
+<link rel="stylesheet" href="css/index.css">
 </head>
 <body>
 <header>
   <div class="bar">
     <div class="logo">R</div>
     <div><div class="title">로키마트 픽업</div><div class="sub">주문하면 로봇이 담아 드려요</div></div>
-    <span class="mode" id="mode">연결 중…</span>
+    <div class="hbtns">
+      <span class="mode" id="mode">연결 중…</span>
+      <button class="mypk" id="custBtn">👤 로그인</button>
+      <button class="mypk" id="myPickup" hidden>🎫 내 픽업</button>
+    </div>
   </div>
   <nav class="tabs">
     <button class="tab on" data-v="shop">🛒 주문하기</button>
@@ -163,8 +30,9 @@
   <!-- 손님 화면 -->
   <section class="view on" id="v-shop">
     <div class="today" id="today" style="display:none">
-      <h2>✨ 오늘의 추천</h2>
+      <h2 id="todayTitle">✨ 오늘의 추천</h2>
       <div class="hscroll" id="todayList"></div>
+      <button class="hint" id="todayHint" hidden>👤 고객번호를 입력하면 평소 자주 사는 상품을 추천해 드려요 ›</button>
     </div>
     <h2>무엇을 담아 드릴까요?</h2>
     <div class="cats" id="cats"></div>
@@ -180,6 +48,11 @@
       <div class="kpi"><small>마지막 점검</small><b id="k-time">-</b></div>
     </div>
     <div class="panel">
+      <div class="ph"><h3>🎫 픽업 대기</h3><span class="sub" style="color:var(--muted)" id="pk-sub">준비 완료 후 30분 지나면 만료</span></div>
+      <table><thead><tr><th>픽업 번호</th><th>준비 시각</th><th>남은 시간</th><th style="text-align:center">상품 수</th><th>상태</th></tr></thead>
+        <tbody id="pickups"></tbody></table>
+    </div>
+    <div class="panel">
       <div class="ph"><h3>재고 현황</h3><span class="sub" style="color:var(--muted)">창고 · 진열 vs 카메라</span>
         <div class="r"><button class="btn sm" id="scan">📷 재고 점검</button></div></div>
       <table><thead><tr><th>상품</th><th>구분</th><th style="text-align:center">창고</th><th style="text-align:center">진열</th><th style="text-align:center">카메라</th><th>상태</th><th>보충</th></tr></thead>
@@ -193,7 +66,7 @@
 </main>
 
 <div class="cart" id="cart">
-  <div class="reco" id="reco"><b>💡 함께 사면 좋아요</b><div class="chips" id="chips"></div></div>
+  <div class="reco" id="reco"><b id="recoTitle">💡 함께 구매하면 좋은 상품</b><div class="chips" id="chips"></div></div>
   <div class="in">
     <button class="sum" id="cartBtn" disabled><span id="cnt">담은 상품 0개</span><b id="total">0원</b><u>🧺 장바구니 보기 ›</u></button>
     <button class="btn" id="orderBtn" disabled>로봇에게 주문하기</button>
@@ -202,386 +75,9 @@
 
 <div class="overlay" id="ov"><div class="sheet" id="sheet"></div></div>
 <div class="overlay" id="cartOv"><div class="sheet" id="cartSheet"></div></div>
+<div class="overlay" id="custOv"><div class="sheet" id="custSheet"></div></div>
 <div class="toast" id="toast"></div>
 
-<script>
-/* ================================================================
-   API 계층: 서버(web_server.py)가 있으면 서버 사용,
-   없으면(파일로 열거나 미리보기) 브라우저 안에서 데모 시뮬레이션
-   ================================================================ */
-let LOW = 1;  // 보충 필요 기준 (브라우저 데모에서는 products.json 의 low_stock 값으로 바뀜)
-const Demo = (() => {
-  // 상품 정보 원본은 pickup_web/products.json. 불러오기에 실패하면(파일로 직접 열기 등) 아래 기본값 사용
-  const FALLBACK = {
-    low_stock:1,
-    products:[
-      {"id":"tuna_can","name":"참치캔","emoji":"🐟","price":2500,"stock":3,"warehouse":5,"category":"식품","aisle":"canned meat seafood","robot":true,"shelf":"lower","fragile":false,"deformable":false,"registered":true},
-      {"id":"spam_can","name":"스팸 통조림","emoji":"🥫","price":4500,"stock":3,"warehouse":5,"category":"식품","aisle":"canned meat seafood","robot":true,"shelf":"lower","fragile":false,"deformable":false,"registered":true},
-      {"id":"milk_pack","name":"소형 우유팩","emoji":"🥛","price":1200,"stock":3,"warehouse":5,"category":"음료","aisle":"milk","robot":true,"shelf":"lower","fragile":false,"deformable":false,"registered":true},
-      {"id":"soap_box","name":"비누 상자","emoji":"🧼","price":2000,"stock":3,"warehouse":5,"category":"생활용품","aisle":"soap","robot":true,"shelf":"lower","fragile":false,"deformable":false,"registered":true},
-      {"id":"choco_box","name":"초콜릿","emoji":"🍫","price":3000,"stock":3,"warehouse":5,"category":"간식","aisle":"candy chocolate","robot":true,"shelf":"upper","fragile":false,"deformable":false,"registered":true},
-      {"id":"snack_bag","name":"과자","emoji":"🍿","price":1500,"stock":3,"warehouse":5,"category":"간식","aisle":"chips pretzels","robot":true,"shelf":"upper","fragile":false,"deformable":true,"registered":true},
-      {"id":"mini_tissue","name":"미니 티슈","emoji":"🧻","price":800,"stock":3,"warehouse":5,"category":"생활용품","aisle":"paper goods","robot":true,"shelf":"upper","fragile":false,"deformable":true,"registered":true},
-      {"id":"egg_pack","name":"계란 모형 포장 용기","emoji":"🥚","price":3500,"stock":3,"warehouse":5,"category":"식품","aisle":"eggs","robot":true,"shelf":"upper","fragile":true,"deformable":false,"registered":true},
-      {"id":"new_item","name":"신규 실험용 상품","emoji":"📦","price":1000,"stock":2,"warehouse":5,"category":"기타","aisle":null,"robot":true,"shelf":"upper","fragile":false,"deformable":false,"registered":false},
-      {"id":"cup_ramen","name":"컵라면","emoji":"🍜","price":1300,"stock":10,"warehouse":10,"category":"식품","aisle":"instant foods","robot":false,"shelf":null,"fragile":false,"deformable":false,"registered":true},
-      {"id":"cola","name":"콜라","emoji":"🥤","price":2000,"stock":10,"warehouse":10,"category":"음료","aisle":"soft drinks","robot":false,"shelf":null,"fragile":false,"deformable":false,"registered":true},
-      {"id":"water","name":"생수","emoji":"💧","price":1000,"stock":10,"warehouse":10,"category":"음료","aisle":"water seltzer sparkling water","robot":false,"shelf":null,"fragile":false,"deformable":false,"registered":true},
-      {"id":"can_coffee","name":"캔커피","emoji":"☕","price":1500,"stock":10,"warehouse":10,"category":"음료","aisle":"coffee","robot":false,"shelf":null,"fragile":false,"deformable":false,"registered":true},
-      {"id":"yogurt","name":"요구르트","emoji":"🥣","price":1800,"stock":10,"warehouse":10,"category":"음료","aisle":"yogurt","robot":false,"shelf":null,"fragile":false,"deformable":false,"registered":true},
-      {"id":"bread","name":"식빵","emoji":"🍞","price":3000,"stock":10,"warehouse":10,"category":"식품","aisle":"bread","robot":false,"shelf":null,"fragile":false,"deformable":false,"registered":true},
-      {"id":"cookie","name":"쿠키","emoji":"🍪","price":2000,"stock":10,"warehouse":10,"category":"간식","aisle":"cookies cakes","robot":false,"shelf":null,"fragile":false,"deformable":false,"registered":true},
-      {"id":"ice_cream","name":"아이스크림","emoji":"🍦","price":2000,"stock":10,"warehouse":10,"category":"간식","aisle":"ice cream ice","robot":false,"shelf":null,"fragile":false,"deformable":false,"registered":true},
-      {"id":"cereal","name":"시리얼","emoji":"🌾","price":4500,"stock":10,"warehouse":10,"category":"식품","aisle":"cereal","robot":false,"shelf":null,"fragile":false,"deformable":false,"registered":true},
-      {"id":"nuts","name":"견과류","emoji":"🥜","price":3500,"stock":10,"warehouse":10,"category":"간식","aisle":"nuts seeds dried fruit","robot":false,"shelf":null,"fragile":false,"deformable":false,"registered":true},
-      {"id":"toothpaste","name":"치약","emoji":"🪥","price":3000,"stock":10,"warehouse":10,"category":"생활용품","aisle":"oral hygiene","robot":false,"shelf":null,"fragile":false,"deformable":false,"registered":true},
-      {"id":"juice","name":"주스","emoji":"🧃","price":1800,"stock":10,"warehouse":10,"category":"음료","aisle":"juice nectars","robot":false,"shelf":null,"fragile":false,"deformable":false,"registered":true},
-      {"id":"sausage","name":"소시지","emoji":"🌭","price":2500,"stock":10,"warehouse":10,"category":"식품","aisle":"hot dogs bacon sausage","robot":false,"shelf":null,"fragile":false,"deformable":false,"registered":true},
-      {"id":"cracker","name":"크래커","emoji":"🍘","price":1500,"stock":10,"warehouse":10,"category":"간식","aisle":"crackers","robot":false,"shelf":null,"fragile":false,"deformable":false,"registered":true},
-      {"id":"lunchbox","name":"도시락","emoji":"🍱","price":4800,"stock":10,"warehouse":10,"category":"식품","aisle":"prepared meals","robot":false,"shelf":null,"fragile":false,"deformable":false,"registered":true}
-    ],
-  };
-  // our_recs.json 요약 (불러오기 실패 시 사용)
-  const FALLBACK_RECS = {
-      "tuna_can":{"popularity":0.00759,"substitute":["spam_can"],"recommend":[]},
-      "spam_can":{"popularity":0.00759,"substitute":["tuna_can"],"recommend":[]},
-      "milk_pack":{"popularity":0.14553,"substitute":[],"recommend":[{"id":"cereal","lift":1.344},{"id":"yogurt","lift":1.31}]},
-      "soap_box":{"popularity":0.00774,"substitute":[],"recommend":[{"id":"toothpaste","lift":4.53},{"id":"mini_tissue","lift":2.266}]},
-      "choco_box":{"popularity":0.04199,"substitute":[],"recommend":[{"id":"cookie","lift":2.025},{"id":"nuts","lift":1.89},{"id":"snack_bag","lift":1.587},{"id":"cola","lift":1.537},{"id":"cracker","lift":1.396}]},
-      "snack_bag":{"popularity":0.07464,"substitute":[],"recommend":[{"id":"cookie","lift":1.838},{"id":"choco_box","lift":1.587},{"id":"cracker","lift":1.548}]},
-      "mini_tissue":{"popularity":0.03604,"substitute":[],"recommend":[{"id":"toothpaste","lift":3.885},{"id":"soap_box","lift":2.266},{"id":"cola","lift":1.364},{"id":"water","lift":1.32},{"id":"can_coffee","lift":1.23}]},
-      "egg_pack":{"popularity":0.05782,"substitute":[],"recommend":[{"id":"sausage","lift":1.442},{"id":"bread","lift":1.248}]},
-      "cup_ramen":{"popularity":0.01329,"substitute":[],"recommend":[]},
-      "cola":{"popularity":0.06616,"substitute":[],"recommend":[{"id":"water","lift":1.688},{"id":"choco_box","lift":1.537},{"id":"cookie","lift":1.517},{"id":"mini_tissue","lift":1.364},{"id":"juice","lift":1.351}]},
-      "water":{"popularity":0.14054,"substitute":[],"recommend":[{"id":"cola","lift":1.688},{"id":"mini_tissue","lift":1.32},{"id":"can_coffee","lift":1.217}]},
-      "can_coffee":{"popularity":0.03305,"substitute":[],"recommend":[{"id":"mini_tissue","lift":1.23},{"id":"water","lift":1.217}]},
-      "yogurt":{"popularity":0.12951,"substitute":[],"recommend":[{"id":"milk_pack","lift":1.31}]},
-      "bread":{"popularity":0.0664,"substitute":[],"recommend":[{"id":"egg_pack","lift":1.248}]},
-      "cookie":{"popularity":0.02889,"substitute":[],"recommend":[{"id":"choco_box","lift":2.025},{"id":"cracker","lift":2.009},{"id":"snack_bag","lift":1.838},{"id":"cola","lift":1.517},{"id":"ice_cream","lift":1.426}]},
-      "ice_cream":{"popularity":0.06097,"substitute":[],"recommend":[{"id":"cookie","lift":1.426},{"id":"cola","lift":1.204}]},
-      "cereal":{"popularity":0.03811,"substitute":[],"recommend":[{"id":"milk_pack","lift":1.344},{"id":"cracker","lift":1.295},{"id":"cookie","lift":1.235}]},
-      "nuts":{"popularity":0.04114,"substitute":[],"recommend":[{"id":"choco_box","lift":1.89},{"id":"cracker","lift":1.262}]},
-      "toothpaste":{"popularity":0.00848,"substitute":[],"recommend":[{"id":"soap_box","lift":4.53},{"id":"mini_tissue","lift":3.885}]},
-      "juice":{"popularity":0.04665,"substitute":[],"recommend":[{"id":"cola","lift":1.351}]},
-      "sausage":{"popularity":0.03129,"substitute":[],"recommend":[{"id":"egg_pack","lift":1.442}]},
-      "cracker":{"popularity":0.04526,"substitute":[],"recommend":[{"id":"cookie","lift":2.009},{"id":"snack_bag","lift":1.548},{"id":"choco_box","lift":1.396},{"id":"cereal","lift":1.295},{"id":"nuts","lift":1.262}]},
-      "lunchbox":{"popularity":0.01322,"substitute":[],"recommend":[]}
-  };
-  let P=[], RECS={}, ready=null;
-  const getJSON=(url,fb)=>fetch(url).then(r=>{if(!r.ok) throw new Error(r.statusText);return r.json()}).catch(()=>fb);
-  const load=()=>ready||(ready=Promise.all([getJSON("/data/products.json",FALLBACK),getJSON("/data/our_recs.json",FALLBACK_RECS)])
-    .then(([c,r])=>{P=c.products.map(p=>({...p}));RECS=r||{};LOW=c.low_stock??LOW}));
-  /* recommender.py 와 같은 규칙 */
-  const RANK={strong:2,weak:1,popular:0};
-  const pop=id=>(RECS[id]||{}).popularity||0, stockOf=id=>(get(id)||{}).stock||0;
-  const levelOf=e=>!e?"popular":e.level?e.level:e.lift==null?"popular":e.lift>=1.2?"strong":e.lift>=1.1?"weak":"popular";
-  const score=(id,e)=>(RANK[levelOf(e)]||0)*100+(e&&e.lift!=null?e.lift:pop(id));
-  const reasonOf=(lv,lift)=>lv==="strong"?`같이 사는 비율 ${lift.toFixed(1)}배`:lv==="weak"?"이런 상품은 어때요?":"인기 상품";
-  const item=(id,level,reason)=>{const p=get(id);return{id,name:p.name,emoji:p.emoji,reason,level}};
-  function recHome(k=4){
-    let out=P.filter(p=>p.id!=="new_item"&&p.stock>0).sort((a,b)=>score(b.id)-score(a.id)).slice(0,k).map(p=>item(p.id,"popular","인기 상품"));
-    if(stockOf("new_item")>0&&Math.random()<0.2){out=out.slice(0,k-1);out.splice(Math.floor(Math.random()*(out.length+1)),0,item("new_item","new","새로 들어왔어요"))}
-    return out;
-  }
-  function recBasket(basket,k=3){
-    const entries=basket.flatMap(b=>(RECS[b]||{}).recommend||[])
-      .concat(P.filter(p=>p.id!=="new_item"&&pop(p.id)>0).map(p=>({id:p.id,lift:null,level:"popular"})));
-    const best={};
-    for(const e of entries){const id=e.id;if(!get(id)||basket.includes(id)||stockOf(id)<=0) continue;
-      const s=score(id,e);if(!best[id]||s>best[id].s) best[id]={s,e}}
-    const ranked=Object.entries(best).sort((a,b)=>b[1].s-a[1].s), win={};
-    for(const [id] of ranked){const a=get(id).aisle;if(a&&(!(a in win)||stockOf(id)>stockOf(win[a]))) win[a]=id}
-    return ranked.filter(([id])=>{const a=get(id).aisle;return !a||win[a]===id}).slice(0,k)
-      .map(([id,{e}])=>{const lv=levelOf(e);return item(id,lv,reasonOf(lv,e.lift))});
-  }
-  const recSub=id=>((RECS[id]||{}).substitute||[]).filter(s=>get(s)&&s!==id&&stockOf(s)>0);
-  let status={state:"idle"}, vision={}, vtime=null, alerts=[], oid=1, resolveChoice=null;
-  const get=id=>P.find(p=>p.id===id), wait=ms=>new Promise(r=>setTimeout(r,ms));
-  const now=()=>new Date().toTimeString().slice(0,8);
-  const alert=(level,text)=>{alerts.unshift({time:now(),level,text});alerts=alerts.slice(0,30)};
-  async function run(id,all){
-    // robot: true 상품만 로봇이 담고, 가상 상품은 직원 준비 (staff_items)
-    let items={}, staff={};
-    for(const [k,v] of Object.entries(all)) if(v>0) (get(k).robot?items:staff)[k]=v;
-    let total=Object.values(items).reduce((a,b)=>a+b,0);
-    status={order_id:id,state:"checking",message:"매대에서 재고를 확인하고 있어요",done:0,total};
-    await wait(1500);
-    const seen=Object.fromEntries(Object.keys(items).map(pid=>[pid,vision[pid]??get(pid).stock]));
-    Object.assign(vision,seen);vtime=now();
-    for(const [pid,want] of Object.entries({...items})){
-      const have=seen[pid];
-      if(have<want){
-        status={order_id:id,state:"need_choice",message:"재고가 부족해요",shortage:{id:pid,want,have},substitute:recSub(pid)[0]||null,done:0,total};
-        const c=await new Promise(r=>resolveChoice=r);
-        if(c.choice==="cancel"){status={order_id:id,state:"cancelled",message:"주문이 취소되었어요"};return}
-        items[pid]=have;
-        if(c.choice==="substitute"&&c.substitute){const dst=get(c.substitute).robot?items:staff;dst[c.substitute]=(dst[c.substitute]||0)+(want-have)}
-        for(const k in items) if(!items[k]) delete items[k];
-        total=Object.values(items).reduce((a,b)=>a+b,0);
-      }
-    }
-    const picked={}; let done=0;
-    for(const [pid,n] of Object.entries(items)) for(let i=0;i<n;i++){
-      status={order_id:id,state:"picking",current:pid,done,total,picked:{...picked},message:"상품을 집어서 바구니에 담고 있어요"};
-      await wait(1800); picked[pid]=(picked[pid]||0)+1; done++;
-    }
-    for(const [pid,n] of Object.entries({...picked,...staff})){const p=get(pid);p.stock=Math.max(0,p.stock-n);if(pid in vision) vision[pid]=Math.max(0,vision[pid]-n);
-      if(p.stock<=LOW) p.warehouse>0?alert("warn",`${p.name} 진열 보충 필요 (진열 ${p.stock}개 / 창고 ${p.warehouse}개)`)
-        :alert("error",`${p.name} 창고 재고 없음 - 발주 필요 (진열 ${p.stock}개)`)}
-    status={order_id:id,state:"done",done,total,picked,staff_items:staff,message:"담기 완료! 픽업대에서 가져가세요"};
-  }
-  return {
-    products:async()=>{await load();return {products:P,mode:"demo"}},
-    order:async items=>{if(["checking","picking","need_choice"].includes(status.state)) throw new Error("로봇이 다른 주문을 처리 중이에요");
-      for(const [k,n] of Object.entries(items)){const p=get(k);if(!p.robot&&n>p.stock) throw new Error(`${p.name} 재고가 부족해요 (남은 ${p.stock}개)`)}
-      const id=oid++; run(id,{...items}); return {order_id:id}},
-    status:async()=>status,
-    choice:async c=>{resolveChoice&&resolveChoice(c);resolveChoice=null;return{ok:true}},
-    recommend:async basket=>{await load();return {items:recBasket(basket)}},
-    home:async()=>{await load();return {items:recHome()}},
-    inventory:async()=>({rows:P.map(p=>{const v=vision[p.id];return{...p,vision:v,state:v!=null&&v!==p.stock?"mismatch":p.stock<=LOW?(p.warehouse>0?"low":"order"):"ok"}}),
-      vision_time:vtime,alerts,robot:status}),
-    scan:async()=>{setTimeout(()=>{const R=P.filter(p=>p.robot);  // 카메라는 실물 매대만
-      vision=Object.fromEntries(R.map(p=>[p.id,p.stock]));
-      if(Math.random()<.4){const p=R[Math.floor(Math.random()*R.length)];vision[p.id]=Math.max(0,p.stock-1)}
-      vtime=now();R.forEach(p=>{if(vision[p.id]!==p.stock) alert("error",`${p.name} 불일치: 진열 ${p.stock}개 / 카메라 ${vision[p.id]}개`)})},1500);return{ok:true}},
-    restock:async(id,qty,mode="move")=>{const p=get(id), sg=n=>(n>0?"+":"")+n; let text;
-      if(mode==="move"){const n=qty>0?Math.min(qty,p.warehouse):Math.max(qty,-p.stock);
-        if(!n) throw new Error(qty>0?"창고 재고가 없어요":"진열 재고가 없어요");
-        p.warehouse-=n;p.stock+=n;text=`${p.name} 창고 -> 진열 ${sg(n)}개 (진열 ${p.stock}개 / 창고 ${p.warehouse}개)`}
-      else if(mode==="receive"){p.warehouse=Math.max(0,p.warehouse+qty);text=`${p.name} 창고 입고 ${sg(qty)}개 (창고 ${p.warehouse}개)`}
-      else {p.stock=Math.max(0,p.stock+qty);text=`${p.name} 진열 재고 ${sg(qty)}개 수정 (진열 ${p.stock}개)`}
-      delete vision[id];alert("info",text);return{ok:true}},
-  };
-})();
-
-const Server = {
-  async j(url,opt){const r=await fetch(url,opt);const d=await r.json().catch(()=>({}));if(!r.ok) throw new Error(d.detail||r.statusText);return d},
-  post(url,body){return this.j(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body||{})})},
-  products(){return this.j("/api/products")},
-  order(items){return this.post("/api/order",{items})},
-  status(){return this.j("/api/status")},
-  choice(c){return this.post("/api/choice",c)},
-  recommend(b){return this.j("/api/recommend?basket="+b.join(","))},
-  home(){return this.j("/api/recommend/home")},
-  inventory(){return this.j("/api/inventory")},
-  scan(){return this.post("/api/scan")},
-  restock(id,qty,mode="move"){return this.post("/api/restock",{id,qty,mode})},
-};
-let API = Server;
-
-/* ================================================================ UI */
-const $=s=>document.querySelector(s);
-const won=n=>n.toLocaleString("ko-KR")+"원";
-let products=[], cart={}, polling=null, lastState=null, cat="전체";
-const CATS=["전체","식품","음료","간식","생활용품"];
-const pmap=()=>Object.fromEntries(products.map(p=>[p.id,p]));
-
-function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("on"),2200)}
-
-async function loadProducts(){
-  try{const d=await API.products();products=d.products;
-    $("#mode").textContent=d.mode==="robot"?"🤖 로봇 연결됨":d.mode==="mock"?"서버 · 데모 로봇":"브라우저 데모";
-  }catch(e){
-    if(API===Server){API=Demo;return loadProducts()}
-    toast(e.message)
-  }
-  renderGrid();
-  renderHome();
-}
-
-async function renderHome(){
-  try{const r=await API.home();
-    if(!r.items.length){$("#today").style.display="none";return}
-    $("#todayList").innerHTML=r.items.map(it=>{const p=pmap()[it.id];return `<button class="hcard ${it.level==="new"?"new":""}" data-add="${it.id}">
-      <div class="emoji">${it.emoji}</div><div class="pname">${it.name}</div>
-      <div class="meta"><span>${p?won(p.price):""}</span></div><small>${it.reason}</small></button>`}).join("");
-    $("#today").style.display="block";
-  }catch{$("#today").style.display="none"}
-}
-
-function renderCats(){
-  $("#cats").innerHTML=CATS.map(c=>`<button class="cat ${c===cat?"on":""}" data-cat="${c}">${c}</button>`).join("");
-}
-$("#cats").addEventListener("click",e=>{const b=e.target.closest("[data-cat]");if(!b)return;cat=b.dataset.cat;renderGrid()});
-const prodTags=p=>(p.robot===false?`<span class="tag staff">직원 준비</span>`:"")+(p.fragile?`<span class="tag fragile">깨짐주의</span>`:"");
-
-function renderGrid(){
-  renderCats();
-  $("#grid").innerHTML=products.filter(p=>cat==="전체"||p.category===cat).map(p=>{
-    const q=cart[p.id]||0, s=p.stock, cls=s===0?"zero":s<=LOW?"low":"";
-    return `<div class="card ${q?"sel":""} ${s===0?"out":""}">
-      <div class="emoji">${p.emoji}</div>
-      <div class="pname">${p.name}</div>
-      ${prodTags(p)?`<div class="ptags">${prodTags(p)}</div>`:""}
-      <div class="meta"><span>${won(p.price)}</span><span class="stock ${cls}">${s===0?"품절":"남은 "+s+"개"}</span></div>
-      <div class="qty"><button data-a="-" data-id="${p.id}" ${q?"":"disabled"} aria-label="빼기">−</button>
-        <span>${q}</span><button data-a="+" data-id="${p.id}" ${q>=s?"disabled":""} aria-label="더하기">+</button></div>
-    </div>`}).join("");
-  const ids=Object.keys(cart).filter(k=>cart[k]>0), m=pmap();
-  const n=ids.reduce((a,k)=>a+cart[k],0), t=ids.reduce((a,k)=>a+cart[k]*m[k].price,0);
-  $("#cnt").textContent=`담은 상품 ${n}개`;$("#total").textContent=won(t);$("#orderBtn").disabled=!n;$("#cartBtn").disabled=!n;
-  if($("#cartOv").classList.contains("on")) renderCartSheet();
-  const key=ids.slice().sort().join(",")+"|"+products.map(p=>p.stock).join(",");
-  if(key!==recoKey){recoKey=key;updateReco(ids)}  // 장바구니(또는 재고)가 바뀔 때만 갱신
-}
-let recoKey=null;
-
-let recoSeq=0;
-async function updateReco(ids){
-  const seq=++recoSeq;  // 빠르게 여러 번 담을 때 늦게 온 예전 응답이 덮어쓰지 않게
-  if(!ids.length){$("#reco").style.display="none";fitCart();return}
-  try{const r=await API.recommend(ids);
-    if(seq!==recoSeq) return;
-    if(!r.items.length){$("#reco").style.display="none";fitCart();return}
-    $("#chips").innerHTML=r.items.map(it=>`<button class="chip ${it.level}" data-add="${it.id}">
-      <span>${it.emoji} ${it.name} 추가</span><small>${it.reason}</small></button>`).join("");
-    $("#reco").style.display="block";fitCart();
-  }catch{}
-}
-// 아래 장바구니 바 높이에 맞춰 본문 여백·토스트 위치 조정
-function fitCart(){document.documentElement.style.setProperty("--cartH",$("#cart").offsetHeight+"px")}
-window.addEventListener("resize",fitCart);
-
-/* ---------------- 장바구니 보기 */
-function renderCartSheet(){
-  const m=pmap(), ids=Object.keys(cart).filter(k=>cart[k]>0&&m[k]);
-  const t=ids.reduce((a,k)=>a+cart[k]*m[k].price,0), n=ids.reduce((a,k)=>a+cart[k],0);
-  $("#cartSheet").innerHTML=`<div class="sheet-h"><div class="st-title">🧺 장바구니 (${n}개)</div><button class="x" data-cart="close" aria-label="닫기">✕</button></div>
-    ${ids.length?`<ul class="clist">${ids.map(k=>{const p=m[k],q=cart[k];return `<li>
-      <span class="ce">${p.emoji}</span>
-      <div class="cn"><b>${p.name}</b><small>${won(p.price)} × ${q} = ${won(p.price*q)}${p.robot===false?" · 직원 준비":""}</small></div>
-      <div class="qty"><button data-cart="-" data-id="${k}" aria-label="빼기">−</button><span>${q}</span>
-        <button data-cart="+" data-id="${k}" ${q>=p.stock?"disabled":""} aria-label="더하기">+</button></div>
-      <button class="del" data-cart="del" data-id="${k}">삭제</button></li>`}).join("")}</ul>
-      <div class="ctot"><button class="del" data-cart="clear">전체 비우기</button><span>합계 <b>${won(t)}</b></span></div>
-      <button class="btn" style="width:100%" data-cart="order">로봇에게 주문하기</button>`
-    :`<div class="empty" style="text-align:center;padding:28px 0">담은 상품이 없어요</div>
-      <button class="btn ghost" style="width:100%" data-cart="close">상품 고르러 가기</button>`}`;
-}
-$("#cartBtn").addEventListener("click",()=>{renderCartSheet();$("#cartOv").classList.add("on")});
-$("#cartOv").addEventListener("click",e=>{
-  if(e.target.id==="cartOv"){$("#cartOv").classList.remove("on");return}  // 바깥 누르면 닫기
-  const b=e.target.closest("[data-cart]");if(!b)return;const a=b.dataset.cart, id=b.dataset.id;
-  if(a==="close"){$("#cartOv").classList.remove("on");return}
-  if(a==="order"){$("#cartOv").classList.remove("on");$("#orderBtn").click();return}
-  if(a==="+") cart[id]=Math.min((cart[id]||0)+1,pmap()[id].stock);
-  if(a==="-") cart[id]=Math.max(0,(cart[id]||0)-1);
-  if(a==="del") delete cart[id];
-  if(a==="clear") cart={};
-  for(const k in cart) if(!cart[k]) delete cart[k];
-  renderGrid();  // 상품 목록·합계·추천 갱신 (+ 시트 다시 그림)
-});
-
-$("#grid").addEventListener("click",e=>{
-  const b=e.target.closest("button[data-a]");if(!b)return;
-  const id=b.dataset.id;cart[id]=Math.max(0,(cart[id]||0)+(b.dataset.a==="+"?1:-1));renderGrid();
-});
-function addOne(e){
-  const b=e.target.closest("[data-add]");if(!b)return;const id=b.dataset.add, p=pmap()[id];if(!p)return;
-  if((cart[id]||0)<p.stock){cart[id]=(cart[id]||0)+1;renderGrid();toast(`${p.name}을(를) 담았어요`)}
-  else toast(`${p.name}은(는) 더 담을 수 없어요`);
-}
-$("#chips").addEventListener("click",addOne);
-$("#todayList").addEventListener("click",addOne);
-
-$("#orderBtn").addEventListener("click",async()=>{
-  const items=Object.fromEntries(Object.entries(cart).filter(([,v])=>v>0));
-  try{await API.order(items);lastState=null;$("#ov").classList.add("on");startPolling()}
-  catch(e){toast(e.message)}
-});
-
-function startPolling(){clearInterval(polling);tick();polling=setInterval(tick,700)}
-async function tick(){
-  let s;try{s=await API.status()}catch{return}
-  const key=JSON.stringify(s);if(key===lastState)return;lastState=key;renderStatus(s);
-}
-
-function renderStatus(s){
-  const m=pmap(), st=s.state;
-  const order=["checking","picking","done"], idx=st==="need_choice"?0:order.indexOf(st);
-  const stepHtml=["재고 확인","담는 중","완료"].map((t,i)=>
-    `<div class="step ${i<idx||st==="done"?"done":i===idx?"on":""}"><div class="dot">${i<idx||st==="done"?"✓":i+1}</div>${t}</div>`).join("");
-  let body="";
-  if(st==="need_choice"){
-    const sh=s.shortage, p=m[sh.id], sub=s.substitute&&m[s.substitute];
-    body=`<div class="robot">🤔</div><div class="st-title">${p.name} 재고가 부족해요</div>
-      <div class="st-msg">${sh.want}개를 주문하셨는데 매대에 ${sh.have}개만 있어요</div>
-      <div class="choices">
-        ${sh.have>0?`<button class="btn" data-c="partial">${sh.have}개만 받을게요</button>`:""}
-        ${sub&&sub.stock>0?`<button class="btn warn" data-c="substitute" data-s="${sub.id}">부족한 만큼 ${sub.emoji} ${sub.name}로 바꿀게요</button>`:""}
-        <button class="btn ghost" data-c="cancel">주문 취소</button></div>`;
-  }else if(st==="done"||st==="cancelled"||st==="error"){
-    const picked=s.picked||{}, staffItems=s.staff_items||{};
-    const list=(title,obj)=>Object.keys(obj).length?`<div class="plist-h">${title}</div><ul class="plist">${Object.entries(obj).map(([k,v])=>`<li><span>${m[k]?m[k].emoji+" "+m[k].name:k}</span><b>${v}개</b></li>`).join("")}</ul>`:"";
-    body=`<div class="robot">${st==="done"?"✅":st==="error"?"⚠️":"🙅"}</div>
-      <div class="st-title">${st==="done"?"담기 완료!":st==="error"?"문제가 생겼어요":"주문 취소"}</div>
-      <div class="st-msg">${s.message||""}</div>
-      ${st!=="cancelled"?`<div class="steps">${stepHtml}</div>`:""}
-      ${list("🤖 로봇이 담은 상품",picked)}
-      ${st==="done"?list("🧑‍💼 직원이 준비할 상품",staffItems):""}
-      <button class="btn" style="width:100%;margin-top:12px" id="closeOv">확인</button>`;
-    clearInterval(polling);
-    if(st==="done"){cart={};loadProducts()}
-  }else{
-    const pct=s.total?Math.round((s.done||0)/s.total*100):0, cur=s.current&&m[s.current];
-    body=`<div class="robot busy">🤖</div>
-      <div class="st-title">${st==="checking"?"재고 확인 중":cur?`${cur.emoji} ${cur.name} 담는 중`:"담는 중"}</div>
-      <div class="st-msg">${s.message||""}</div>
-      <div class="steps">${stepHtml}</div>
-      <div class="prog"><i style="width:${pct}%"></i></div>
-      <div class="meta" style="margin-top:6px"><span>진행</span><span>${s.done||0} / ${s.total||0}개</span></div>`;
-  }
-  $("#sheet").innerHTML=body;
-}
-
-$("#sheet").addEventListener("click",async e=>{
-  const c=e.target.closest("[data-c]");
-  if(c){c.disabled=true;await API.choice({choice:c.dataset.c,substitute:c.dataset.s||null});lastState=null;return}
-  if(e.target.id==="closeOv"){$("#ov").classList.remove("on");loadProducts()}
-});
-
-/* ---------------- 직원 화면 */
-let staffTimer=null;
-const STATE_TXT={ok:"정상",low:"보충 필요",order:"발주 필요",mismatch:"불일치"};
-const attrTags=r=>(r.fragile?`<span class="tag attr fragile">깨짐주의</span>`:"")+(r.deformable?`<span class="tag attr soft">말랑</span>`:"")
-  +(r.registered===false?`<span class="tag attr unreg">미등록</span>`:"");
-const ROBOT_TXT={idle:"대기",checking:"재고 확인",picking:"담는 중",need_choice:"손님 선택 대기",done:"대기",cancelled:"대기",error:"오류"};
-async function loadStaff(){
-  let d;try{d=await API.inventory()}catch(e){return}
-  $("#inv").innerHTML=d.rows.map(r=>`<tr>
-    <td>${r.emoji} ${r.name}${attrTags(r)}</td>
-    <td>${r.robot?`<span class="tag real">실물</span>`:`<span class="tag staff">가상</span>`}</td><td class="n" style="${r.warehouse===0?"color:var(--danger)":""}">${r.warehouse}</td><td class="n">${r.stock}</td>
-    <td class="n" style="${r.state==="mismatch"?"color:var(--danger)":""}">${r.vision??"-"}</td>
-    <td><span class="tag ${r.state}">${STATE_TXT[r.state]}</span></td>
-    <td><div class="mini"><button data-r="${r.id}" data-m="move" data-q="1" ${r.warehouse?"":"disabled"} title="창고에서 1개 꺼내 진열">진열 +1</button>
-      <button data-r="${r.id}" data-m="receive" data-q="5" title="창고에 5개 입고">입고 +5</button>
-      ${r.state==="mismatch"?`<button data-r="${r.id}" data-m="adjust" data-q="${r.vision-r.stock}">카메라값 반영</button>`:""}</div></td></tr>`).join("");
-  $("#k-low").textContent=d.rows.filter(r=>r.state==="low"||r.state==="order").length;
-  $("#k-mis").textContent=d.rows.filter(r=>r.state==="mismatch").length;
-  $("#k-time").textContent=d.vision_time||"-";
-  $("#k-robot").textContent=ROBOT_TXT[d.robot?.state]||"대기";
-  $("#alerts").innerHTML=d.alerts.length?d.alerts.map(a=>`<li><span class="lv ${a.level}"></span><time>${a.time}</time><span>${a.text}</span></li>`).join("")
-    :`<li class="empty">아직 알림이 없어요</li>`;
-}
-$("#inv").addEventListener("click",async e=>{
-  const b=e.target.closest("button");if(!b)return;
-  try{await API.restock(b.dataset.r,+b.dataset.q,b.dataset.m)}catch(e){toast(e.message)}loadStaff();loadProducts();
-});
-$("#scan").addEventListener("click",async()=>{await API.scan();toast("로봇이 매대를 점검하고 있어요");setTimeout(loadStaff,1800)});
-
-/* ---------------- 탭 */
-function show(v){
-  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.v===v));
-  document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id==="v-"+v));
-  $("#cart").style.display=v==="shop"?"block":"none";fitCart();
-  clearInterval(staffTimer);
-  if(v==="staff"){loadStaff();staffTimer=setInterval(loadStaff,1500)}else loadProducts();
-  history.replaceState(null,"",v==="staff"?"#staff":location.pathname);
-}
-document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>show(t.dataset.v)));
-
-loadProducts().then(()=>show(location.hash==="#staff"?"staff":"shop"));
-</script>
+<script src="js/index.js"></script>
 </body>
 </html>

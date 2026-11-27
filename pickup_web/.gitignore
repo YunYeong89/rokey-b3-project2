@@ -1,2 +1,9 @@
-inventory.json
 __pycache__/
+.DS_Store
+# 서버가 만드는 파일 (재고, 주문·픽업 token, 고객 구매 이력)
+data/runtime/
+# 예전 위치 (구조 변경 전)
+inventory.json
+data/orders.json
+data/orders.tmp
+data/customer_history.db*
