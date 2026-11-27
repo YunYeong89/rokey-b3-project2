@@ -1,8 +1,23 @@
 """화면(html)과 공개 데이터 파일"""
+import re
+
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 
 from ..config import DATA, RUNTIME, STATIC
+
+ASSET_RE = re.compile(r'(href|src)="((?:css|js|vendor)/[^"?#]+)"')
+
+
+def page(name):
+    """html 을 보내면서 css·js 주소에 파일 수정 시각을 붙임 (css/index.css?v=...).
+    파일이 바뀌면 주소가 바뀌어서, 브라우저가 예전 css·js 를 캐시에서 꺼내 쓰지 못함.
+    static/*.html 원본은 그대로라 서버 없이 파일로 열어도 동작"""
+    def versioned(m):
+        f = STATIC / m.group(2)
+        return f'{m.group(1)}="{m.group(2)}?v={int(f.stat().st_mtime)}"' if f.is_file() else m.group(0)
+    html = ASSET_RE.sub(versioned, (STATIC / name).read_text(encoding="utf-8"))
+    return HTMLResponse(html, headers={"Cache-Control": "no-cache"})
 
 
 def build(svc):
@@ -10,11 +25,11 @@ def build(svc):
 
     @r.get("/")
     def index():
-        return FileResponse(STATIC / "index.html")
+        return page("index.html")
 
     @r.get("/kiosk")
     def kiosk():
-        return FileResponse(STATIC / "kiosk.html")
+        return page("kiosk.html")
 
     @r.get("/data/{name:path}")
     def data_file(name: str):
