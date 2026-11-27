@@ -34,7 +34,8 @@ import json
 import random
 from pathlib import Path
 
-from .config import CROSS_FILE, HYBRID_FILE, PRODUCTS_FILE, RECS_FILE, SAME_FILE
+from .catalog import PRODUCTS
+from .config import CROSS_FILE, HYBRID_FILE, RECS_FILE, SAME_FILE
 
 TOP_K = 3
 NEW_ITEM = "new_item"        # 콜드 스타트 실험용 상품 (분석 데이터에 없음)
@@ -61,10 +62,9 @@ def _wa(word):
 
 
 class Recommender:
-    def __init__(self, products_file=PRODUCTS_FILE, recs_file=RECS_FILE, stock_fn=None, rng=None,
+    def __init__(self, recs_file=RECS_FILE, stock_fn=None, rng=None,
                  hybrid_file=HYBRID_FILE, same_file=SAME_FILE, cross_file=CROSS_FILE):
-        catalog = _load_json(products_file, {"products": []})
-        self.products = {p["id"]: p for p in catalog.get("products", [])}
+        self.products = {p["id"]: p for p in PRODUCTS}   # 판매 상품 (pickup/catalog.py)
         self.recs = _load_json(recs_file, {})        # substitute, 예전 인기도
         hy = _load_json(hybrid_file, {})
         self.stock_fn = stock_fn or (lambda pid: self.products.get(pid, {}).get("stock", 0))

@@ -2,7 +2,7 @@
 from fastapi import APIRouter, HTTPException
 
 from ..catalog import split_items
-from ..history import clean_customer_id
+from ..history import BAD_CUSTOMER_ID, clean_customer_id
 from ..service import ACTIVE_STATES
 from .schemas import ChoiceReq, OrderReq
 
@@ -23,7 +23,7 @@ def build(svc):
             raise HTTPException(400, "담은 상품이 없어요")
         customer_id = clean_customer_id(req.customer_id)
         if req.customer_id and not customer_id:
-            raise HTTPException(400, "고객번호는 한글·영문·숫자 20자 이내로 입력해 주세요")
+            raise HTTPException(400, BAD_CUSTOMER_ID)
         attrib = {pid: {k: a.get(k) for k in ("slot", "algo", "rec_id", "rank")}
                   for pid, a in (req.rec_attrib or {}).items() if pid in items and isinstance(a, dict)}
         with store.lock:

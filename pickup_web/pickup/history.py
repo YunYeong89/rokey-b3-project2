@@ -32,6 +32,7 @@ from .config import HISTORY_FILE as DB_FILE
 
 COUNTED_STATUSES = ("completed", "picked_up")   # R 계산에 넣는 주문 상태
 CUSTOMER_ID_RE = re.compile(r"^[0-9A-Za-z가-힣_-]{1,20}$")
+BAD_CUSTOMER_ID = "고객번호는 한글·영문·숫자 20자 이내로 입력해 주세요"   # 형식이 틀릴 때 API 오류 문구
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS purchases (

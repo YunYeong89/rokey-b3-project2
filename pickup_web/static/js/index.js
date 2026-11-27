@@ -189,9 +189,12 @@ let API = Server;
 /* ================================================================ UI */
 const $=s=>document.querySelector(s);
 const won=n=>n.toLocaleString("ko-KR")+"원";
-let products=[], cart={}, polling=null, lastState=null, cat="전체";
+let products=[], cart={}, polling=null, lastState=null, cat="전체", recoKey=null;
 const CATS=["전체","식품","음료","간식","생활용품"];
 const pmap=()=>Object.fromEntries(products.map(p=>[p.id,p]));
+// 장바구니에 담긴 상품 id, 개수 합, 금액 합
+function cartSummary(){const m=pmap(), ids=Object.keys(cart).filter(k=>cart[k]>0&&m[k]);
+  return {m,ids,n:ids.reduce((a,k)=>a+cart[k],0),t:ids.reduce((a,k)=>a+cart[k]*m[k].price,0)}}
 
 function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("on"),2200)}
 
@@ -290,14 +293,12 @@ function renderGrid(){
       <div class="qty"><button data-a="-" data-id="${p.id}" ${q?"":"disabled"} aria-label="빼기">−</button>
         <span>${q}</span><button data-a="+" data-id="${p.id}" ${q>=s?"disabled":""} aria-label="더하기">+</button></div>
     </div>`}).join("");
-  const ids=Object.keys(cart).filter(k=>cart[k]>0), m=pmap();
-  const n=ids.reduce((a,k)=>a+cart[k],0), t=ids.reduce((a,k)=>a+cart[k]*m[k].price,0);
+  const {ids,n,t}=cartSummary();
   $("#cnt").textContent=`담은 상품 ${n}개`;$("#total").textContent=won(t);$("#orderBtn").disabled=!n;$("#cartBtn").disabled=!n;
   if($("#cartOv").classList.contains("on")) renderCartSheet();
   const key=ids.slice().sort().join(",")+"|"+products.map(p=>p.stock).join(",");
   if(key!==recoKey){recoKey=key;updateReco(ids)}  // 장바구니(또는 재고)가 바뀔 때만 갱신
 }
-let recoKey=null;
 
 let recoSeq=0;
 async function updateReco(ids){
@@ -319,8 +320,7 @@ window.addEventListener("resize",fitCart);
 
 /* ---------------- 장바구니 보기 */
 function renderCartSheet(){
-  const m=pmap(), ids=Object.keys(cart).filter(k=>cart[k]>0&&m[k]);
-  const t=ids.reduce((a,k)=>a+cart[k]*m[k].price,0), n=ids.reduce((a,k)=>a+cart[k],0);
+  const {m,ids,n,t}=cartSummary();
   $("#cartSheet").innerHTML=`<div class="sheet-h"><div class="st-title">🧺 장바구니 (${n}개)</div><button class="x" data-cart="close" aria-label="닫기">✕</button></div>
     ${ids.length?`<ul class="clist">${ids.map(k=>{const p=m[k],q=cart[k];return `<li>
       <span class="ce">${p.emoji}</span>

@@ -2,11 +2,10 @@
 from fastapi import APIRouter, HTTPException
 
 from ..catalog import NAMES
-from ..history import clean_customer_id
+from ..history import BAD_CUSTOMER_ID, clean_customer_id
 from .schemas import RecEventReq
 
 REC_TITLE = {"personal": "평소 자주 구매하시는 상품", "popular": "인기 상품 추천", "cart": "함께 구매하면 좋은 상품"}
-BAD_CUSTOMER_ID = "고객번호는 한글·영문·숫자 20자 이내로 입력해 주세요"
 
 
 def _ids(csv):

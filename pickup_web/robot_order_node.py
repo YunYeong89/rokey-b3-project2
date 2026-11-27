@@ -17,14 +17,16 @@ done 을 보내면 web_server 가 픽업 번호(A-017)와 QR 을 만들고, 손�
 """
 import json
 import threading
+from pathlib import Path
 
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-from pickup.catalog import PRODUCTS
-
-# 상품 정보는 웹 서버와 같은 data/products.json 에서 읽음 (pickup/catalog.py)
+# 상품 정보는 웹 서버와 같은 data/products.json 에서 직접 읽음
+# (ROS2 패키지로 옮길 노드라 웹 서버의 pickup 패키지는 import 하지 않음)
+PRODUCTS_FILE = Path(__file__).resolve().parent / "data" / "products.json"
+PRODUCTS = json.loads(PRODUCTS_FILE.read_text(encoding="utf-8"))["products"]
 # 상품 id -> 속성 (shelf, fragile, deformable, registered). pick_one 에서 그립 방식 결정에 사용
 PRODUCT_INFO = {p["id"]: p for p in PRODUCTS}
 ROBOT_ITEMS = {pid for pid, p in PRODUCT_INFO.items() if p.get("robot")}  # 로봇이 집는 실물 상품
