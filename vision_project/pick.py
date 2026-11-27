@@ -48,6 +48,8 @@ MARGIN = 5.0                        # mm, 상자 여유
 MIN_HITS = 10                       # 상자 안 장애물 점이 이 개수 이상일 때만 막힘으로 판정 (depth 잡음 무시)
 STEP = 10.0                         # mm, 경로를 따라 상자를 검사하는 간격
 RETRIES, RETRY_DELAY = 10, 2.0      # 재시도 횟수, 간격(s)
+ARRIVAL_POSITION, ARRIVAL_ANGLE = 5.0, 2.0  # mm, deg: movel·movesx 뒤 목표와 이만큼 넘게 다르면 도중에 멈춘 것으로 봄
+ARRIVAL_JOINT = 1.0                 # deg: movej 뒤 각 관절이 목표와 이만큼 넘게 다르면 도중에 멈춘 것으로 봄
 GRIPPER_NAME, TOOLCHARGER_IP, TOOLCHARGER_PORT = "rg2", "192.168.1.1", "502"
 UP = np.array([0.0, 0.0, 1.0])
 
@@ -55,7 +57,7 @@ UP = np.array([0.0, 0.0, 1.0])
 DR_init.__dsr__id, DR_init.__dsr__model = ROBOT_ID, ROBOT_MODEL
 rclpy.init()
 DR_init.__dsr__node = rclpy.create_node("vision_pick_dsr", namespace=ROBOT_ID)
-from DSR_ROBOT2 import get_current_posx, movej, movel, movesx, mwait, posx  # noqa: E402
+from DSR_ROBOT2 import get_current_posj, get_current_posx, movej, movel, movesx, mwait, posx  # noqa: E402
 
 
 def angle_to_minus_y(pose):
@@ -236,24 +238,48 @@ class Picker(Node):
 
     def move(self, position, orientation=None):
         """position (base mm)으로 movel. orientation을 주지 않으면 집는 자세(TCP ∥ -y).
-        컨트롤러가 이동을 거부하면(movel 반환 -1) 로봇이 제자리에 있으므로 중단합니다."""
+        컨트롤러가 이동을 거부하거나(movel 반환 -1) 도중에 멈추면 중단합니다."""
         target = np.asarray(position).tolist() + (orientation or self.orientation)
         if movel(target, vel=VELOCITY, acc=ACC) != 0:
             raise RuntimeError(f"movel to {np.round(target, 1).tolist()} was rejected by the controller.")
         mwait()
+        self.arrived("movel", target)
 
     def spline(self, *waypoints):
         """(position, orientation) 경유점들을 movesx 스플라인 한 번으로 이어서 지나갑니다 (자세도 경유점 사이에서 보간).
-        컨트롤러가 거부하면(반환 -1) 중단합니다."""
+        컨트롤러가 거부하거나(반환 -1) 마지막 경유점에 닿기 전에 멈추면 중단합니다."""
         path = [posx(np.asarray(position).tolist() + list(orientation)) for position, orientation in waypoints]
         if movesx(path, vel=VELOCITY, acc=ACC) != 0:
             raise RuntimeError(f"movesx through {[np.round(list(p), 1).tolist() for p in path]} "
                                "was rejected by the controller.")
         mwait()
+        self.arrived("movesx", list(path[-1]))
+
+    def arrived(self, name, target):
+        """DRL 반환값 0은 '명령 접수'일 뿐이라 실행 중 특이점·관절 한계로 멈춰도 알 수 없으므로, 이동 뒤 실제 posx를
+        목표와 비교해 위치 ARRIVAL_POSITION·자세 ARRIVAL_ANGLE 넘게 다르면 어디서 멈췄는지와 함께 중단합니다."""
+        pose = list(get_current_posx()[0])
+        position_error = float(np.linalg.norm(np.subtract(pose[:3], target[:3])))
+        angle_error = (Rotation.from_euler("ZYZ", pose[3:], degrees=True).inv()
+                       * Rotation.from_euler("ZYZ", target[3:], degrees=True)).magnitude() * 180 / np.pi
+        if position_error > ARRIVAL_POSITION or angle_error > ARRIVAL_ANGLE:
+            raise RuntimeError(f"{name} stopped before its target: now {np.round(pose, 1).tolist()}, "
+                               f"target {np.round(target, 1).tolist()} ({position_error:.0f} mm, {angle_error:.1f} deg off). "
+                               "Check the teach pendant alarm (singularity, joint limit, workspace).")
+
+    def move_joints(self, joints, name):
+        """고정 자세(SCAN_J, HOME_J)로 movej하고, 각 관절이 ARRIVAL_JOINT 넘게 다르면 중단합니다."""
+        if movej(joints, vel=VELOCITY, acc=ACC) != 0:
+            raise RuntimeError(f"movej to {name} {joints} was rejected by the controller.")
+        mwait()
+        error = np.abs(np.subtract(list(get_current_posj()), joints)).max()
+        if error > ARRIVAL_JOINT:
+            raise RuntimeError(f"movej to {name} stopped before its target: now "
+                               f"{np.round(list(get_current_posj()), 1).tolist()}, target {joints} ({error:.1f} deg off). "
+                               "Check the teach pendant alarm.")
 
     def scan_pose(self):
-        movej(SCAN_J, vel=VELOCITY, acc=ACC)
-        mwait()
+        self.move_joints(SCAN_J, "SCAN_J")
 
     def run(self):
         for attempt in range(1, RETRIES + 1):  # 그리퍼는 시작할 때 건드리지 않고 잡기 직전에만 벌림
@@ -294,8 +320,7 @@ class Picker(Node):
 
             self.move(grasp + LIFT * UP)  # 살짝 들어 올리고
             self.move(pregrasp + LIFT * UP)  # 같은 높이로 잡기 직전 위치까지 빠짐
-            movej(HOME_J, vel=VELOCITY, acc=ACC)
-            mwait()
+            self.move_joints(HOME_J, "HOME_J")
             self.gripper.start(MAX_OPEN)  # 홈에서 놓기
             self.gripper.wait()
             self.get_logger().info("Released at home.")
