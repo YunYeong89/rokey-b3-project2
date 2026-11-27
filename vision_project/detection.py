@@ -13,7 +13,6 @@ import time
 
 from ament_index_python.packages import get_package_share_directory
 import cv2
-import DR_init
 from dsr_msgs2.srv import GetCurrentPosx
 import numpy as np
 import rclpy
@@ -25,20 +24,16 @@ from std_srvs.srv import Trigger
 from vision_project.model_loader import load_grasp_clustering
 from vision_project.realsense import RosCamera
 
-ROBOT_ID, ROBOT_MODEL = "dsr01", "m0609"
 GRIPPER2CAM = Path(get_package_share_directory("vision_project")) / "resource" / "T_gripper2camera.npy"
+# 두산 컨트롤러의 현재 TCP 자세 서비스. DRL(DSR_ROBOT2)을 쓰지 않고 직접 불러 이미지 안 DRL 버전·실행기와 무관하게 합니다.
+POSX_SERVICE = "/dsr01/dsr_controller2/aux_control/get_current_posx"
+POSX_TIMEOUT = 2.0              # s, 응답을 기다리는 최대 시간 (넘으면 그 프레임은 건너뜀)
 OBSTACLE_STRIDE = 4             # px, 장애물 점을 뽑는 간격
 OBSTACLE_VOXEL = 15             # mm, 장애물 점을 줄이는 격자 크기
 OBSTACLE_RANGE = (0.2, 1.5)     # m, 그리퍼가 비치는 가까운 점과 먼 배경을 뺀 depth 범위
 TARGET_PAD = 7                  # px, 장애물에서 뺄 0번 마스크를 넓히는 폭 (경계의 번진 depth 제외)
 TARGET_STRIDE = 2               # px, 물체 점(무게중심·폭)을 뽑는 간격
 TARGET_VOXEL = 5                # mm, 응답에 넣는 0번 물체 점을 줄이는 격자 크기
-
-# DRL API(DSR_ROBOT2)는 import 전에 DR_init에 로봇 ID·모델·노드가 등록되어 있어야 합니다.
-DR_init.__dsr__id, DR_init.__dsr__model = ROBOT_ID, ROBOT_MODEL
-rclpy.init()
-DR_init.__dsr__node = rclpy.create_node("grasp_detection_dsr", namespace=ROBOT_ID)
-from DSR_ROBOT2 import get_current_posx  # noqa: E402
 
 grasp_clustering = load_grasp_clustering()
 GraspStream, create_parser = grasp_clustering.GraspStream, grasp_clustering.create_parser
@@ -54,7 +49,7 @@ def pose_matrix(x, y, z, rx, ry, rz):
 
 class GraspDetector(GraspStream):
     """grasp_clustering 화면(세그멘테이션·가까운 순 라벨)에 잡을 점을 더하고, 라벨별 base 좌표를 서비스로 제공합니다.
-    스레드: 메인 = OpenCV 화면, 추론 = 분할·base 변환(DRL get_current_posx), 서비스 = 별도 executor."""
+    스레드: 메인 = OpenCV 화면, 추론 = 분할·base 변환, 서비스 = 별도 executor (get_grasp_positions 제공, posx 응답 수신)."""
 
     def __init__(self, args):
         super().__init__(args)
@@ -62,12 +57,10 @@ class GraspDetector(GraspStream):
         self.result = {"clusters": 0, "labels": [], "targets": {}, "target_points": [], "obstacles": []}  # 최신 응답
         self.updated = 0.0  # self.result를 만든 추론의 시작 시각
         self.node = rclpy.create_node("grasp_detection")
-        # DRL get_current_posx는 응답이 올 때까지 무한정 기다려 화면이 검게 멈추므로, 시작할 때 컨트롤러 서비스를 먼저 확인합니다.
-        posx = self.node.create_client(GetCurrentPosx, f"/{ROBOT_ID}/dsr_controller2/aux_control/get_current_posx")
-        while not posx.wait_for_service(timeout_sec=3.0):
-            print(f"Waiting for {posx.srv_name} (is the robot bringup running and visible from this container?)",
+        self.posx = self.node.create_client(GetCurrentPosx, POSX_SERVICE)
+        while not self.posx.wait_for_service(timeout_sec=3.0):
+            print(f"Waiting for {POSX_SERVICE} (is the robot bringup running and visible from this container?)",
                   flush=True)
-        self.node.destroy_client(posx)
         self.node.create_service(Trigger, "get_grasp_positions", self.get_positions)
         executor = SingleThreadedExecutor()
         executor.add_node(self.node)
@@ -81,7 +74,10 @@ class GraspDetector(GraspStream):
     def process(self, frame):
         """가까운 순 마스크 → 마스크 안 유효 depth 점들을 T_gripper2camera·현재 posx로 base 좌표(mm)로 바꿔 무게중심을 잡을 점으로 씁니다."""
         start = time.monotonic()
-        base2cam = pose_matrix(*get_current_posx()[0]) @ self.gripper2cam
+        pose = self.current_pose()
+        if pose is None:
+            return frame[0].copy(), f"No response from {POSX_SERVICE} within {POSX_TIMEOUT:.0f} s"
+        base2cam = pose_matrix(*pose) @ self.gripper2cam
         masks, boxes, groups, depths, total = self.rank(frame)
         depth = frame[1]
 
@@ -104,6 +100,15 @@ class GraspDetector(GraspStream):
                           for rank, (label, (x, y, h)) in enumerate(zip(labels, base)))
         return overlay, (f"Clusters {self.result['clusters']} | Obstacles {len(obstacles)} | "
                          f"Grasp {len(base)}/{total} | base mm {coords}")
+
+    def current_pose(self):
+        """두산 컨트롤러의 현재 TCP posx [x, y, z, rx, ry, rz] (base, mm·ZYZ deg). POSX_TIMEOUT 안에 응답이 없으면 None.
+        응답은 서비스 executor 스레드가 받고, 추론 스레드는 future가 끝나기만 기다립니다."""
+        future = self.posx.call_async(GetCurrentPosx.Request(ref=0))
+        deadline = time.monotonic() + POSX_TIMEOUT
+        while not future.done() and time.monotonic() < deadline:
+            time.sleep(0.005)
+        return list(future.result().task_pos_info[0].data[:6]) if future.done() else None
 
     def to_base(self, u, v, z, base2cam):
         """픽셀 (u, v)와 depth z (m) → base 좌표 점 (N, 3) mm (T_gripper2camera 단위)."""
@@ -148,7 +153,9 @@ def parse_args():
 
 
 def main():
-    GraspDetector(parse_args()).run()
+    args = parse_args()
+    rclpy.init()
+    GraspDetector(args).run()
     rclpy.shutdown()
 
 
