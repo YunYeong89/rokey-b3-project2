@@ -1,8 +1,8 @@
 """realsense 토픽 프레임으로 model/DINOv3/grasp_clustering.py(분할 → DINOv3 그룹 → CLIP --object 선택 → depth 가까운 순 라벨)를
-화면에 띄우고, 잡을 점(segmentation 무게중심)과 장애물 점을 base 좌표(mm)로 바꿔 /get_grasp_positions 서비스로 제공합니다 (docker 실행).
+화면에 띄우고, 잡을 점(빨간 점)과 장애물 점을 base 좌표(mm)로 바꿔 /get_grasp_positions 서비스로 제공합니다 (docker 실행).
 응답: Trigger.message = JSON {
   "clusters": 선택된 DINOv3 묶음 수 (pick은 1일 때만 진행), "labels": ["A0", "A1", …] (화면 라벨, targets 순서),
-  "targets": {"0": [x, y, z], …} (마스크 안 유효 depth 점들의 무게중심, 전체 가까운 순, 0 = 가장 가까움),
+  "targets": {"0": [x, y, z], …} (빨간 점 = 마스크 픽셀 평균 위치의 depth 점, 전체 가까운 순, 0 = 가장 가까움),
   "target_points": [[x, y, z], …] (0번 물체 점, 그리퍼 벌림 폭 계산용), "obstacles": [[x, y, z], …] (0번을 뺀 depth 점)}."""
 
 import json
@@ -75,7 +75,7 @@ class GraspDetector(GraspStream):
         return RosCamera()
 
     def process(self, frame):
-        """가까운 순 마스크 → 마스크 안 유효 depth 점들을 T_gripper2camera·현재 posx로 base 좌표(mm)로 바꿔 무게중심을 잡을 점으로 씁니다."""
+        """가까운 순 마스크 → 빨간 점(마스크 픽셀 평균 위치)의 depth를 T_gripper2camera·현재 posx로 base 좌표(mm)로 바꿔 잡을 점으로 씁니다."""
         start = time.monotonic()
         pose = self.current_pose()
         if pose is None:
@@ -85,8 +85,9 @@ class GraspDetector(GraspStream):
         depth = frame[1]
 
         clouds = [self.mask_points(depth, mask, base2cam) for mask in masks]  # rank에서 유효 depth 없는 마스크는 이미 빠짐
-        base = np.array([cloud.mean(0) for cloud in clouds]).reshape(-1, 3)
-        points = np.array([np.argwhere(mask).mean(0)[::-1] for mask in masks]).reshape(-1, 2)  # 화면 표시용 (u, v)
+        points = np.array([np.argwhere(mask).mean(0)[::-1] for mask in masks]).reshape(-1, 2)  # 빨간 점 (u, v)
+        base = np.array([self.dot_point(depth, mask, u, v, base2cam)
+                         for mask, (u, v) in zip(masks, points.round().astype(int))]).reshape(-1, 3)
         labels = self.labels(groups)[1]
         obstacles = self.obstacles(depth, masks[0] if len(masks) else None, base2cam)
         target_points = (np.unique(np.round(clouds[0] / TARGET_VOXEL), axis=0) * TARGET_VOXEL).astype(int) if clouds else []
@@ -119,6 +120,12 @@ class GraspDetector(GraspStream):
         z = z * 1000
         camera = np.stack([(u - k["ppx"]) * z / k["fx"], (v - k["ppy"]) * z / k["fy"], z, np.ones_like(z)])
         return (base2cam @ camera)[:3].T
+
+    def dot_point(self, depth, mask, u, v, base2cam):
+        """빨간 점 픽셀 (u, v)의 depth → base 좌표 점 (3,) mm. 그 픽셀 depth가 비어 있으면(반사 등) 같은 픽셀에
+        마스크 안 유효 depth 중앙값을 씁니다."""
+        z = depth[v, u] if depth[v, u] > 0 else np.median(depth[mask & (depth > 0)])
+        return self.to_base(np.array([u]), np.array([v]), np.array([z]), base2cam)[0]
 
     def mask_points(self, depth, mask, base2cam):
         """마스크 안 유효 depth 픽셀(TARGET_STRIDE 간격) → base 좌표 점 (N, 3) mm. 무게중심과 그리퍼 벌림 폭 계산용."""
