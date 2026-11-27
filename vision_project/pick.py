@@ -178,14 +178,16 @@ class Picker(Node):
         across = np.asarray(result["target_points"], dtype=float).reshape(-1, 3) @ self.frame[:, 0]
         return float(np.subtract(*np.percentile(across, (95, 5))))
 
-    def joints(self, position, orientation):
+    def joints(self, position, orientation, reference):
         """position (base mm) + orientation(ZYZ deg)을 스캔 자세 해 공간으로 ikin한 관절값 [deg]. 실패하면 중단합니다.
-        |J5|가 WRIST_SINGULAR보다 작으면 손목 특이점 근처라고 경고합니다."""
+        ikin은 각도를 ±180° 안으로 돌려주므로(예: -180.2° 대신 179.8°), 각 관절을 reference(직전 관절값)에 가장 가까운
+        ±360° 값으로 바꿔 관절이 한 바퀴 도는 이동이 생기지 않게 합니다. |J5|가 WRIST_SINGULAR보다 작으면 경고합니다."""
         target = np.asarray(position).tolist() + list(orientation)
         solved = ikin(target, self.solution)
         if isinstance(solved, int):
             raise RuntimeError(f"ikin failed for {np.round(target, 1).tolist()} (unreachable?).")
-        joints = [float(q) for q in solved]
+        reference = np.asarray(reference, dtype=float)
+        joints = (reference + (np.asarray(solved, dtype=float) - reference + 180) % 360 - 180).tolist()
         log = self.get_logger().warn if abs(joints[4]) < WRIST_SINGULAR else self.get_logger().info
         log(f"Pose {np.round(target, 1).tolist()} → joints {np.round(joints, 1).tolist()} (J5 {joints[4]:.1f} deg)")
         return joints
@@ -245,7 +247,10 @@ class Picker(Node):
     def spline(self, *positions):
         """positions (base mm)를 스캔 자세 배향 그대로, ikin한 관절값으로 movesj 관절 공간 스플라인 한 번에 지나갑니다.
         경유점에서는 정확히 그 posx이고, 사이는 관절 보간이라 특이점 때문에 도중에 멈추지 않습니다."""
-        joints = [self.joints(position, self.scan_orientation) for position in positions]
+        joints, reference = [], list(get_current_posj())
+        for position in positions:  # 경유점마다 직전 관절값 기준으로 ±360° 맞춤
+            reference = self.joints(position, self.scan_orientation, reference)
+            joints.append(reference)
         if movesj([posj(q) for q in joints], vel=VELOCITY, acc=ACC) != 0:
             raise RuntimeError(f"movesj through {[np.round(q, 1).tolist() for q in joints]} was rejected by the controller.")
         mwait()
@@ -253,7 +258,7 @@ class Picker(Node):
 
     def align(self, position):
         """position (base mm)에서 제자리로 집는 자세 GRASP_EULER로 정렬합니다. ikin → movej라 특이점에서 멈추지 않습니다."""
-        joints = self.joints(position, GRASP_EULER)
+        joints = self.joints(position, GRASP_EULER, list(get_current_posj()))
         if movej(joints, vel=VELOCITY, acc=ACC) != 0:
             raise RuntimeError(f"movej to the grasp orientation (joints {np.round(joints, 1).tolist()}) "
                                "was rejected by the controller.")
@@ -277,7 +282,8 @@ class Picker(Node):
         if movej(joints, vel=VELOCITY, acc=ACC) != 0:
             raise RuntimeError(f"movej to {name} {joints} was rejected by the controller.")
         mwait()
-        error = np.abs(np.subtract(list(get_current_posj()), joints)).max()
+        difference = np.subtract(list(get_current_posj()), joints)
+        error = np.abs((difference + 180) % 360 - 180).max()  # -180.2°와 179.8°처럼 360° 차이는 같은 각도로 봄
         if error > ARRIVAL_JOINT:
             raise RuntimeError(f"movej to {name} stopped before its target: now "
                                f"{np.round(list(get_current_posj()), 1).tolist()}, target {joints} ({error:.1f} deg off). "
