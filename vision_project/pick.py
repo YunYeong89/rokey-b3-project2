@@ -2,14 +2,15 @@
 1. SCAN_J로 movej 후 검출 요청. 선택된 묶음(cluster)이 정확히 1개일 때만 진행하고, 아니면 RETRY_DELAY 뒤 재시도합니다.
    스캔 자세는 테이블을 내려다보도록 기울어도 되고, 집는 자세는 스캔 자세의 TCP 방향을 base -y로 맞추는 최소 회전
    (+ GRASP_ROLL)의 오일러각으로 계산합니다.
-2. motion 1 (waypoint1): 가장 가까운 목표(0번) 앞(base +y로 APPROACH)의 잡기 직전 위치(집는 자세)를 ikin으로 풀어
-   movej하므로, 이동하면서 자연스럽게 축 정렬(TCP ∥ -y)이 끝납니다. 이 경로(앞 절반 스캔·뒤 절반 집는 자세 그리퍼)와
-   앞으로 들어가는 구간(집는 자세 그리퍼)을 장애물 점(base)으로 검사해, 막히면 재시도합니다.
+2. 가장 가까운 목표(0번) 앞(base +y로 APPROACH)에 잡기 직전 위치(waypoint1)를 두고, 동작이 겹치지 않게 나눠 갑니다.
+   waypoint0: 스캔 위치와 waypoint1의 중간점으로 스캔 자세 그대로 movel (평행 이동만).
+   waypoint1: 집는 자세를 ikin으로 풀어 movej (남은 거리 + 축 정렬 TCP ∥ -y).
+   두 구간(스캔·집는 자세 그리퍼)과 앞으로 들어가는 구간(집는 자세 그리퍼)을 장애물 점(base)으로 검사해, 막히면 재시도합니다.
 3. 보정: 잡기 직전 위치에서 다시 검출해 0번 segmentation 무게중심을 최종 grasp point로 정합니다 (1차 좌표와
    CORRECTION_LIMIT 이상 다르면 거절). 보정된 좌표까지 앞으로 들어가는 구간도 새 장애물 점으로 다시 검사합니다.
-4. 그리퍼는 가로(TCP 방향에 수직인 수평축)로 열고 닫도록 고정하고, 물체 점의 가로 폭 + GRIP_MARGIN만큼 벌립니다
-   (MAX_OPEN 초과면 거절). motion 2: 앞으로 movel해 grasp point에 도착하면, TCP 방향(툴 z축)이 base -y와
-   AXIS_TOLERANCE 이내로 평행한지 확인하고 잡습니다.
+4. 그리퍼는 시작할 때 건드리지 않고, 잡기 직전에만 가로(TCP 방향에 수직인 수평축)로 물체 가로 폭 + GRIP_MARGIN만큼
+   벌립니다 (MAX_OPEN 초과면 거절). 앞으로 movel해 grasp point에 도착하면, TCP 방향(툴 z축)이 base -y와
+   AXIS_TOLERANCE 이내로 평행한지 확인하고 잡습니다. 로봇 이동과 그리퍼 동작은 각각 끝난 뒤 다음으로 넘어갑니다.
 5. 잡으면 LIFT만큼 위로 올린 뒤 같은 높이로 잡기 직전 위치 위까지 movel로 빠지고, HOME_J로 movej해 그리퍼를 엽니다.
 고정 자세(SCAN_J, HOME_J)는 movej, 집는 동작은 movel입니다.
 동작은 DRL API(DSR_ROBOT2), 그리퍼는 Modbus TCP(onrobot.RG)이며, 그리퍼가 안전 정지하거나 GRIPPER_TIMEOUT을 넘기면 중단합니다."""
@@ -141,14 +142,16 @@ class Picker(Node):
         hit = checker.blocked(pregrasp, target)
         if hit:
             return None, f"moving forward from the pre-grasp point to the target {target.round(1).tolist()} is blocked: {hit}"
-        route = [pregrasp]  # motion 1: 스캔 위치 → waypoint1, 이동 중 스캔 자세 → 집는 자세로 회전
-        middle = (scan + pregrasp) / 2  # 자세가 서서히 바뀌므로 앞 절반은 스캔 자세, 뒤 절반은 집는 자세 그리퍼로 검사
-        hit = (PathChecker(result["obstacles"], self.scan_frame).blocked(scan, middle)
-               or PathChecker(result["obstacles"], self.frame).blocked(middle, pregrasp))
+        waypoint0 = (scan + pregrasp) / 2  # 스캔 위치 → waypoint1 중간점 (스캔 자세, 평행 이동만)
+        hit = PathChecker(result["obstacles"], self.scan_frame).blocked(scan, waypoint0)
         if hit:
-            return None, f"motion 1 to waypoint1 (pre-grasp) is blocked: {hit}"
-        self.get_logger().info(f"Target {target.round(1).tolist()}, waypoint1 {pregrasp.round(1).tolist()}")
-        return (target, pregrasp, route), None
+            return None, f"move to waypoint0 is blocked: {hit}"
+        hit = PathChecker(result["obstacles"], self.frame).blocked(waypoint0, pregrasp)
+        if hit:
+            return None, f"move to waypoint1 (pre-grasp) is blocked: {hit}"
+        self.get_logger().info(f"Target {target.round(1).tolist()}, waypoint0 {waypoint0.round(1).tolist()}, "
+                               f"waypoint1 {pregrasp.round(1).tolist()}")
+        return (target, pregrasp, waypoint0), None
 
     def correct(self, coarse, pregrasp):
         """잡기 직전 위치에서 다시 검출해 최종 grasp point와 그리퍼 벌림 폭을 정합니다.
@@ -210,9 +213,7 @@ class Picker(Node):
             time.sleep(0.5)
 
     def run(self):
-        self.gripper.open_gripper()
-        self.wait_gripper()
-        for attempt in range(1, RETRIES + 1):
+        for attempt in range(1, RETRIES + 1):  # 그리퍼는 시작할 때 건드리지 않고 잡기 직전에만 벌림
             self.scan_pose()
             pose, self.solution = get_current_posx()  # posx와 해 공간(sol, ikin에 사용)
             scan, self.scan_orientation, self.scan_frame = np.array(pose[:3]), list(pose[3:]), grasp_frame(pose)
@@ -224,9 +225,9 @@ class Picker(Node):
                 self.get_logger().warn(f"Attempt {attempt}/{RETRIES} rejected at scan pose: {reason}")
                 time.sleep(RETRY_DELAY)
                 continue
-            coarse, pregrasp, route = plan
-            for waypoint in route:  # motion 1: 집는 자세(ikin → movej)로 이동하며 도착과 함께 축 정렬 완료
-                self.reach(waypoint)
+            coarse, pregrasp, waypoint0 = plan
+            self.move(waypoint0, self.scan_orientation)  # waypoint0: 스캔 자세 그대로 평행 이동
+            self.reach(pregrasp)  # waypoint1: 남은 거리 + 축 정렬 (ikin → movej)
 
             final, reason = self.correct(coarse, pregrasp)  # 최종 grasp point·벌림 폭 보정
             if final is None:
