@@ -49,6 +49,7 @@ MARGIN = 5.0                        # mm, 상자 여유
 MIN_HITS = 10                       # 상자 안 장애물 점이 이 개수 이상일 때만 막힘으로 판정 (depth 잡음 무시)
 STEP = 10.0                         # mm, 경로를 따라 상자를 검사하는 간격
 RETRIES, RETRY_DELAY = 10, 2.0      # 재시도 횟수, 간격(s)
+DETECT_TRIES = 10                   # 한 자리에서 선택된 묶음이 1개인 프레임이 나올 때까지 검출을 다시 요청하는 횟수
 ARRIVAL_POSITION, ARRIVAL_ANGLE = 5.0, 2.0  # mm, deg: 작업 공간 목표와 이만큼 넘게 다르면 도중에 멈춘 것으로 봄
 ARRIVAL_JOINT = 1.0                 # deg: 관절 이동 뒤 각 관절이 목표와 이만큼 넘게 다르면 도중에 멈춘 것으로 봄
 GRIPPER_NAME, TOOLCHARGER_IP, TOOLCHARGER_PORT = "rg2", "192.168.1.1", "502"
@@ -216,16 +217,28 @@ class Picker(Node):
         self.arm = None  # 스캔 자세에서 만든 PlanarArm
 
     def request(self):
-        """detection 결과 {clusters, labels, targets{순번: base xyz}, target_points, obstacles} (mm)."""
-        future = self.client.call_async(Trigger.Request())
-        rclpy.spin_until_future_complete(self, future)
-        return json.loads(future.result().message)
+        """detection 결과 {clusters, labels, targets{순번: base xyz}, target_points, obstacles} (mm).
+        검출이 프레임마다 끊길 수 있어, 선택된 묶음이 1개가 아니면 DETECT_TRIES번까지 새 프레임으로 다시 요청합니다."""
+        for attempt in range(1, DETECT_TRIES + 1):
+            future = self.client.call_async(Trigger.Request())
+            rclpy.spin_until_future_complete(self, future)
+            result = json.loads(future.result().message)
+            if result["clusters"] == 1:
+                break
+        if attempt > 1:
+            self.get_logger().info(f"Detection took {attempt} frames (last: {result['clusters']} clusters).")
+        return result
 
     def target(self, result):
-        """선택된 묶음이 정확히 1개면 (0번 무게중심, None), 아니면 (None, 거절 사유)."""
+        """선택된 묶음이 정확히 1개면 (0번 위치, None), 아니면 (None, 거절 사유). x·y는 0번 무게중심, 높이는 0번 물체 점
+        높이 범위(5~95 백분위)의 가운데입니다. 위에서 내려다보는 스캔에서는 윗면 점이 무게중심을 물체 중심보다 끌어올립니다."""
         if result["clusters"] != 1:
             return None, f"{result['clusters']} clusters selected ({' '.join(result['labels']) or 'none'}), need exactly 1"
-        return np.array(result["targets"]["0"]), None
+        target = np.array(result["targets"]["0"])
+        bottom, top = np.percentile(np.asarray(result["target_points"], dtype=float).reshape(-1, 3)[:, 2], (5, 95))
+        self.get_logger().info(f"Target height {bottom:.0f}~{top:.0f} mm (centroid {target[2]:.0f}) → {(bottom + top) / 2:.0f}")
+        target[2] = (bottom + top) / 2
+        return target, None
 
     def width(self, result):
         """0번 물체 점들의 가로(손가락이 벌어지는 수평축, base x) 폭, 5~95 백분위 (mm)."""
