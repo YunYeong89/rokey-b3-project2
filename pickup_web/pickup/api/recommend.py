@@ -27,7 +27,7 @@ def build(svc):
 
     @r.get("/api/recommend")
     def recommend(basket: str = "", user=Depends(current_user)):
-        """장바구니 '함께 구매하면 좋은 상품' (S -> C -> 인기). 장바구니가 비면 빈 목록"""
+        """장바구니 '함께 구매하면 좋은 상품'. basket 은 담은 순서 (마지막 = 방금 담은 상품 -> 그 상품 기준 2개 + 전체 기준 1개)"""
         ids = _ids(basket)
         cid = _cid(user)
         items, rec_id = svc.serve_rec("cart", cid, lambda: rec.for_basket(ids))

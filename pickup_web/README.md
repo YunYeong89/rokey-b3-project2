@@ -218,7 +218,7 @@ verify / manual 실패는 **400** `{"ok": false, "reason": ..., "message": ...}`
 |---|---|---|---|
 | 첫 화면 | 구매 이력 있는 고객 | **R** 재구매 Top 3 (모자라면 인기 상품으로 보충) + 뒤에 **인기 상품 2개** (`HOME_POPULAR_WITH_R`) | 🔁 평소 자주 구매하시는 상품 |
 | 첫 화면 | 신규 고객 / 비회원 | **Popularity** Top 3 | 🔥 인기 상품 추천 |
-| 장바구니 | 장바구니에 상품이 있을 때 | **S** 같은 코너 → **C** 다른 코너 → 인기 상품, Top 3 | 💡 함께 구매하면 좋은 상품 |
+| 장바구니 | 장바구니에 상품이 있을 때 | **방금 담은 상품**의 연관 상품 2개 + **장바구니 전체** 기준 1개 (`BASKET_LAST_K`). 연관은 **S** 같은 코너 → **C** 다른 코너, 모자라면 인기 상품 | 💡 함께 구매하면 좋은 상품 |
 | 재고 부족 | 로봇이 재고 부족 발견 | `our_recs.json`의 `substitute` (기존과 같음) | 부족한 만큼 ○○로 바꿀게요 |
 
 ### 왜 이렇게 나눴나 (Colab 오프라인 실험, `pattern_analysis_v3`)
@@ -263,7 +263,7 @@ Instacart 주문 76,781건 (Validation 38,390 / Final Test 38,391), 11개 알고
 | `POST /api/login` | `{"username", "password"}` → `{"token", "username", "role"}` (틀리면 401) |
 | `POST /api/logout`, `GET /api/me` | 로그아웃 / 지금 로그인한 사용자 |
 | `GET /api/recommend/home?basket=` | 첫 화면. `{"items", "mode": "personal"/"popular", "title", "rec_id", "n_orders"}` |
-| `GET /api/recommend?basket=a,b` | 장바구니. `{"items", "title", "rec_id"}` |
+| `GET /api/recommend?basket=a,b` | 장바구니. `basket` 은 **담은 순서** (마지막 = 방금 담은 상품). `{"items", "title", "rec_id"}` |
 | `POST /api/order` | `rec_attrib`(추천을 눌러 담은 상품 `{pid: {slot, algo, rec_id, rank}}`) 추가 |
 | `GET /api/customer` | 로그인한 본인의 구매 이력·상품별 R 점수·최근 주문 20건 (비로그인 401) |
 | `GET /api/members` | (관리자) 계정별 `role`, `n_orders`, `last_purchase`, 자주 산 상품 `top` 3개 |

@@ -5,7 +5,8 @@
   첫 화면  home()       기존 고객: R(재구매) Top 3 + 인기 상품 2개  "평소 자주 구매하시는 상품"
                         신규 고객: Popularity Top 3 "인기 상품 추천"
                         R 후보가 3개가 안 되면 인기 상품으로 보충. 뒤에 붙는 인기 상품은 R 에 약한 새 상품 탐색용
-  장바구니 for_basket() S(같은 코너 상품) -> C(다른 코너) -> 인기 상품 순으로 Top 3
+  장바구니 for_basket() 방금 담은 상품의 연관 상품 2개 + 장바구니 전체를 본 연관 상품 1개 (모자라면 인기 상품)
+                        연관 상품은 S(같은 코너 상품) -> C(다른 코너) 순
                         "함께 구매하면 좋은 상품"
   재고 부족 substitute() 대체 상품 (our_recs.json, 기존과 같음)
 
@@ -38,6 +39,7 @@ from .catalog import PRODUCTS
 from .config import CROSS_FILE, HYBRID_FILE, RECS_FILE, SAME_FILE
 
 TOP_K = 3
+BASKET_LAST_K = 2            # 장바구니 추천 중 방금 담은 상품 기준으로 고르는 수 (나머지는 장바구니 전체 기준)
 HOME_POPULAR_WITH_R = 2      # 구매 이력 있는 고객의 첫 화면: R 뒤에 붙이는 인기 상품 수 (R 이 모자라면 TOP_K 까지는 더 채움)
 NEW_ITEM = "new_item"        # 콜드 스타트 실험용 상품 (분석 데이터에 없음)
 NEW_ITEM_RATE = 0.0          # 홈 추천에 new_item 을 끼워 넣을 확률 (예전 0.2. 새 방식은 Top 3 을 그대로 보여 주므로 꺼 둠)
@@ -185,18 +187,25 @@ class Recommender:
         return out
 
     # ------------------------------------------------------------ 장바구니
-    def for_basket(self, basket_ids, k=TOP_K):
-        """장바구니 전체를 보고 '함께 구매하면 좋은 상품' Top k.
-        1) S: 장바구니 상품과 같은 코너에서 함께 사는 상품 (예: 콜라 -> 오렌지 탄산음료)
-        2) C: 장바구니 상품의 코너와 함께 사는 다른 코너의 상품 (코너마다 인기 1개, lift > 1 만)
+    def for_basket(self, basket_ids, k=TOP_K, n_last=BASKET_LAST_K):
+        """'함께 구매하면 좋은 상품' Top k. basket_ids 는 담은 순서 (마지막 = 방금 담은 상품)
+        1) 방금 담은 상품의 연관 상품 n_last 개  (담을 때마다 추천이 바로 바뀌게)
+        2) 장바구니 전체를 본 연관 상품으로 k 개까지 (여러 상품과 관련 있으면 점수를 더함)
         3) 근거가 모자라면 인기 상품
-        같은 상품이 여러 장바구니 상품과 관련 있으면 점수를 더함. 결과에는 코너당 1개만."""
+        연관 상품: S(같은 코너에서 함께 사는 상품, 예: 콜라 -> 오렌지 탄산음료) 먼저, 그다음 C(함께 사는 다른 코너의 인기 상품).
+        결과에는 코너당 1개만. 장바구니에 상품이 하나면 예전(전체 기준 Top k)과 결과가 같음"""
         basket = [b for b in dict.fromkeys(basket_ids) if b in self.products]
         if not basket:
             return []
         ctx = {"basket": basket}
-        seen = set(basket)
-        cand = {}  # (pid, algo) -> {"score": 합, "best": (기여 점수, 근거)}
+        seen, used_aisles, out = set(basket), set(), []
+        self._pick(self._related([basket[-1]], seen, ctx), n_last, seen, used_aisles, out)
+        self._pick(self._related(basket, seen, ctx), k, seen, used_aisles, out)
+        return out + self._popular(k - len(out), seen, used_aisles, ctx)
+
+    def _related(self, items, seen, ctx):
+        """items 와 함께 사는 상품 후보를 순서대로 [((pid, algo), {"score": 합, "best": (기여 점수, 근거)})]"""
+        cand = {}
 
         def add(pid, algo, score, src, conf, lift):
             e = cand.setdefault((pid, algo), {"score": 0.0, "best": (-1, None)})
@@ -204,19 +213,22 @@ class Recommender:
             if score > e["best"][0]:
                 e["best"] = (score, {"from": src, "confidence": conf, "lift": lift})
 
-        for b in basket:
+        for b in items:
             for t, score, conf, lift in self.s_pairs.get(b, []):
                 if self.sellable(t, seen):
                     add(t, "S", score, b, conf, lift)
             for ta, score, conf, lift in self.c_pairs.get(self.item_aisle.get(b), []):
                 # 다른 코너에서는 그 코너의 (재고 있는) 가장 인기 상품 하나
-                items = [t for t in self.aisle_items.get(ta, []) if self.sellable(t, seen)]
-                if items:
-                    add(max(items, key=lambda t: (self.popularity(t), self.stock(t))), "C", score, b, conf, lift)
+                cands = [t for t in self.aisle_items.get(ta, []) if self.sellable(t, seen)]
+                if cands:
+                    add(max(cands, key=lambda t: (self.popularity(t), self.stock(t))), "C", score, b, conf, lift)
+        return sorted(cand.items(), key=lambda kv: self._rank(kv[0][1], kv[1]["score"], ctx), reverse=True)
 
-        ranked = sorted(cand.items(), key=lambda kv: self._rank(kv[0][1], kv[1]["score"], ctx), reverse=True)
-        out, used_aisles = [], set()
+    def _pick(self, ranked, upto, seen, used_aisles, out):
+        """ranked 에서 out 이 upto 개가 될 때까지 담기 (이미 고른 상품·코너는 건너뜀)"""
         for (pid, algo), e in ranked:
+            if len(out) >= upto:
+                return
             a = self.item_aisle.get(pid)
             if pid in seen or (a is not None and a in used_aisles):
                 continue
@@ -225,9 +237,6 @@ class Recommender:
             seen.add(pid)
             if a is not None:
                 used_aisles.add(a)
-            if len(out) >= k:
-                return out
-        return out + self._popular(k - len(out), seen, used_aisles, ctx)
 
     def _reason(self, algo, basis):
         src = self.products.get(basis.get("from"), {}).get("name", "담은 상품")

@@ -214,6 +214,8 @@ let API = Server;
 const $=s=>document.querySelector(s);
 const won=n=>n.toLocaleString("ko-KR")+"원";
 let products=[], cart={}, polling=null, lastState=null, cat="전체", recoKey=null;
+// 담은 순서: 개수가 늘어난 상품에 순번을 매김 (어느 경로로 담든 renderGrid 에서 한 번에 처리)
+let prevCart={}, addTick=0, addedAt={};
 const CATS=["전체","식품","음료","간식","생활용품"];
 const pmap=()=>Object.fromEntries(products.map(p=>[p.id,p]));
 // 장바구니에 담긴 상품 id, 개수 합, 금액 합
@@ -334,11 +336,15 @@ function renderGrid(){
       <div class="qty"><button data-a="-" data-id="${p.id}" ${q?"":"disabled"} aria-label="빼기">−</button>
         <span>${q}</span><button data-a="+" data-id="${p.id}" ${q>=s?"disabled":""} aria-label="더하기">+</button></div>
     </div>`}).join("");
+  for(const k in cart) if((cart[k]||0)>(prevCart[k]||0)) addedAt[k]=++addTick;
+  prevCart={...cart};
   const {ids,n,t}=cartSummary();
+  const byAdd=ids.slice().sort((a,b)=>(addedAt[a]||0)-(addedAt[b]||0));  // 마지막 = 방금 담은 상품
   $("#cnt").textContent=`담은 상품 ${n}개`;$("#total").textContent=won(t);$("#orderBtn").disabled=!n;$("#cartBtn").disabled=!n;
   if($("#cartOv").classList.contains("on")) renderCartSheet();
-  const key=ids.slice().sort().join(",")+"|"+products.map(p=>p.stock).join(",");
-  if(key!==recoKey){recoKey=key;updateReco(ids)}  // 장바구니(또는 재고)가 바뀔 때만 갱신
+  const key=byAdd.join(",")+"|"+products.map(p=>p.stock).join(",");
+  if(key!==recoKey){recoKey=key;updateReco(byAdd)}  // 장바구니·담은 순서(또는 재고)가 바뀔 때만 갱신
+  // 서버는 basket 의 마지막 상품 기준 2개 + 장바구니 전체 기준 1개를 추천
 }
 
 let recoSeq=0;
