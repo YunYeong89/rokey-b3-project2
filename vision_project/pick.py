@@ -29,7 +29,7 @@ from vision_project.onrobot import RG
 
 ROBOT_ID, ROBOT_MODEL = "dsr01", "m0609"
 VELOCITY, ACC = 24, 24  # movej deg/s·deg/s², movel mm/s·mm/s²
-SCAN_J = [-90.0, -54.91, 85.55, 0.0, 90.0, 90.0]  # 검출 자세 (movej), 잡기 직전 위치까지 이 배향 유지
+SCAN_J = [91.26, 52.31, -88.22, -180.2, 87.03, 93.43]  # 검출 자세 (movej), 잡기 직전 위치까지 이 배향 유지
 HOME_J = [0, 0, 90, 0, 90, 90]                     # 잡은 물품을 가져와 그리퍼를 여는 자세
 GRASP_EULER = [90.0, -90.0, -90.0]  # deg ZYZ, 잡기 직전에만 맞추는 집는 자세 (TCP ∥ base -y, 툴 x = base x, 툴 y = 위)
 GRIPPER_TIMEOUT = 10.0              # s, 그리퍼 동작을 기다리는 최대 시간
