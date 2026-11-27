@@ -110,20 +110,59 @@ class GroupStream(InstructionStream):
         return overlay, f"Groups: {len(np.unique(groups))} | Matches: {len(groups)}/{len(masks)}"
 
     def select(self, rgb, masks, boxes):
-        """면적 필터 → DINOv3 그룹 → 그룹 평균 CLIP 점수가 min_score 이상이고 최고 그룹 대비 margin 이내인 그룹만 남깁니다.
+        """group() 결과 중 그룹 CLIP 점수가 min_score 이상이고 최고 그룹 대비 margin 이내인 그룹만 남깁니다.
         남은 (마스크, 박스, 그룹 ID, 그룹 CLIP 점수, 마스크 CLIP 점수)를 반환합니다."""
-        keep = self.selector.keep(masks)
-        if self.selector.text is None or len(keep) == 0:
+        if self.selector.text is None or len(self.selector.keep(masks)) == 0:
             return masks[:0], boxes[:0], np.empty(0, dtype=int), np.empty(0), np.empty(0)
-        masks, boxes = masks[keep], boxes[keep]
+        masks, boxes, _, groups, scores, mask_scores = self.group(rgb, masks, boxes)
+        hit = self.chosen(scores)
+        return masks[hit], boxes[hit], groups[hit], scores[hit], mask_scores[hit]
 
-        groups = self.grouper(self.embedder(rgb, masks, boxes))
+    def group(self, rgb, masks, boxes):
+        """면적 필터 → DINOv3 그룹 → 그룹 평균 CLIP 점수 (선택 전 전체).
+        (마스크, 박스, DINOv3 임베딩, 그룹 ID, 마스크별 그룹 CLIP 점수, 마스크 CLIP 점수)를 반환합니다."""
+        keep = self.selector.keep(masks)
+        masks, boxes = masks[keep], boxes[keep]
+        features = self.embedder(rgb, masks, boxes)
+        groups = self.grouper(features)
         image = self.selector.embed(rgb, masks, boxes)
         ids = np.unique(groups)
         centers = np.stack([image[groups == group].mean(0) for group in ids])
         scores = (centers @ self.selector.text / np.linalg.norm(centers, axis=1))[np.searchsorted(ids, groups)]
-        hit = (scores >= self.args.min_score) & (scores >= scores.max() - self.args.margin)
-        return masks[hit], boxes[hit], groups[hit], scores[hit], image[hit] @ self.selector.text
+        return masks, boxes, features, groups, scores, image @ self.selector.text
+
+    def chosen(self, scores):
+        """그룹 CLIP 점수 → 선택 여부 (min_score 이상이고 최고 그룹 대비 margin 이내)."""
+        return (scores >= self.args.min_score) & (scores >= scores.max() - self.args.margin)
+
+    def inspect(self, bgr):
+        """선택 전 모든 DINOv3 그룹을 'G<ID> #<마스크>'로 그리고(선택된 그룹은 흰 윤곽) 그룹별 표를 출력합니다.
+        콜라·사이다가 같은 G면 DINOv3 군집 문제, 다른 G인데 둘 다 SELECTED면 CLIP 점수 차(margin) 문제입니다.
+        within = 그룹 안 최소 DINOv3 유사도, nearest = 평균 유사도가 가장 높은 다른 그룹 (group-sim 이상이면 합쳐짐)."""
+        rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+        masks, boxes, features, groups, scores, mask_scores = self.group(rgb, *self.segmenter(rgb))
+        hit = self.chosen(scores)
+        sim = features @ features.T
+        ids = np.unique(groups)
+        cut = max(self.args.min_score, scores.max() - self.args.margin)
+        print(f"'{self.instruction}': select group clip >= {cut:.3f} | DINOv3 group-sim {self.args.group_sim}")
+        for group in sorted(ids, key=lambda g: -scores[groups == g][0]):
+            members = np.flatnonzero(groups == group)
+            links = {other: sim[np.ix_(members, np.flatnonzero(groups == other))].mean() for other in ids if other != group}
+            nearest = max(links, key=links.get) if links else None
+            print(f"G{group:<3} clip {scores[members[0]]:.3f} {'SELECTED' if hit[members[0]] else '        '} "
+                  f"n={len(members):<2} within {sim[np.ix_(members, members)].min():.2f} "
+                  + (f"nearest G{nearest} {links[nearest]:.2f} " if links else "")
+                  + "| masks " + " ".join(f"#{k}:{mask_scores[k]:.3f}" for k in members))
+
+        overlay, colors = self.paint(bgr, masks, groups)
+        for k, (mask, (x1, y1, _, _), group, color) in enumerate(zip(masks, boxes.astype(int), groups, colors)):
+            if hit[k]:
+                contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                cv2.drawContours(overlay, contours, -1, (255, 255, 255), 3)
+            cv2.putText(overlay, f"G{group} #{k}", (x1 + 4, y1 + 20), cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5, color.tolist(), 2, cv2.LINE_AA)
+        return overlay
 
     @classmethod
     def paint(cls, bgr, masks, groups):
@@ -164,6 +203,9 @@ def create_parser():
     parser.add_argument("--input", type=Path, default=DINO_DIR / "images" / "before.jpg", help="Input image.")
     parser.add_argument("--output", type=Path, default=DINO_DIR / "images" / "after.jpg", help="Masked output image.")
     parser.add_argument("--stream", action="store_true", help="Run on webcam shared memory instead of --input.")
+    parser.add_argument("--debug", action="store_true",
+                        help="Also save every DINOv3 group before CLIP selection to <output>_groups and print a "
+                             "per-group table (CLIP score, selected, DINOv3 within/nearest similarity).")
     return parser
 
 
@@ -182,9 +224,14 @@ def main():
         pipeline.run()
         return
     pipeline.set_instruction(args.instruction)
-    overlay, status = pipeline.process(cv2.imread(str(args.input)))
+    bgr = cv2.imread(str(args.input))
+    overlay, status = pipeline.process(bgr)
     cv2.imwrite(str(args.output), overlay)
     print(f"Saved {args.output} | {args.instruction} | {status}")
+    if args.debug:
+        path = args.output.with_name(f"{args.output.stem}_groups{args.output.suffix}")
+        cv2.imwrite(str(path), pipeline.inspect(bgr))
+        print(f"Saved {path}")
 
 
 if __name__ == "__main__":
