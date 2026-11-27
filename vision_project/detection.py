@@ -11,7 +11,7 @@ from threading import Thread
 import time
 
 import cv2
-from dsr_msgs2.srv import GetCurrentPosx, SetCurrentTcp, SetCurrentTool
+from dsr_msgs2.srv import GetCurrentPosx, GetCurrentTcp, GetCurrentTool, SetCurrentTcp, SetCurrentTool
 import numpy as np
 import rclpy
 from rclpy.callback_groups import ReentrantCallbackGroup
@@ -72,10 +72,20 @@ class GraspDetector(GraspStream):
         for srv_type, service, name in ((SetCurrentTool, "tool/set_current_tool", calibration.TOOL_NAME),
                                         (SetCurrentTcp, "tcp/set_current_tcp", calibration.TCP_NAME)):
             client = self.node.create_client(srv_type, DSR + service, callback_group=group)
-            ready = client.wait_for_service(timeout_sec=3.0)
-            response = self.wait(client.call_async(srv_type.Request(name=name))) if ready else None
-            print(f"{service} '{name}': "
-                  f"{'ok' if response and response.success else 'FAILED (check the name on the teach pendant)'}", flush=True)
+            response = (self.wait(client.call_async(srv_type.Request(name=name)))
+                        if client.wait_for_service(timeout_sec=3.0) else "unavailable")
+            status = ("service unavailable" if response == "unavailable" else "no response" if response is None
+                      else "ok" if response.success
+                      else "rejected (name not registered on the teach pendant, or robot not in autonomous mode)")
+            print(f"{service} '{name}': {status}", flush=True)
+        # 지금 켜진 공구·TCP (설정이 실패하면 이 TCP 기준 posx로 계산됨 — 보정 때 TCP와 다르면 좌표가 틀어짐)
+        active = []
+        for srv_type, service in ((GetCurrentTool, "tool/get_current_tool"), (GetCurrentTcp, "tcp/get_current_tcp")):
+            client = self.node.create_client(srv_type, DSR + service, callback_group=group)
+            response = self.wait(client.call_async(srv_type.Request())) if client.wait_for_service(timeout_sec=3.0) else None
+            active.append(repr(response.info) if response else "unknown")
+        print(f"Active tool {active[0]}, TCP {active[1]} (calibration expects tool '{calibration.TOOL_NAME}', "
+              f"TCP '{calibration.TCP_NAME}')", flush=True)
         self.name += " + base"
 
     def open_source(self):
