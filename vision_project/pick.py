@@ -45,6 +45,7 @@ LIFT = 30.0                         # mm, 잡은 뒤 위로 올리는 높이
 CORRECTION_LIMIT = 200.0            # mm, 잡기 직전 위치에서 보정한 좌표가 1차 좌표와 달라도 되는 최대 거리
 GRIP_MARGIN = 50.0                  # mm, 물체 가로 폭보다 더 벌리는 여유 (양쪽 합)
 GRASP_DEPTH = 25.0                  # mm, 손가락 끝(TCP)을 물체 중심(앞면 + 가로 폭/2)보다 더 넣는 깊이
+GRASP_Z_OFFSET = -50.0              # mm, 최종 grasp point 높이 보정 (검출 높이가 실제보다 높게 나와 위쪽을 잡는 문제, 음수 = 아래로)
 MAX_OPEN = 110.0                    # mm, RG2 최대 벌림 (실측 확인)
 GRIPPER_BOX = (100.0, 50.0, 150.0)  # mm, 그리퍼 상자: 가로 폭(손가락이 벌어지는 수평축), 세로 두께, TCP(손가락 끝)→손목 길이 — 실측해 조정
 MARGIN = 5.0                        # mm, 상자 여유
@@ -290,7 +291,7 @@ class Picker(Node):
             return None, f"corrected target moved {shift:.0f} mm from the first estimate (limit {CORRECTION_LIMIT:.0f})"
         width = self.width(result)
         opening = min(width + GRIP_MARGIN, MAX_OPEN)  # 최대치를 넘으면 거절하지 않고 최대로 벌림
-        grasp = target + (width / 2 + GRASP_DEPTH) * self.frame[:, 2]  # 앞면 → 물체 중심 너머
+        grasp = target + (width / 2 + GRASP_DEPTH) * self.frame[:, 2] + GRASP_Z_OFFSET * UP  # 앞면 → 물체 중심 너머
         hit = PathChecker(result["obstacles"]).blocked(self.frame, pregrasp, grasp)
         if hit:
             return None, f"moving forward to the grasp point is blocked: {hit}"
