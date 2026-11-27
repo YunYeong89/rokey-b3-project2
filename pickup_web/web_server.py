@@ -12,6 +12,7 @@
     손님 화면    http://<PC IP>:8000/
     직원 화면    http://<PC IP>:8000/#staff
     픽업 키오스크 http://localhost:8000/kiosk   (카메라 때문에 가게 PC 에서 localhost 로 열기)
+    서버를 켜면 위 주소(PC IP 포함)를 터미널에 출력함
 
 코드는 pickup/ 패키지에 있음 (pickup/__init__.py 에 파일별 역할).
 
@@ -35,8 +36,28 @@ ROS2 토픽 (모두 std_msgs/String, JSON 문자열):
       /vision_count   {"tuna_can": 1, "spam_can": 3, ...}   # 카메라로 센 개수
 """
 import argparse
+import socket
 
 from pickup.config import PICKUP_EXPIRE_MIN
+
+
+def lan_ip():
+    """같은 와이파이의 휴대폰이 접속할 이 PC 의 IP (UDP connect 는 패킷을 보내지 않음). 모르면 127.0.0.1"""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("10.255.255.255", 1))
+        return s.getsockname()[0]
+    except OSError:
+        return "127.0.0.1"
+    finally:
+        s.close()
+
+
+def print_urls(port):
+    ip = lan_ip()
+    print(f"[web] 손님 화면     http://{ip}:{port}/          (같은 와이파이의 휴대폰에서)")
+    print(f"[web] 픽업 키오스크 http://localhost:{port}/kiosk   (이 PC 의 브라우저에서 열어야 카메라가 켜짐)")
+    print(f"[web] 직원 화면     http://{ip}:{port}/#staff    (관리자 로그인)")
 
 
 def main():
@@ -54,6 +75,7 @@ def main():
 
     svc = PickupService(expire_min=args.pickup_expire_min)
     svc.robot = connect_robot(svc, mock=args.mock)
+    print_urls(args.port)
     uvicorn.run(create_app(svc), host="0.0.0.0", port=args.port)
 
 
