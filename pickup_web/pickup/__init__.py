@@ -10,5 +10,5 @@ robot       웹 <-> 로봇 연결 (ROS2 / Mock)
 service     위를 묶은 서버 상태 (PickupService)
 api/        FastAPI 라우터 (shop / recommend / staff / pickup / pages)
 
-robot_order_node.py 는 catalog, recommender 만 사용하므로 이 파일에서는 fastapi 를 import 하지 않음.
+robot_order_node.py 는 catalog 만 사용하므로 이 파일에서는 fastapi 를 import 하지 않음.
 """

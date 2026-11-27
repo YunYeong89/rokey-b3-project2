@@ -23,14 +23,11 @@ from rclpy.node import Node
 from std_msgs.msg import String
 
 from pickup.catalog import PRODUCTS
-from pickup.recommender import Recommender
 
 # 상품 정보는 웹 서버와 같은 data/products.json 에서 읽음 (pickup/catalog.py)
 # 상품 id -> 속성 (shelf, fragile, deformable, registered). pick_one 에서 그립 방식 결정에 사용
 PRODUCT_INFO = {p["id"]: p for p in PRODUCTS}
 ROBOT_ITEMS = {pid for pid, p in PRODUCT_INFO.items() if p.get("robot")}  # 로봇이 집는 실물 상품
-# 대체 상품 후보 (our_recs.json). 최종 대체 상품은 web_server 가 실시간 재고로 다시 고름
-RECOMMENDER = Recommender()
 # 상품 id -> 매대 ("upper" / "lower"). 실물 상품만, products.json 의 "shelf" 값으로 만듦
 SHELF_VIEW_POSE = {pid: PRODUCT_INFO[pid]["shelf"] for pid in ROBOT_ITEMS}
 # 매대 이름 -> 촬영 위치 (posj 또는 posx). 직접 티칭해서 채우세요.
@@ -131,7 +128,7 @@ class OrderNode(Node):
                 self.choice_evt.clear()
                 self.status(order_id=oid, state="need_choice", message="재고가 부족해요",
                             shortage={"id": pid, "want": want, "have": have},
-                            substitute=next(iter(RECOMMENDER.substitute(pid)), None), done=0, total=total)
+                            substitute=None, done=0, total=total)  # 대체 상품은 web_server 가 실시간 재고로 채움
                 if not self.choice_evt.wait(timeout=120) or self.choice["choice"] == "cancel":
                     self.status(order_id=oid, state="cancelled", message="주문이 취소되었어요")
                     return

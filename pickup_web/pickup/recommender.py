@@ -1,5 +1,5 @@
 """
-상품 추천 (서버 pickup/service.py, robot_order_node.py 가 함께 사용)
+상품 추천 (서버 pickup/service.py 에서 사용)
 
 추천 목적별로 알고리즘을 나눔 (Switching Hybrid)
   첫 화면  home()       기존 고객: R(재구매) Top 3  "평소 자주 구매하시는 상품"
@@ -68,9 +68,7 @@ class Recommender:
         self.recs = _load_json(recs_file, {})        # substitute, 예전 인기도
         hy = _load_json(hybrid_file, {})
         self.stock_fn = stock_fn or (lambda pid: self.products.get(pid, {}).get("stock", 0))
-        self.rng = rng or random.Random()
-        self.min_count = hy.get("min_count", 200)
-        self.lift_weight = hy.get("lift_weight", 0.5)
+        self.rng = rng or random.Random()   # NEW_ITEM_RATE 로 new_item 을 끼워 넣을 때 사용
 
         # 인기도: 분석 결과(27종) 우선, 없으면 our_recs.json
         self.pop = {pid: v for pid, v in (hy.get("popularity") or {}).items() if v}
