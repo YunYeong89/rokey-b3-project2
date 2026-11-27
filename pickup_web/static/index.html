@@ -21,7 +21,7 @@
     </div>
   </div>
   <nav class="tabs">
-    <button class="tab on" data-v="shop">🛒 주문하기</button>
+    <button class="tab on" data-v="shop" id="shopTab">🛒 주문하기</button>
     <button class="tab" data-v="history" id="historyTab" hidden>🧾 구매 이력</button>
     <button class="tab" data-v="staff" id="staffTab" hidden>📋 직원 · 재고</button>
     <button class="tab" data-v="members" id="membersTab" hidden>👥 회원</button>
@@ -43,6 +43,10 @@
 
   <!-- 직원 화면 -->
   <section class="view" id="v-staff">
+    <div class="staff-top">
+      <a class="btn sm" href="/kiosk" target="_blank" rel="noopener">🖥 픽업 키오스크 열기 (/kiosk)</a>
+      <span class="sub" style="color:var(--muted)">손님이 휴대폰 QR을 보여 주면 키오스크 카메라가 읽어요 · 카메라는 이 PC(localhost)에서 열기</span>
+    </div>
     <div class="kpis">
       <div class="kpi"><small>로봇 상태</small><b id="k-robot">대기</b></div>
       <div class="kpi amber"><small>보충 필요</small><b id="k-low">0</b></div>

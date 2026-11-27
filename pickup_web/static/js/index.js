@@ -233,13 +233,13 @@ async function loadProducts(){
   renderHome();
 }
 
-/* ---------------- 로그인 (ID + 비밀번호). 관리자(admin)만 직원·재고 탭, 로그인 안 해도 손님 화면은 그대로 */
+/* ---------------- 로그인 (ID + 비밀번호). 관리자(admin)는 직원·재고 / 회원 탭만, 로그인 안 해도 손님 화면은 그대로 */
 const ROLE_TXT={admin:"관리자",user:"손님"};
 function updateCustBtn(){$("#custBtn").textContent=sess?`${isAdmin()?"🛠":"👤"} ${sess.username}`:"👤 로그인"}
 function onSessChange(){  // 로그인 / 로그아웃 / 세션 만료
   updateCustBtn();
   updateTabs();
-  if(!canView(view)) show("shop");
+  if(!canView(view)) show(defaultView());  // 관리자 로그인 -> 직원 · 재고, 로그아웃 -> 주문하기
   else if(view==="history") loadHistory();
   renderHome();
 }
@@ -252,7 +252,7 @@ async function renderCustSheet(){
       <button class="x" data-cu="close" aria-label="닫기">✕</button></div>
     ${sess?`<div class="st-msg" style="text-align:left;margin:4px 2px 0">구매 완료 주문 <b>${info?.n_orders??0}번</b>
         ${info?.n_orders?"· 첫 화면에 평소 자주 사는 상품을 보여 드려요":"· 아직 이력이 없어 인기 상품을 보여 드려요"}
-        ${isAdmin()?"<br>관리자 계정이라 <b>📋 직원 · 재고</b> 탭을 볼 수 있어요":""}</div>
+        ${isAdmin()?"<br>관리자 계정은 <b>📋 직원 · 재고</b>, <b>👥 회원</b> 탭만 보여요":""}</div>
       ${top.length?`<ul class="chist">${top.map(it=>`<li><span>${m[it.id]?m[it.id].emoji+" ":""}${it.name}</span>
         <small>${info.n_orders}번 중 ${it.orders}번</small></li>`).join("")}</ul>`:""}
       <button class="btn ghost" style="width:100%;margin-top:14px" data-cu="logout">로그아웃</button>`
@@ -280,7 +280,7 @@ $("#custOv").addEventListener("click",async e=>{
     try{const r=await API.login(id,pw);
       setSess({token:r.token,username:r.username,role:r.role});
       $("#custOv").classList.remove("on");
-      toast(r.role==="admin"?`관리자 ${r.username}님, 📋 직원 · 재고 탭이 열렸어요`:`${r.username}님, 반가워요`);
+      toast(r.role==="admin"?`관리자 ${r.username}님, 📋 직원 · 재고 화면이에요`:`${r.username}님, 반가워요`);
     }catch(err){b.disabled=false;toast(err.message);$("#loginPw").select()}
   }
 });
@@ -301,6 +301,7 @@ function noteRecClick(slot,id){
 let homeSeq=0;
 async function renderHome(){
   const seq=++homeSeq;
+  if(isAdmin()){$("#today").style.display="none";return}  // 관리자는 주문 화면이 없으므로 추천도 안 부름 (노출 기록 안 남김)
   try{const r=await API.home(Object.keys(cart).filter(k=>cart[k]>0));
     if(seq!==homeSeq) return;
     homeRec={rec_id:r.rec_id,items:r.items};
@@ -598,12 +599,16 @@ async function loadMembers(){
     <td>${u.top.length?u.top.map(t=>`${m[t.id]?m[t.id].emoji+" ":""}${t.name} ${t.orders}번`).join(" · "):`<span style="color:var(--muted)">-</span>`}</td></tr>`).join("");
 }
 
-/* ---------------- 탭: 구매 이력은 로그인, 직원 · 재고 / 회원은 관리자만 (서버 API 도 같은 권한) */
+/* ---------------- 탭
+   비회원: 주문하기 / 손님: 주문하기 · 구매 이력 / 관리자: 직원 · 재고 · 회원 (주문 화면·장바구니 바·추천 없음)
+   서버 API 도 같은 권한 (직원 · 회원 API 는 관리자만, 구매 이력은 본인만) */
 let view="shop";
-const canView=v=>v==="shop"||(v==="history"&&!!sess)||((v==="staff"||v==="members")&&isAdmin());
-function updateTabs(){$("#historyTab").hidden=!sess;$("#staffTab").hidden=!isAdmin();$("#membersTab").hidden=!isAdmin()}
+const canView=v=>isAdmin()?(v==="staff"||v==="members"):(v==="shop"||(v==="history"&&!!sess));
+const defaultView=()=>isAdmin()?"staff":"shop";
+function updateTabs(){const a=isAdmin();
+  $("#shopTab").hidden=a;$("#historyTab").hidden=!sess||a;$("#staffTab").hidden=!a;$("#membersTab").hidden=!a}
 function show(v){
-  if(!canView(v)) v="shop";
+  if(!canView(v)) v=defaultView();
   view=v;
   document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.v===v));
   document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id==="v-"+v));
@@ -621,7 +626,8 @@ updateCustBtn();
 updateTabs();
 loadProducts().then(async()=>{
   if(sess) await API.me().catch(()=>{});  // 저장된 로그인이 아직 유효한지 (만료면 Server.j 가 로그아웃 처리)
-  const want=location.hash.slice(1)||"shop";  // #history, #staff, #members 로 바로 열기
+  const want=location.hash.slice(1)||defaultView();  // #history, #staff, #members 로 바로 열기 (관리자는 기본 직원 · 재고)
   show(want);
-  if(["history","staff","members"].includes(want)&&!canView(want)){openCust();toast(want==="history"?"구매 이력은 로그인이 필요해요":"관리자 로그인이 필요해요")}
+  const needLogin=(want==="history"&&!sess)||((want==="staff"||want==="members")&&!isAdmin());
+  if(needLogin){openCust();toast(want==="history"?"구매 이력은 로그인이 필요해요":"관리자 로그인이 필요해요")}
   restoreMy()});

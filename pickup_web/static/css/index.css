@@ -75,6 +75,8 @@
   .plist li{display:flex;justify-content:space-between;padding:7px 2px;border-bottom:1px dashed var(--line)}
   .choices{display:grid;gap:8px;margin-top:6px}
   /* 직원 화면 */
+  .staff-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;font-size:12px}
+  .staff-top a.btn{text-decoration:none;display:inline-block}
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
   .kpi{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
   .kpi small{color:var(--muted);font-size:12px}.kpi b{display:block;font-size:24px;margin-top:2px}
