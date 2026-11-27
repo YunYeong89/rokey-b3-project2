@@ -5,7 +5,6 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-import pyrealsense2 as rs
 
 from group import DINO_DIR, GroupStream, add_group_arguments
 from instruction import create_parser as create_clip_parser
@@ -17,6 +16,7 @@ class RealSenseCamera:
     """RealSense 컬러(BGR)와 컬러에 정렬한 depth(m)를 FrameShm과 같은 read/close/frame 인터페이스로 제공합니다."""
 
     def __init__(self, width, height, fps):
+        import pyrealsense2 as rs  # 카메라를 직접 열 때만 필요해 ROS(토픽 입력) 환경에는 설치하지 않아도 됩니다.
         self.pipeline = rs.pipeline()
         config = rs.config()
         config.enable_stream(rs.stream.color, width, height, rs.format.bgr8, fps)
@@ -62,28 +62,94 @@ class DepthRanker:
         return order, z[order]
 
 
+class DepthMerger:
+    """색 경계 때문에 여러 마스크로 갈라진 같은 물체를 depth로 다시 합칩니다. 조건을 만족하는 쌍만 합치고 나머지는 그대로 둡니다.
+    ① 맞닿은(겹쳐도 됨) 두 마스크의 공통 경계 band px에서 양쪽 depth 중앙값 차이 < step: 라벨·윗면 경계는 같은 표면이라 통과,
+       앞뒤로 겹친 다른 물체는 단차가 있어 탈락.
+    ② 합친 영역의 depth 폭(10~90 백분위) < span: 바닥이 맞닿은 테이블처럼 앞뒤로 긴 영역과 합쳐지는 것을 막습니다."""
+
+    MIN_PIXELS = 20  # 경계 양쪽에 각각 필요한 유효 depth 픽셀 수
+
+    def __init__(self, step, span, band=3):
+        self.step, self.span, self.band = step, span, band
+        self.kernel = np.ones((2 * band + 1, 2 * band + 1), np.uint8)
+
+    def __call__(self, depth, masks, boxes):
+        """depth (H, W) m, 마스크 (N, H, W), 박스 (N, 4) → 합친 마스크 (M, H, W), 박스 (M, 4), 합친 횟수."""
+        if len(masks) < 2:
+            return masks, boxes, 0
+        parent = np.arange(len(masks))
+        merged, merged_boxes = list(masks), boxes.copy()
+        for i, j, region in self.pairs(boxes):
+            a, b = self.root(parent, i), self.root(parent, j)
+            if a == b or not self.continuous(depth, masks[i], masks[j], region):
+                continue
+            union = merged[a] | merged[b]
+            low, high = np.percentile(depth[union & (depth > 0)], (10, 90))
+            if high - low > self.span:
+                continue
+            parent[b], merged[a] = a, union
+            merged_boxes[a] = np.r_[np.minimum(merged_boxes[a, :2], merged_boxes[b, :2]),
+                                    np.maximum(merged_boxes[a, 2:], merged_boxes[b, 2:])]
+        roots = np.flatnonzero(parent == np.arange(len(masks)))
+        return np.stack([merged[r] for r in roots]), merged_boxes[roots], len(masks) - len(roots)
+
+    def pairs(self, boxes):
+        """band만큼 넓힌 박스가 겹치는 (i, j, 교차 영역 xyxy). 공통 경계는 이 교차 영역 안에만 있어 그 안만 계산합니다."""
+        pad = boxes + (-self.band, -self.band, self.band, self.band)
+        low = np.maximum(pad[:, None, :2], pad[None, :, :2])
+        high = np.minimum(pad[:, None, 2:], pad[None, :, 2:])
+        for i, j in zip(*np.nonzero(np.triu((low < high).all(-1), 1))):
+            yield i, j, np.r_[low[i, j], high[i, j]]
+
+    def continuous(self, depth, mask_i, mask_j, region):
+        """교차 영역에서 두 마스크를 band px 넓혀 겹친 공통 경계의 양쪽 depth 중앙값 차이가 step 미만인지."""
+        x1, y1 = np.maximum(region[:2], 0).astype(int)
+        x2, y2 = np.ceil(region[2:]).astype(int) + 1
+        d, mi, mj = depth[y1:y2, x1:x2], mask_i[y1:y2, x1:x2], mask_j[y1:y2, x1:x2]
+        band = (cv2.dilate(mi.astype(np.uint8), self.kernel) & cv2.dilate(mj.astype(np.uint8), self.kernel)).astype(bool)
+        side_i, side_j = d[band & mi & (d > 0)], d[band & mj & (d > 0)]
+        return min(len(side_i), len(side_j)) >= self.MIN_PIXELS and abs(np.median(side_i) - np.median(side_j)) < self.step
+
+    @staticmethod
+    def root(parent, index):
+        while parent[index] != index:
+            index = parent[index]
+        return index
+
+
 class GraspStream(GroupStream):
     """RealSense (BGR, depth) → group.py 선택 → depth 가까운 순 0부터 라벨. 스트림 구동은 InstructionStream.run을 그대로 씁니다."""
 
     def __init__(self, args):
         super().__init__(args)
         self.ranker = DepthRanker(args.depth_percentile)
+        self.merger = DepthMerger(args.merge_step, args.merge_span) if args.merge_step > 0 else None
+        self.merged = 0  # 직전 프레임에서 합친 횟수
         self.name += " + depth"
 
     def open_source(self):
         print(f"Source: RealSense {self.args.width}x{self.args.height} @ {self.args.fps} fps.", flush=True)
         return RealSenseCamera(self.args.width, self.args.height, self.args.fps)
 
-    def process(self, frame):
-        """(BGR, depth m) → 가까운 순 라벨을 그린 (overlay, 상태 문자열)."""
+    def rank(self, frame):
+        """(BGR, depth m) → instruction 물품을 가까운 순으로 정렬한 (마스크, 박스, 그룹 ID, 거리 m)와 전체 마스크 수.
+        분할 직후 DepthMerger로 갈라진 조각을 합친 뒤 DINOv3·CLIP에 넘깁니다 (--merge-step 0이면 생략)."""
         bgr, depth = frame
         rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
         masks, boxes = self.segmenter(rgb)
+        if self.merger:
+            masks, boxes, self.merged = self.merger(depth, masks, boxes)
         hit_masks, hit_boxes, groups, _, _ = self.select(rgb, masks, boxes)
         order, z = self.ranker(depth, hit_masks)
-        overlay = self.render(bgr, hit_masks[order], hit_boxes[order], groups[order], z)
+        return hit_masks[order], hit_boxes[order], groups[order], z, len(masks)
+
+    def process(self, frame):
+        """(BGR, depth m) → 가까운 순 라벨을 그린 (overlay, 상태 문자열)."""
+        masks, boxes, groups, z, total = self.rank(frame)
+        overlay = self.render(frame[0], masks, boxes, groups, z)
         ranks = " ".join(f"{rank}:{dist:.2f}m" for rank, dist in enumerate(z))
-        return overlay, f"Groups: {len(np.unique(groups))} | Grasp {len(order)}/{len(masks)} | {ranks}"
+        return overlay, f"Groups: {len(np.unique(groups))} | Merged {self.merged} | Grasp {len(z)}/{total} | {ranks}"
 
     @classmethod
     def render(cls, bgr, masks, boxes, groups, depths):
@@ -109,6 +175,12 @@ def create_parser():
     parser.add_argument("--fps", type=int, default=30, help="RealSense color/depth frame rate.")
     parser.add_argument("--depth-percentile", type=float, default=50,
                         help="Percentile of valid depth inside each mask used as its distance (lower = front surface).")
+    parser.add_argument("--merge-step", type=float, default=0.015,
+                        help="Merge touching masks whose median depth differs less than this across their shared "
+                             "boundary (m), e.g. a can split into label and top by color. 0 disables merging.")
+    parser.add_argument("--merge-span", type=float, default=0.10,
+                        help="Only merge when the merged region's 10-90 percentile depth range stays below this (m), "
+                             "so objects are not merged into the table they stand on.")
     parser.add_argument("--output", type=Path, nargs="?", const=DINO_DIR / "results" / "grasp.jpg",
                         help="Save one processed frame instead of streaming (no path: results/grasp.jpg).")
     return parser
