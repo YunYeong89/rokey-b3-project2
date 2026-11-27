@@ -18,7 +18,7 @@ from rclpy.utilities import remove_ros_args
 from scipy.spatial.transform import Rotation
 from std_srvs.srv import Trigger
 
-from vision_project.realsense import ImgNode
+from vision_project.realsense import RosCamera
 
 ROBOT_ID, ROBOT_MODEL = "dsr01", "m0609"
 GRIPPER2CAM = Path(get_package_share_directory("vision_project")) / "resource" / "T_gripper2camera.npy"
@@ -40,27 +40,6 @@ def pose_matrix(x, y, z, rx, ry, rz):
     matrix[:3, :3] = Rotation.from_euler("ZYZ", [rx, ry, rz], degrees=True).as_matrix()
     matrix[:3, 3] = x, y, z
     return matrix
-
-
-class RosCamera:
-    """realsense 노드 토픽(컬러 BGR, 정렬 depth mm)을 GraspStream 소스 인터페이스(read/close/frame)로 감쌉니다.
-    카메라는 realsense 노드가 점유하므로 grasp_clustering의 RealSenseCamera(pyrealsense2 직접 연결) 대신 씁니다."""
-
-    def __init__(self):
-        self.node = ImgNode()
-        while self.node.color_frame is None or self.node.depth_frame is None or self.node.intrinsics is None:
-            self.node.spin_once()
-        self.frame = self.node.color_frame  # InstructionStream.run 대기 화면 크기
-        self.intrinsics = self.node.intrinsics
-
-    def read(self, timeout=0.1):
-        """(frame_id, stamp, (BGR, depth m)). 컬러 프레임이 그대로면 같은 id라 InstructionStream._infer가 건너뜁니다."""
-        self.node.spin_once(timeout)
-        stamp = int(self.node.color_frame_stamp)
-        return stamp, stamp, (self.node.color_frame, self.node.depth_frame.astype(np.float32) / 1000)
-
-    def close(self):
-        self.node.destroy_node()
 
 
 class GraspDetector(GraspStream):

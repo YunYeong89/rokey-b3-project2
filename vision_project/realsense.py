@@ -1,3 +1,4 @@
+import numpy as np
 from rclpy.node import Node
 from rclpy.executors import SingleThreadedExecutor
 from sensor_msgs.msg import Image, CameraInfo
@@ -47,3 +48,24 @@ class ImgNode(Node):
 
     def get_camera_intrinsic(self):
         return self.intrinsics
+
+
+class RosCamera:
+    """realsense 노드 토픽(컬러 BGR, 정렬 depth mm)을 GraspStream 소스 인터페이스(read/close/frame)로 감쌉니다.
+    카메라는 realsense 노드가 점유하므로 grasp_clustering의 RealSenseCamera(pyrealsense2 직접 연결) 대신 씁니다."""
+
+    def __init__(self):
+        self.node = ImgNode()
+        while self.node.color_frame is None or self.node.depth_frame is None or self.node.intrinsics is None:
+            self.node.spin_once()
+        self.frame = self.node.color_frame  # InstructionStream.run 대기 화면 크기
+        self.intrinsics = self.node.intrinsics
+
+    def read(self, timeout=0.1):
+        """(frame_id, stamp, (BGR, depth m)). 컬러 프레임이 그대로면 같은 id라 InstructionStream._infer가 건너뜁니다."""
+        self.node.spin_once(timeout)
+        stamp = int(self.node.color_frame_stamp)
+        return stamp, stamp, (self.node.color_frame, self.node.depth_frame.astype(np.float32) / 1000)
+
+    def close(self):
+        self.node.destroy_node()

@@ -29,6 +29,7 @@ setup(
     entry_points={
         'console_scripts': [
             'detection = vision_project.detection:main',
+            'detect_obj = vision_project.detect_obj:main',
             'pick = vision_project.pick:main',
         ],
     },
