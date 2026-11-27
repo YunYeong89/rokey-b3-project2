@@ -148,7 +148,15 @@ const Demo = (() => {
     recommend:async basket=>{await load();return {items:basket.length?recBasket(basket):[],title:"함께 구매하면 좋은 상품"}},
     home:async()=>{await load();return {items:recHome(),mode:"popular",title:"인기 상품 추천",n_orders:0}},
     event:async()=>({ok:true}),
-    customer:async cid=>({customer_id:cid,n_orders:0,items:[]}),  // 브라우저 데모는 구매 이력 없음
+    customer:async()=>({customer_id:sess?.username,n_orders:0,items:[],orders:[]}),  // 브라우저 데모는 구매 이력 없음
+    members:async()=>({members:[{username:"admin",role:"admin"},{username:"user1",role:"user"}]
+      .map(u=>({...u,n_orders:0,last_purchase:null,top:[]}))}),
+    // 브라우저 데모(서버 없음)용 로그인: 서버 기본 계정과 같은 ID 로 역할만 흉내 (서버는 data/runtime/users.json 사용)
+    login:async(u,pw)=>{const a={admin:["admin1234","admin"],user1:["user1234","user"]}[u];
+      if(!a||a[0]!==pw) throw Object.assign(new Error("ID 또는 비밀번호가 맞지 않아요"),{status:401});
+      return {token:"demo",username:u,role:a[1]}},
+    logout:async()=>({ok:true}),
+    me:async()=>sess,
     inventory:async()=>({rows:P.map(p=>{const v=vision[p.id];return{...p,vision:v,state:v!=null&&v!==p.stock?"mismatch":p.stock<=LOW?(p.warehouse>0?"low":"order"):"ok"}}),
       vision_time:vtime,alerts,robot:status}),
     scan:async()=>{setTimeout(()=>{const R=P.filter(p=>p.robot);  // 카메라는 실물 매대만
@@ -165,24 +173,40 @@ const Demo = (() => {
   };
 })();
 
+/* 로그인 세션 {token, username, role}: localStorage 에 기억. 서버를 다시 켜면 token 이 만료되어 자동 로그아웃 */
+const SESS_KEY="rokey_session";
+let sess=(()=>{try{const s=JSON.parse(localStorage.getItem(SESS_KEY)||"null");return s&&s.token&&s.username?s:null}catch{return null}})();
+const isAdmin=()=>sess?.role==="admin";
+function setSess(s){sess=s||null;try{s?localStorage.setItem(SESS_KEY,JSON.stringify(s)):localStorage.removeItem(SESS_KEY)}catch{}
+  onSessChange()}
+
 const Server = {
-  async j(url,opt){const r=await fetch(url,opt);const d=await r.json().catch(()=>({}));
-    if(!r.ok){const e=new Error(d.detail||d.message||r.statusText);e.status=r.status;throw e}return d},
+  async j(url,opt={}){
+    const headers={...(opt.headers||{})};if(sess?.token) headers.Authorization="Bearer "+sess.token;
+    const r=await fetch(url,{...opt,headers});const d=await r.json().catch(()=>({}));
+    if(!r.ok){
+      if(r.status===401&&sess&&url!=="/api/login"){setSess(null);toast("로그인이 만료됐어요. 다시 로그인해 주세요")}
+      const e=new Error(d.detail||d.message||r.statusText);e.status=r.status;throw e}
+    return d},
   post(url,body){return this.j(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body||{})})},
   products(){return this.j("/api/products")},
-  order(items,customer_id,rec_attrib){return this.post("/api/order",{items,customer_id,rec_attrib})},
+  login(username,password){return this.post("/api/login",{username,password})},
+  logout(){return this.post("/api/logout")},
+  me(){return this.j("/api/me")},
+  order(items,rec_attrib){return this.post("/api/order",{items,rec_attrib})},  // 고객은 서버가 로그인 세션으로 정함
   status(){return this.j("/api/status")},
   choice(c){return this.post("/api/choice",c)},
-  recommend(b,cid){return this.j(`/api/recommend?basket=${b.join(",")}&customer_id=${encodeURIComponent(cid||"")}`)},
-  home(cid,b){return this.j(`/api/recommend/home?customer_id=${encodeURIComponent(cid||"")}&basket=${(b||[]).join(",")}`)},
+  recommend(b){return this.j(`/api/recommend?basket=${b.join(",")}`)},
+  home(b){return this.j(`/api/recommend/home?basket=${(b||[]).join(",")}`)},
   event(e){return this.post("/api/rec_event",e).catch(()=>{})},  // 기록 실패는 무시
-  customer(cid){return this.j("/api/customer?customer_id="+encodeURIComponent(cid))},
+  customer(){return this.j("/api/customer")},  // 로그인한 본인 이력
   inventory(){return this.j("/api/inventory")},
   scan(){return this.post("/api/scan")},
   restock(id,qty,mode="move"){return this.post("/api/restock",{id,qty,mode})},
   myOrder(id,secret){return this.j(`/api/pickup/order/${id}?secret=${encodeURIComponent(secret)}`)},
   qrUrl(id,secret){return `/api/pickup/qr/${id}.png?secret=${encodeURIComponent(secret)}`},
   pickups(){return this.j("/api/pickups")},
+  members(){return this.j("/api/members")},  // 관리자
 };
 let API = Server;
 
@@ -209,64 +233,80 @@ async function loadProducts(){
   renderHome();
 }
 
-/* ---------------- 고객번호 (시연용 간단 로그인: 비밀번호 없이 번호만, localStorage 에 기억) */
-const CUST_KEY="rokey_customer";
-let cust=(()=>{try{return localStorage.getItem(CUST_KEY)||null}catch{return null}})();
-const CUST_RE=/^[0-9A-Za-z가-힣_-]{1,20}$/;
-function setCust(id){cust=id||null;try{id?localStorage.setItem(CUST_KEY,id):localStorage.removeItem(CUST_KEY)}catch{}
-  updateCustBtn();renderHome()}
-function updateCustBtn(){$("#custBtn").textContent=cust?`👤 ${cust}`:"👤 로그인"}
+/* ---------------- 로그인 (ID + 비밀번호). 관리자(admin)만 직원·재고 탭, 로그인 안 해도 손님 화면은 그대로 */
+const ROLE_TXT={admin:"관리자",user:"손님"};
+function updateCustBtn(){$("#custBtn").textContent=sess?`${isAdmin()?"🛠":"👤"} ${sess.username}`:"👤 로그인"}
+function onSessChange(){  // 로그인 / 로그아웃 / 세션 만료
+  updateCustBtn();
+  updateTabs();
+  if(!canView(view)) show("shop");
+  else if(view==="history") loadHistory();
+  renderHome();
+}
 
 async function renderCustSheet(){
   let info=null;
-  if(cust){try{info=await API.customer(cust)}catch{}}
+  if(sess){try{info=await API.customer()}catch{}}
   const top=(info?.items||[]).slice(0,5), m=pmap();
-  $("#custSheet").innerHTML=`<div class="sheet-h"><div class="st-title">👤 ${cust?`고객 ${cust}`:"고객번호 입력"}</div>
+  $("#custSheet").innerHTML=`<div class="sheet-h"><div class="st-title">${sess?`👤 ${sess.username} <small style="color:var(--muted)">${ROLE_TXT[sess.role]||""}</small>`:"👤 로그인"}</div>
       <button class="x" data-cu="close" aria-label="닫기">✕</button></div>
-    ${cust?`<div class="st-msg" style="text-align:left;margin:4px 2px 0">구매 완료 주문 <b>${info?.n_orders??0}번</b>
-        ${info?.n_orders?"· 첫 화면에 평소 자주 사는 상품을 보여 드려요":"· 아직 이력이 없어 인기 상품을 보여 드려요"}</div>
+    ${sess?`<div class="st-msg" style="text-align:left;margin:4px 2px 0">구매 완료 주문 <b>${info?.n_orders??0}번</b>
+        ${info?.n_orders?"· 첫 화면에 평소 자주 사는 상품을 보여 드려요":"· 아직 이력이 없어 인기 상품을 보여 드려요"}
+        ${isAdmin()?"<br>관리자 계정이라 <b>📋 직원 · 재고</b> 탭을 볼 수 있어요":""}</div>
       ${top.length?`<ul class="chist">${top.map(it=>`<li><span>${m[it.id]?m[it.id].emoji+" ":""}${it.name}</span>
         <small>${info.n_orders}번 중 ${it.orders}번</small></li>`).join("")}</ul>`:""}
-      <button class="btn ghost" style="width:100%;margin-top:14px" data-cu="logout">다른 번호로 바꾸기 / 로그아웃</button>`
-    :`<div class="st-msg" style="text-align:left;margin:4px 2px 0">고객번호를 입력하면 주문할 때마다 구매 이력이 쌓이고,
+      <button class="btn ghost" style="width:100%;margin-top:14px" data-cu="logout">로그아웃</button>`
+    :`<div class="st-msg" style="text-align:left;margin:4px 2px 0">로그인하면 주문할 때마다 구매 이력이 쌓이고,
         첫 화면에 <b>평소 자주 구매하시는 상품</b>을 추천해 드려요.</div>
-      <input class="cinput" id="custIn" maxlength="20" placeholder="예: 1234" autocomplete="off">
-      <div class="pk-hint" style="text-align:left">한글·영문·숫자 20자 이내 · 전화번호 같은 개인정보는 넣지 마세요</div>
-      <button class="btn" style="width:100%;margin-top:10px" data-cu="login">확인</button>
+      <input class="cinput" id="loginId" maxlength="20" placeholder="ID" autocomplete="username" autocapitalize="off">
+      <input class="cinput" id="loginPw" type="password" placeholder="비밀번호" autocomplete="current-password">
+      <button class="btn" style="width:100%;margin-top:10px" data-cu="login">로그인</button>
       <button class="btn ghost" style="width:100%;margin-top:8px" data-cu="close">비회원으로 계속 (인기 상품 추천)</button>`}`;
-  $("#custIn")?.focus();
+  $("#loginId")?.focus();
 }
 function openCust(){renderCustSheet();$("#custOv").classList.add("on")}
 $("#custBtn").addEventListener("click",openCust);
 $("#todayHint").addEventListener("click",openCust);
-$("#custOv").addEventListener("click",e=>{
+$("#custOv").addEventListener("click",async e=>{
   if(e.target.id==="custOv"){$("#custOv").classList.remove("on");return}
   const b=e.target.closest("[data-cu]");if(!b)return;const a=b.dataset.cu;
   if(a==="close") $("#custOv").classList.remove("on");
-  if(a==="logout"){setCust(null);renderCustSheet()}
-  if(a==="login"){const v=$("#custIn").value.trim();
-    if(!CUST_RE.test(v)){toast("한글·영문·숫자 20자 이내로 입력해 주세요");return}
-    setCust(v);$("#custOv").classList.remove("on");toast(`고객 ${v}님, 반가워요`)}
+  if(a==="logout"){await API.logout().catch(()=>{});setSess(null);renderCustSheet();toast("로그아웃했어요")}
+  if(a==="login"){
+    const id=$("#loginId").value.trim(), pw=$("#loginPw").value;
+    if(!id){$("#loginId").focus();return}
+    if(!pw){$("#loginPw").focus();return}
+    b.disabled=true;
+    try{const r=await API.login(id,pw);
+      setSess({token:r.token,username:r.username,role:r.role});
+      $("#custOv").classList.remove("on");
+      toast(r.role==="admin"?`관리자 ${r.username}님, 📋 직원 · 재고 탭이 열렸어요`:`${r.username}님, 반가워요`);
+    }catch(err){b.disabled=false;toast(err.message);$("#loginPw").select()}
+  }
 });
-$("#custOv").addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="custIn") $('[data-cu="login"]').click()});
+$("#custOv").addEventListener("keydown",e=>{
+  if(e.key!=="Enter") return;
+  if(e.target.id==="loginId") $("#loginPw").focus();
+  if(e.target.id==="loginPw") $('[data-cu="login"]').click();
+});
 
 /* ---------------- 추천 반응 기록: 추천을 눌러 담으면 click 기록, 주문할 때 rec_attrib 로 같이 보내 구매 여부 기록 */
 let homeRec={rec_id:null,items:[]}, cartRec={rec_id:null,items:[]}, attrib={};
 function noteRecClick(slot,id){
   const r=slot==="home"?homeRec:cartRec, i=r.items.findIndex(it=>it.id===id);if(i<0)return;
   const a={slot,algo:r.items[i].algo,rec_id:r.rec_id,rank:i+1};attrib[id]=a;
-  API.event({event:"click",product_id:id,customer_id:cust,...a});
+  API.event({event:"click",product_id:id,...a});
 }
 
 let homeSeq=0;
 async function renderHome(){
   const seq=++homeSeq;
-  try{const r=await API.home(cust,Object.keys(cart).filter(k=>cart[k]>0));
+  try{const r=await API.home(Object.keys(cart).filter(k=>cart[k]>0));
     if(seq!==homeSeq) return;
     homeRec={rec_id:r.rec_id,items:r.items};
     // 기존 고객: R "평소 자주 구매하시는 상품" / 신규·비회원: "인기 상품 추천"
     $("#todayTitle").textContent=(r.mode==="personal"?"🔁 ":"🔥 ")+(r.title||"오늘의 추천");
-    $("#todayHint").hidden=!!cust||API!==Server;
+    $("#todayHint").hidden=!!sess||API!==Server;
     if(!r.items.length){$("#today").style.display="none";return}
     $("#todayList").innerHTML=r.items.map(it=>{const p=pmap()[it.id];return `<button class="hcard ${it.algo==="R"?"personal":""}" data-add="${it.id}" data-slot="home">
       <div class="emoji">${it.emoji}</div><div class="pname">${it.name}</div>
@@ -304,13 +344,14 @@ let recoSeq=0;
 async function updateReco(ids){
   const seq=++recoSeq;  // 빠르게 여러 번 담을 때 늦게 온 예전 응답이 덮어쓰지 않게
   if(!ids.length){$("#reco").style.display="none";fitCart();return}
-  try{const r=await API.recommend(ids,cust);
+  try{const r=await API.recommend(ids);
     if(seq!==recoSeq) return;
     cartRec={rec_id:r.rec_id,items:r.items};
     if(!r.items.length){$("#reco").style.display="none";fitCart();return}
     $("#recoTitle").textContent="💡 "+(r.title||"함께 구매하면 좋은 상품");
+    const m=pmap();
     $("#chips").innerHTML=r.items.map(it=>`<button class="chip ${it.level}" data-add="${it.id}" data-slot="cart">
-      <span>${it.emoji} ${it.name} 추가</span><small>${it.reason}</small></button>`).join("");
+      <span>${it.emoji} ${it.name} 추가${m[it.id]?` <span class="cprice">${won(m[it.id].price)}</span>`:""}</span><small>${it.reason}</small></button>`).join("");
     $("#reco").style.display="block";fitCart();
   }catch{}
 }
@@ -370,7 +411,7 @@ function forgetMy(){my=null;saveMy();updateMyBtn()}
 $("#orderBtn").addEventListener("click",async()=>{
   const items=Object.fromEntries(Object.entries(cart).filter(([,v])=>v>0));
   const ra=Object.fromEntries(Object.entries(attrib).filter(([k])=>items[k]));  // 추천을 눌러 담은 상품만
-  try{const r=await API.order(items,cust,ra);
+  try{const r=await API.order(items,ra);
     attrib={};
     my={order_id:r.order_id,client_secret:r.client_secret};
     if(API===Server) saveMy();  // 브라우저 데모는 새로고침하면 사라지므로 저장 안 함
@@ -455,7 +496,7 @@ function renderOrder(o){
 async function restoreMy(){  // 새로고침: 진행 중이거나 수령 대기 중인 주문이 있으면 다시 열기
   my=API===Server?readMy():null;updateMyBtn();if(!my) return;
   try{const o=await API.myOrder(my.order_id,my.client_secret);
-    if(ACTIVE.includes(o.status)&&location.hash!=="#staff") openMy()}
+    if(ACTIVE.includes(o.status)&&view==="shop") openMy()}
   catch(e){if(e.status===404||e.status===403) forgetMy()}
 }
 
@@ -529,16 +570,58 @@ $("#inv").addEventListener("click",async e=>{
 });
 $("#scan").addEventListener("click",async()=>{await API.scan();toast("로봇이 매대를 점검하고 있어요");setTimeout(loadStaff,1800)});
 
-/* ---------------- 탭 */
+/* ---------------- 구매 이력 탭 (로그인한 손님 본인) */
+const ORDER_ST={completed:["staff","담기 완료"],picked_up:["ok","수령 완료"],expired:["mismatch","만료 · 미수령"]};
+const ymdhm=t=>{const d=new Date(t*1000);return `${d.getFullYear()}.${pad2(d.getMonth()+1)}.${pad2(d.getDate())} ${hhmm(t)}`};
+async function loadHistory(){
+  let d;try{d=await API.customer()}catch{return}
+  const m=pmap();
+  $("#hist-sub").textContent=`구매 완료 주문 ${d.n_orders}번 기준`;
+  $("#hist-top").innerHTML=d.items.length?d.items.slice(0,5).map(it=>`<li><span>${m[it.id]?m[it.id].emoji+" ":""}${it.name}</span>
+    <small>${d.n_orders}번 중 ${it.orders}번</small></li>`).join("")
+    :`<li class="empty">아직 구매 이력이 없어요. 주문하면 여기에 쌓여요</li>`;
+  $("#hist-orders").innerHTML=d.orders.length?d.orders.map(o=>{const [cls,txt]=ORDER_ST[o.order_status]||["",o.order_status];
+    const n=Object.values(o.items).reduce((a,b)=>a+b,0);
+    return `<li><div class="oh"><b>${ymdhm(o.purchased_at)}</b><span>${n}개</span><span class="tag ${cls}">${txt}</span></div>
+      <div class="oi">${Object.entries(o.items).map(([k,v])=>`<span>${m[k]?m[k].emoji+" "+m[k].name:k} ${v}개</span>`).join("")}</div></li>`}).join("")
+    :`<li class="empty">주문 내역이 없어요</li>`;
+}
+
+/* ---------------- 회원 탭 (관리자만) */
+async function loadMembers(){
+  let d;try{d=await API.members()}catch{return}
+  const m=pmap(), users=d.members.filter(u=>u.role==="user").length;
+  $("#mem-sub").textContent=`전체 ${d.members.length}명 · 손님 ${users}명`;
+  $("#members").innerHTML=d.members.map(u=>`<tr><td><b>${u.username}</b></td>
+    <td>${u.role==="admin"?`<span class="tag order">관리자</span>`:`<span class="tag ok">손님</span>`}</td>
+    <td class="n">${u.n_orders}</td><td>${u.last_purchase?ymdhm(u.last_purchase):"-"}</td>
+    <td>${u.top.length?u.top.map(t=>`${m[t.id]?m[t.id].emoji+" ":""}${t.name} ${t.orders}번`).join(" · "):`<span style="color:var(--muted)">-</span>`}</td></tr>`).join("");
+}
+
+/* ---------------- 탭: 구매 이력은 로그인, 직원 · 재고 / 회원은 관리자만 (서버 API 도 같은 권한) */
+let view="shop";
+const canView=v=>v==="shop"||(v==="history"&&!!sess)||((v==="staff"||v==="members")&&isAdmin());
+function updateTabs(){$("#historyTab").hidden=!sess;$("#staffTab").hidden=!isAdmin();$("#membersTab").hidden=!isAdmin()}
 function show(v){
+  if(!canView(v)) v="shop";
+  view=v;
   document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.v===v));
   document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id==="v-"+v));
   $("#cart").style.display=v==="shop"?"block":"none";fitCart();
   clearInterval(staffTimer);
-  if(v==="staff"){loadStaff();staffTimer=setInterval(loadStaff,1500)}else loadProducts();
-  history.replaceState(null,"",v==="staff"?"#staff":location.pathname);
+  if(v==="staff"){loadStaff();staffTimer=setInterval(loadStaff,1500)}
+  else if(v==="history") loadHistory();
+  else if(v==="members") loadMembers();
+  else loadProducts();
+  history.replaceState(null,"",v==="shop"?location.pathname:"#"+v);
 }
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>show(t.dataset.v)));
 
 updateCustBtn();
-loadProducts().then(()=>{show(location.hash==="#staff"?"staff":"shop");restoreMy()});
+updateTabs();
+loadProducts().then(async()=>{
+  if(sess) await API.me().catch(()=>{});  // 저장된 로그인이 아직 유효한지 (만료면 Server.j 가 로그아웃 처리)
+  const want=location.hash.slice(1)||"shop";  // #history, #staff, #members 로 바로 열기
+  show(want);
+  if(["history","staff","members"].includes(want)&&!canView(want)){openCust();toast(want==="history"?"구매 이력은 로그인이 필요해요":"관리자 로그인이 필요해요")}
+  restoreMy()});

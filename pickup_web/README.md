@@ -1,4 +1,4 @@
-# 로키마트 픽업 주문 웹
+# 로키편의점 픽업 주문 웹
 
 손님이 웹에서 주문하면 로봇이 매대에서 재고를 확인하고 상품을 바구니에 담습니다.
 직원 화면에서는 재고를 **창고 / 진열 / 카메라** 세 가지로 나눠 봅니다.
@@ -28,18 +28,20 @@ pickup_web/
 │   ├── inventory.py       재고(진열·창고·카메라)와 직원 알림 (Store)
 │   ├── orders.py          주문·픽업 기록, 픽업 번호·확인번호 (Orders)
 │   ├── history.py         고객 구매 이력·추천 반응 (SQLite). CLI: python3 -m pickup.history
-│   ├── recommender.py     추천 (Recommender.home / for_basket / substitute). 로봇 노드도 사용
+│   ├── auth.py            로그인 계정·세션 (admin / user). CLI: python3 -m pickup.auth
+│   ├── recommender.py     추천 (Recommender.home / for_basket / substitute)
 │   ├── robot.py           웹 ↔ 로봇 연결: RobotLink(ROS2) / MockRobot(데모)
 │   ├── service.py         위를 하나로 묶은 서버 상태 (PickupService), 로봇 상태 처리
 │   └── api/               FastAPI 라우터 (화면별)
+│       ├── auth.py        로그인 (/api/login, logout, me) + 권한 확인 (current_user, require_admin)
 │       ├── shop.py        손님 주문 (/api/products, order, status, choice)
-│       ├── recommend.py   추천·반응 기록·고객 이력 (/api/recommend*, rec_event, rec_stats, customer)
-│       ├── staff.py       직원 화면 (/api/inventory, scan, restock, pickups)
+│       ├── recommend.py   추천·반응 기록·고객 이력 (/api/recommend*, rec_event, rec_stats(관리자), customer)
+│       ├── staff.py       직원 화면 (/api/inventory, scan, restock, pickups, members) - 관리자만
 │       ├── pickup.py      QR 픽업 (/api/pickup/*)
 │       ├── pages.py       화면 html, /data/* 공개 파일
 │       └── schemas.py     요청 본문 모델
 ├── static/
-│   ├── index.html         손님 주문 화면(+ 픽업 QR) + 직원 재고·픽업 대기 화면 (탭으로 전환)
+│   ├── index.html         손님 주문 화면(+ 픽업 QR) + 직원 재고·픽업 대기 화면 (탭으로 전환, 직원 탭은 관리자만)
 │   ├── kiosk.html         가게 픽업 키오스크 (/kiosk). 카메라로 QR 인식 또는 번호 입력
 │   ├── css/, js/          화면별 스타일·스크립트 (index.*, kiosk.*)
 │   ├── vendor/jsQR.js     QR 인식 라이브러리 jsQR 1.4.0 (Apache-2.0). 가게 네트워크가 막혀도 되게 파일로 포함
@@ -50,7 +52,8 @@ pickup_web/
 │   └── runtime/           서버가 만드는 파일 (git 제외, /data 로 공개 안 함)
 │       ├── inventory.json       재고. 지우면 products.json 기본값으로 초기화
 │       ├── orders.json          주문·픽업 기록. 서버를 다시 켜도 수령 대기 주문 유지
-│       └── customer_history.db  고객 구매 이력·추천 반응
+│       ├── customer_history.db  고객 구매 이력·추천 반응
+│       └── users.json           로그인 계정 (비밀번호는 PBKDF2 해시). 없으면 기본 계정으로 새로 만듦
 └── analysis/              Colab 노트북(01~04)과 전체 분석 결과 (recommender/). 서버는 사용하지 않음
 ```
 - `/data/*` 로는 `products.json`, `recommend/*` 만 내려받을 수 있음 (`runtime/` 은 404)
@@ -69,11 +72,36 @@ python3 web_server.py --mock --pickup-expire-min 1   # 픽업 만료를 1분으�
 python3 web_server.py                # 터미널 1
 python3 robot_order_node.py          # 터미널 2
 ```
-- 손님 화면: `http://<PC IP>:8000/`
-- 직원 화면: `http://<PC IP>:8000/#staff`
+- 손님 화면: `http://<PC IP>:8000/` (로그인 안 해도 주문 가능)
+- 직원 화면: `http://<PC IP>:8000/#staff` (관리자 로그인 필요)
 - 픽업 키오스크: 가게 PC(로봇 PC)에서 `http://localhost:8000/kiosk` (아래 "QR 픽업" 참고)
 - 같은 와이파이의 휴대폰에서 접속 → 공유 메뉴 → **홈 화면에 추가** 하면 앱처럼 열립니다.
 - `index.html`만 브라우저로 열어도 서버 없이 **브라우저 데모**로 동작합니다.
+
+## 로그인 (`pickup/auth.py`, `data/runtime/users.json`)
+손님 화면 오른쪽 위 **👤 로그인** → ID + 비밀번호. 로그인하지 않아도 손님 화면(주문·픽업)은 그대로 쓸 수 있습니다.
+
+| 구분 | 기본 계정 | 할 수 있는 것 |
+|---|---|---|
+| 관리자 | `admin` / `admin1234` | 손님 화면 + **📋 직원 · 재고** 탭 (재고, 점검, 보충, 픽업 대기, 추천 통계) + **👥 회원** 탭 |
+| 손님 | `user1` / `user1234` | 주문할 때 구매 이력 저장 → 첫 화면 "평소 자주 구매하시는 상품", **🧾 구매 이력** 탭 |
+| 손님 (추가) | `user2`, `user3` / `user1234` | `python3 -m pickup.auth set` 으로 추가한 계정 (샘플 이력: user2 우유·시리얼, user3 콜라·과자) |
+| 비회원 | (로그인 안 함) | 주문·픽업 가능, 추천은 인기 상품, 구매 이력 저장 안 함 |
+
+- 서버를 처음 켤 때 `users.json`이 없으면 위 기본 계정으로 만듭니다. **시연용 비밀번호이므로 실제로 쓸 때는 바꾸세요**
+- 탭: 🛒 주문하기(모두) · 🧾 구매 이력(로그인, 본인 주문 내역과 자주 산 상품) · 📋 직원 · 재고 / 👥 회원(관리자: 계정별 구매 완료 주문 수, 마지막 구매, 자주 산 상품). `#history`, `#staff`, `#members` 로 바로 열기
+- 직원 탭은 관리자에게만 보이고, 서버도 직원 API를 관리자 token 에만 허용합니다 (비로그인 401, 손님 403). 키오스크(`/kiosk`)는 로그인 없이 동작
+- 구매 이력의 고객 id = 로그인 ID. 서버가 세션으로 정하므로 다른 사람의 이력을 볼 수 없음
+- 로그인 유지 `SESSION_HOURS`(=12)시간. 세션은 서버 메모리에 있어서 **서버를 다시 켜면 다시 로그인**해야 함
+- 로그인 실패가 1분에 10번을 넘으면 그 IP 는 잠시 막음 (429)
+- 브라우저 데모(서버 없음)에서는 같은 기본 계정으로 역할만 흉내 냅니다
+
+```bash
+python3 -m pickup.auth list              # 계정 목록
+python3 -m pickup.auth set admin admin   # 비밀번호 바꾸기 (입력 받음). 새 ID 면 계정 추가 (role: admin / user)
+python3 -m pickup.auth delete user1      # 계정 삭제
+# 바꾼 뒤 서버를 다시 켜면 반영
+```
 
 ## ROS2 토픽 (모두 `std_msgs/String`, 내용은 JSON)
 | 토픽 | 방향 | 예시 |
@@ -163,7 +191,7 @@ verify / manual 실패는 **400** `{"ok": false, "reason": ..., "message": ...}`
 
 | 화면 | 대상 | 알고리즘 | 화면 문구 |
 |---|---|---|---|
-| 첫 화면 | 구매 이력 있는 고객 | **R** 재구매 Top 3 (모자라면 인기 상품으로 보충) | 🔁 평소 자주 구매하시는 상품 |
+| 첫 화면 | 구매 이력 있는 고객 | **R** 재구매 Top 3 (모자라면 인기 상품으로 보충) + 뒤에 **인기 상품 2개** (`HOME_POPULAR_WITH_R`) | 🔁 평소 자주 구매하시는 상품 |
 | 첫 화면 | 신규 고객 / 비회원 | **Popularity** Top 3 | 🔥 인기 상품 추천 |
 | 장바구니 | 장바구니에 상품이 있을 때 | **S** 같은 코너 → **C** 다른 코너 → 인기 상품, Top 3 | 💡 함께 구매하면 좋은 상품 |
 | 재고 부족 | 로봇이 재고 부족 발견 | `our_recs.json`의 `substitute` (기존과 같음) | 부족한 만큼 ○○로 바꿀게요 |
@@ -204,19 +232,24 @@ Instacart 주문 76,781건 (Validation 38,390 / Final Test 38,391), 11개 알고
 ### API
 | API | 설명 |
 |---|---|
-| `GET /api/recommend/home?customer_id=&basket=` | 첫 화면. `{"items", "mode": "personal"/"popular", "title", "rec_id", "n_orders"}` |
-| `GET /api/recommend?basket=a,b&customer_id=` | 장바구니. `{"items", "title", "rec_id"}` |
-| `POST /api/order` | `customer_id`(선택), `rec_attrib`(추천을 눌러 담은 상품 `{pid: {slot, algo, rec_id, rank}}`) 추가 |
-| `GET /api/customer?customer_id=` | 고객 구매 이력·상품별 R 점수 |
-| `POST /api/rec_event` | 추천 클릭 기록 `{"event":"click","slot":"home"/"cart","product_id","algo","rec_id","rank","customer_id"}` |
-| `GET /api/rec_stats` | 화면(slot)·알고리즘별 노출 / 클릭 / 구매 수, CTR, 구매율 |
+고객은 요청의 `Authorization: Bearer <token>`(로그인 세션)으로 정합니다. token 이 없으면 비회원.
+| API | 설명 |
+|---|---|
+| `POST /api/login` | `{"username", "password"}` → `{"token", "username", "role"}` (틀리면 401) |
+| `POST /api/logout`, `GET /api/me` | 로그아웃 / 지금 로그인한 사용자 |
+| `GET /api/recommend/home?basket=` | 첫 화면. `{"items", "mode": "personal"/"popular", "title", "rec_id", "n_orders"}` |
+| `GET /api/recommend?basket=a,b` | 장바구니. `{"items", "title", "rec_id"}` |
+| `POST /api/order` | `rec_attrib`(추천을 눌러 담은 상품 `{pid: {slot, algo, rec_id, rank}}`) 추가 |
+| `GET /api/customer` | 로그인한 본인의 구매 이력·상품별 R 점수·최근 주문 20건 (비로그인 401) |
+| `GET /api/members` | (관리자) 계정별 `role`, `n_orders`, `last_purchase`, 자주 산 상품 `top` 3개 |
+| `POST /api/rec_event` | 추천 클릭 기록 `{"event":"click","slot":"home"/"cart","product_id","algo","rec_id","rank"}` |
+| `GET /api/rec_stats` | (관리자) 화면(slot)·알고리즘별 노출 / 클릭 / 구매 수, CTR, 구매율 |
 
 추천 항목: `{"id", "name", "emoji", "reason", "algo": "R"/"S"/"C"/"popular", "level", "score", "basis": {"from", "confidence", "lift"}}`
 (`level`은 예전 화면 색 이름과 호환: S=`strong`, C=`weak`, 인기=`popular`, R=`personal`)
 
 ### 고객 구매 이력 (`pickup/history.py`, `data/runtime/customer_history.db`)
-- **고객 식별(시연용)**: 손님 화면 오른쪽 위 **👤 로그인** → 고객번호(한글·영문·숫자 20자 이내) 입력. 비밀번호 없이 번호만, 브라우저에 기억. 입력 안 하면 비회원 = 인기 상품.
-  고객번호만 알면 누구나 그 이력을 볼 수 있으므로 **전화번호 같은 개인정보는 쓰지 말 것** (실서비스라면 로그인 필요)
+- **고객 식별**: 로그인 ID 가 `customer_id` (위 "로그인"). 로그인 안 하면 비회원 = 인기 상품, 이력 저장 안 함
 - `purchases` 테이블: `customer_id, order_id, order_uid, product_id, quantity, purchased_at, order_status`
   - **로봇이 담기를 끝낸(done) 주문만** 저장. 취소(`cancelled`)·실패(`error`)는 저장하지 않음
   - 저장하는 상품은 실제로 준비된 상품(`picked` + `staff_items`, 대체 상품 포함)
@@ -226,8 +259,8 @@ Instacart 주문 76,781건 (Validation 38,390 / Final Test 38,391), 11개 알고
 - DB를 지우면 모든 고객이 신규 고객(인기 상품)으로 돌아감
 
 ```bash
-python3 -m pickup.history seed        # 시연용 샘플: 1234(우유·시리얼), 5678(콜라·과자)
-python3 -m pickup.history show 5678   # 이력과 R 점수
+python3 -m pickup.history seed        # 시연용 샘플: user1·user2(우유·시리얼), user3(콜라·과자)
+python3 -m pickup.history show user1  # 이력과 R 점수
 python3 -m pickup.history events      # 추천 노출/클릭/구매 집계
 ```
 
@@ -246,9 +279,10 @@ python3 -m pickup.history seed
 python3 web_server.py --mock
 ```
 1. 처음 접속 → "🔥 인기 상품 추천"
-2. 👤 로그인 → `5678` → "🔁 평소 자주 구매하시는 상품" (콜라, 과자, 견과류)
+2. 👤 로그인 → `user1` / `user1234` → "🔁 평소 자주 구매하시는 상품" (우유, 시리얼 …)
 3. 콜라를 담으면 아래에 "💡 함께 구매하면 좋은 상품" (오렌지 탄산음료 S, 생수·초콜릿 C)
-4. 주문하면(데모 로봇이 완료) 이력이 쌓여 첫 화면 R이 바뀜. 새 번호로 로그인해 주문하면 신규 → 기존 고객 전환을 볼 수 있음
+4. 주문하면(데모 로봇이 완료) 이력이 쌓여 첫 화면 R이 바뀜. `python3 -m pickup.auth set user2 user` 로 새 손님을 만들어 주문하면 신규 → 기존 고객 전환을 볼 수 있음
+5. 로그아웃 → `admin` / `admin1234` 로 로그인하면 📋 직원 · 재고 탭이 나타남
 
 브라우저 데모(서버 없이 `index.html`만 열기)는 구매 이력이 없어 첫 화면은 인기 상품, 장바구니는 예전 `our_recs.json` 방식의 간이 추천입니다.
 

@@ -1,9 +1,10 @@
 """손님 주문: 상품 목록, 주문, 로봇 진행 상황, 재고 부족 시 선택"""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from ..catalog import split_items
-from ..history import BAD_CUSTOMER_ID, clean_customer_id
+from ..history import clean_customer_id
 from ..service import ACTIVE_STATES
+from .auth import current_user
 from .schemas import ChoiceReq, OrderReq
 
 
@@ -17,13 +18,11 @@ def build(svc):
             return {"products": store.products, "mode": svc.mode}
 
     @r.post("/api/order")
-    def order(req: OrderReq):
+    def order(req: OrderReq, user=Depends(current_user)):
         items = {k: v for k, v in req.items.items() if v > 0}
         if not items:
             raise HTTPException(400, "담은 상품이 없어요")
-        customer_id = clean_customer_id(req.customer_id)
-        if req.customer_id and not customer_id:
-            raise HTTPException(400, BAD_CUSTOMER_ID)
+        customer_id = clean_customer_id(user["username"]) if user else None  # 비회원이면 None
         attrib = {pid: {k: a.get(k) for k in ("slot", "algo", "rec_id", "rank")}
                   for pid, a in (req.rec_attrib or {}).items() if pid in items and isinstance(a, dict)}
         with store.lock:

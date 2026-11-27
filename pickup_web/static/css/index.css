@@ -19,6 +19,7 @@
   .tabs{display:flex;gap:4px;max-width:980px;margin:12px auto 0}
   .tab{padding:10px 16px;border-radius:12px 12px 0 0;font-weight:700;font-size:14px;opacity:.75}
   .tab.on{background:var(--bg);color:var(--brand);opacity:1}
+  .tab[hidden]{display:none}
   main{max-width:980px;margin:0 auto;padding:18px 16px calc(var(--cartH,90px) + 40px)}
   .view{display:none}.view.on{display:block}
   h2{font-size:17px;margin:4px 2px 12px;letter-spacing:-.02em}
@@ -118,6 +119,7 @@
   /* 함께 사면 좋아요: level 색 구분 */
   .chip{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left}
   .chip small{font-size:11px;font-weight:600}
+  .chip .cprice{font-weight:800;margin-left:2px}
   .chip.strong{background:#fde68a;border-color:#d97706;color:#78350f}
   .chip.weak{background:#fffbeb;border-color:#f3c46b;color:#92400e}
   .chip.popular{background:#f3f4f6;border-color:#d1d5db;color:#4b5563}
@@ -159,4 +161,10 @@
   .cinput:focus{outline:none;border-color:var(--brand-2);box-shadow:0 0 0 3px rgba(20,184,166,.18)}
   .chist{list-style:none;margin:8px 0 0;padding:0;font-size:14px}
   .chist li{display:flex;justify-content:space-between;padding:7px 2px;border-bottom:1px dashed var(--line)}
+  .olist{list-style:none;margin:0;padding:0}
+  .olist li{padding:10px 2px;border-bottom:1px dashed var(--line)}
+  .olist .oh{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-bottom:6px}
+  .olist .oh b{color:var(--ink);font-size:14px}.olist .oh .tag{margin-left:auto}
+  .olist .oi{display:flex;flex-wrap:wrap;gap:6px}
+  .olist .oi span{background:#f6f3ec;border-radius:99px;padding:3px 9px;font-size:13px}
   .chist small{color:var(--muted)}

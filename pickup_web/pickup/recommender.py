@@ -2,9 +2,9 @@
 상품 추천 (서버 pickup/service.py 에서 사용)
 
 추천 목적별로 알고리즘을 나눔 (Switching Hybrid)
-  첫 화면  home()       기존 고객: R(재구매) Top 3  "평소 자주 구매하시는 상품"
+  첫 화면  home()       기존 고객: R(재구매) Top 3 + 인기 상품 2개  "평소 자주 구매하시는 상품"
                         신규 고객: Popularity Top 3 "인기 상품 추천"
-                        R 후보가 3개가 안 되면 인기 상품으로 보충
+                        R 후보가 3개가 안 되면 인기 상품으로 보충. 뒤에 붙는 인기 상품은 R 에 약한 새 상품 탐색용
   장바구니 for_basket() S(같은 코너 상품) -> C(다른 코너) -> 인기 상품 순으로 Top 3
                         "함께 구매하면 좋은 상품"
   재고 부족 substitute() 대체 상품 (our_recs.json, 기존과 같음)
@@ -38,6 +38,7 @@ from .catalog import PRODUCTS
 from .config import CROSS_FILE, HYBRID_FILE, RECS_FILE, SAME_FILE
 
 TOP_K = 3
+HOME_POPULAR_WITH_R = 2      # 구매 이력 있는 고객의 첫 화면: R 뒤에 붙이는 인기 상품 수 (R 이 모자라면 TOP_K 까지는 더 채움)
 NEW_ITEM = "new_item"        # 콜드 스타트 실험용 상품 (분석 데이터에 없음)
 NEW_ITEM_RATE = 0.0          # 홈 추천에 new_item 을 끼워 넣을 확률 (예전 0.2. 새 방식은 Top 3 을 그대로 보여 주므로 꺼 둠)
 MIN_C_LIFT = 1.0             # C(다른 코너)는 lift 가 이보다 큰 관계만 (lift < 1 은 오히려 같이 안 사는 관계)
@@ -151,7 +152,8 @@ class Recommender:
     # ------------------------------------------------------------ 첫 화면
     def home(self, k=TOP_K, history=None, exclude=()):
         """첫 화면 추천. history = customer_history.stats() 결과 {"n_orders", "counts", "last"} 또는 None
-        이력이 있으면 R(재구매) 순, 모자라면 인기 상품으로 보충. 결과의 algo 로 어떤 방식인지 알 수 있음"""
+        이력이 있으면 R(재구매) 순 + 인기 상품 HOME_POPULAR_WITH_R 개 (R 이 k 개보다 적으면 k 개까지 인기로 채움),
+        이력이 없으면 인기 상품 k 개. 결과의 algo 로 어떤 방식인지 알 수 있음"""
         ctx = {"page": "home"}
         seen = set(exclude)
         out = []
@@ -171,9 +173,14 @@ class Recommender:
                 seen.add(pid)
                 if len(out) >= k:
                     break
-        out += self._popular(k - len(out), seen, ctx=ctx)
+        if out:  # R 이 있으면 인기 상품을 덧붙임. 새 상품 탐색용이라 이미 산 적 있는 상품은 뺌
+            pop_seen = seen | set(history.get("counts") or {})
+            out += self._popular(max(k - len(out), HOME_POPULAR_WITH_R), pop_seen, ctx=ctx)
+            seen.update(it["id"] for it in out)
+        else:
+            out += self._popular(k, seen, ctx=ctx)
         if NEW_ITEM_RATE and self.sellable(NEW_ITEM, seen) and out and self.rng.random() < NEW_ITEM_RATE:
-            out = out[:k - 1]
+            out = out[:max(len(out), k) - 1]   # 한 자리를 new_item 으로 바꿈
             out.insert(self.rng.randrange(len(out) + 1), self._item(NEW_ITEM, "popular", "새로 들어왔어요"))
         return out
 

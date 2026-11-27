@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>로키마트 픽업 주문</title>
+<title>로키편의점 픽업 주문</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0f766e">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,7 +13,7 @@
 <header>
   <div class="bar">
     <div class="logo">R</div>
-    <div><div class="title">로키마트 픽업</div><div class="sub">주문하면 로봇이 담아 드려요</div></div>
+    <div><div class="title">로키편의점 픽업</div><div class="sub">주문하면 로봇이 담아 드려요</div></div>
     <div class="hbtns">
       <span class="mode" id="mode">연결 중…</span>
       <button class="mypk" id="custBtn">👤 로그인</button>
@@ -22,7 +22,9 @@
   </div>
   <nav class="tabs">
     <button class="tab on" data-v="shop">🛒 주문하기</button>
-    <button class="tab" data-v="staff">📋 직원 · 재고</button>
+    <button class="tab" data-v="history" id="historyTab" hidden>🧾 구매 이력</button>
+    <button class="tab" data-v="staff" id="staffTab" hidden>📋 직원 · 재고</button>
+    <button class="tab" data-v="members" id="membersTab" hidden>👥 회원</button>
   </nav>
 </header>
 
@@ -32,7 +34,7 @@
     <div class="today" id="today" style="display:none">
       <h2 id="todayTitle">✨ 오늘의 추천</h2>
       <div class="hscroll" id="todayList"></div>
-      <button class="hint" id="todayHint" hidden>👤 고객번호를 입력하면 평소 자주 사는 상품을 추천해 드려요 ›</button>
+      <button class="hint" id="todayHint" hidden>👤 로그인하면 평소 자주 사는 상품을 추천해 드려요 ›</button>
     </div>
     <h2>무엇을 담아 드릴까요?</h2>
     <div class="cats" id="cats"></div>
@@ -61,6 +63,28 @@
     <div class="panel">
       <div class="ph"><h3>알림</h3></div>
       <ul class="alerts" id="alerts"></ul>
+    </div>
+  </section>
+
+  <!-- 구매 이력 (로그인한 손님 본인) -->
+  <section class="view" id="v-history">
+    <div class="panel">
+      <div class="ph"><h3>⭐ 자주 산 상품</h3><span class="sub" style="color:var(--muted)" id="hist-sub"></span></div>
+      <ul class="chist" id="hist-top"></ul>
+    </div>
+    <div class="panel">
+      <div class="ph"><h3>🧾 주문 내역</h3><span class="sub" style="color:var(--muted)">최근 20건 · 로봇 담기가 끝난 주문만</span></div>
+      <ul class="olist" id="hist-orders"></ul>
+    </div>
+  </section>
+
+  <!-- 회원 (관리자만) -->
+  <section class="view" id="v-members">
+    <div class="panel">
+      <div class="ph"><h3>👥 회원</h3><span class="sub" style="color:var(--muted)" id="mem-sub"></span></div>
+      <table><thead><tr><th>ID</th><th>구분</th><th style="text-align:center">구매 완료 주문</th><th>마지막 구매</th><th>자주 산 상품</th></tr></thead>
+        <tbody id="members"></tbody></table>
+      <p class="pk-hint" style="text-align:left;margin-top:10px">계정 추가 · 비밀번호 변경: <code>python3 -m pickup.auth set &lt;ID&gt; &lt;admin|user&gt;</code> (서버 다시 켜면 반영)</p>
     </div>
   </section>
 </main>

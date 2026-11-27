@@ -58,7 +58,7 @@
 <body>
 <main>
   <h1>pickup_web 코드 구조</h1>
-  <p class="lead">로키마트 픽업 주문 웹 · 서버, 로봇 노드, 화면, 데이터가 어디에 있는지 정리</p>
+  <p class="lead">로키편의점 픽업 주문 웹 · 서버, 로봇 노드, 화면, 데이터가 어디에 있는지 정리</p>
 
   <nav class="toc">
     <a href="#tree">폴더 구조</a>
@@ -81,11 +81,13 @@
 │   ├── inventory.py
 │   ├── orders.py
 │   ├── history.py
+│   ├── auth.py
 │   ├── recommender.py
 │   ├── robot.py
 │   ├── service.py
 │   └── api/
 │       ├── __init__.py      <span class="c"># create_app(): 라우터 조립</span>
+│       ├── auth.py
 │       ├── shop.py
 │       ├── recommend.py
 │       ├── staff.py
@@ -185,6 +187,7 @@
     <tr><td><code>inventory.py</code></td><td>진열·창고·카메라 재고, 직원 알림, 로봇 현재 상태</td><td><code>Store</code>, <code>rows()</code>, <code>restock()</code></td></tr>
     <tr><td><code>orders.py</code></td><td>주문·픽업 기록, 픽업 번호(A-001) 발급, 수령·만료 처리</td><td><code>Orders</code>, <code>check_code()</code>, <code>normalize_code()</code></td></tr>
     <tr><td><code>history.py</code></td><td>고객 구매 이력, 추천 노출/클릭/구매 기록 (SQLite). CLI 겸용</td><td><code>CustomerHistory</code>, <code>clean_customer_id()</code></td></tr>
+    <tr><td><code>auth.py</code></td><td>로그인 계정(<code>data/runtime/users.json</code>, 비밀번호 해시)과 세션. 관리자 / 손님. CLI 겸용</td><td><code>Accounts</code>, <code>login()</code>, <code>user()</code></td></tr>
     <tr><td><code>recommender.py</code></td><td>Switching Hybrid 추천: 첫 화면(R / 인기), 장바구니(S → C → 인기), 대체 상품</td><td><code>Recommender.home / for_basket / substitute</code></td></tr>
     <tr><td><code>robot.py</code></td><td>웹 ↔ 로봇 연결. ROS2가 없으면 Mock으로 자동 전환</td><td><code>RobotLink</code>, <code>MockRobot</code>, <code>connect_robot()</code></td></tr>
     <tr><td><code>service.py</code></td><td>위 모듈을 묶은 서버 상태. 로봇 상태 처리, 구매 기록, 추천 노출 기록</td><td><code>PickupService</code>, <code>handle_status()</code></td></tr>
@@ -198,9 +201,10 @@
   <p>각 파일에 <code>build(svc)</code> 함수가 있고, <code>create_app(svc)</code>가 이 함수들로 라우터를 모읍니다.</p>
   <table>
     <tr><th>파일</th><th>화면</th><th>엔드포인트</th></tr>
+    <tr><td><code>auth.py</code></td><td>로그인 · 권한</td><td><code>POST /api/login</code> · <code>/api/logout</code> · <code>GET /api/me</code>. 다른 라우터가 쓰는 <code>current_user</code>, <code>require_admin</code></td></tr>
     <tr><td><code>shop.py</code></td><td>손님 주문</td><td><code>GET /api/products</code> · <code>POST /api/order</code> · <code>GET /api/status</code> · <code>POST /api/choice</code></td></tr>
-    <tr><td><code>recommend.py</code></td><td>추천 · 고객 이력</td><td><code>GET /api/recommend</code> · <code>/api/recommend/home</code> · <code>POST /api/rec_event</code> · <code>GET /api/rec_stats</code> · <code>/api/customer</code></td></tr>
-    <tr><td><code>staff.py</code></td><td>직원</td><td><code>GET /api/inventory</code> · <code>POST /api/scan</code> · <code>POST /api/restock</code> · <code>GET /api/pickups</code></td></tr>
+    <tr><td><code>recommend.py</code></td><td>추천 · 고객 이력</td><td><code>GET /api/recommend</code> · <code>/api/recommend/home</code> · <code>POST /api/rec_event</code> · <code>GET /api/rec_stats</code>(관리자) · <code>/api/customer</code>(본인)</td></tr>
+    <tr><td><code>staff.py</code></td><td>직원 (관리자만)</td><td><code>GET /api/inventory</code> · <code>POST /api/scan</code> · <code>POST /api/restock</code> · <code>GET /api/pickups</code> · <code>/api/members</code></td></tr>
     <tr><td><code>pickup.py</code></td><td>QR 픽업</td><td><code>GET /api/pickup/order/{id}</code> · <code>/api/pickup/qr/{id}.png</code> · <code>POST /api/pickup/verify</code> · <code>/api/pickup/manual</code></td></tr>
     <tr><td><code>pages.py</code></td><td>화면 · 데이터</td><td><code>/</code> · <code>/kiosk</code> · <code>/data/{path}</code> (<code>runtime/</code>은 404)</td></tr>
     <tr><td><code>schemas.py</code></td><td colspan="2">요청 본문 모델 (<code>OrderReq</code>, <code>RestockReq</code>, <code>VerifyReq</code> …)</td></tr>
@@ -226,7 +230,7 @@
     <tr><th>위치</th><th>내용</th><th>공개(<code>/data/*</code>)</th></tr>
     <tr><td><code>data/products.json</code></td><td>상품 28종, 속성, 매대 위치. 서버·로봇 노드·브라우저 데모가 함께 읽는 원본</td><td>O</td></tr>
     <tr><td><code>data/recommend/</code></td><td><code>hybrid_scores_optimized.json</code>, <code>same_aisle_scores.json</code>, <code>cross_aisle_scores.json</code>, <code>our_recs.json</code></td><td>O</td></tr>
-    <tr><td><code>data/runtime/</code></td><td><code>inventory.json</code>, <code>orders.json</code>(픽업 token), <code>customer_history.db</code>. 서버가 만들고 git에서 제외</td><td>X</td></tr>
+    <tr><td><code>data/runtime/</code></td><td><code>inventory.json</code>, <code>orders.json</code>(픽업 token), <code>customer_history.db</code>, <code>users.json</code>(로그인 계정). 서버가 만들고 git에서 제외</td><td>X</td></tr>
     <tr><td><code>analysis/</code></td><td>Colab 노트북 01~04, 전체 분석 결과(<code>recommender/</code>). 참고용</td><td>X</td></tr>
   </table>
 
@@ -238,8 +242,8 @@ python3 web_server.py --mock --pickup-expire-min 1  <span class="c"># 픽업 만
 python3 web_server.py                               <span class="c"># ROS2 환경: 터미널 1</span>
 python3 robot_order_node.py                         <span class="c"># ROS2 환경: 터미널 2</span>
 
-python3 -m pickup.history seed        <span class="c"># 샘플 고객 1234, 5678</span>
-python3 -m pickup.history show 5678   <span class="c"># 이력과 R 점수</span>
+python3 -m pickup.history seed        <span class="c"># 샘플 고객 user1, user2, user3</span>
+python3 -m pickup.history show user3  <span class="c"># 이력과 R 점수</span>
 python3 -m pickup.history events      <span class="c"># 추천 노출/클릭/구매 집계</span></code></pre>
   <p>모든 명령은 <code>pickup_web/</code> 폴더에서 실행합니다.
      손님 <code>http://&lt;PC IP&gt;:8000/</code> · 직원 <code>/#staff</code> · 키오스크 <code>http://localhost:8000/kiosk</code></p>

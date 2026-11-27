@@ -18,6 +18,7 @@ RUNTIME = DATA / "runtime"                     # 서버가 만드는 파일 (git
 INVENTORY_FILE = RUNTIME / "inventory.json"    # 재고 (진열·창고)
 ORDERS_FILE = RUNTIME / "orders.json"          # 주문·픽업 기록 (token 포함)
 HISTORY_FILE = RUNTIME / "customer_history.db" # 고객 구매 이력·추천 반응
+USERS_FILE = RUNTIME / "users.json"            # 로그인 계정 (비밀번호는 해시)
 
 # ---- 재고
 LOW_STOCK = 1                   # 진열 재고가 이 개수 이하이면 보충 필요
@@ -28,4 +29,7 @@ PICKUP_LETTER = "A"             # 픽업 번호 앞 글자 (A-001 ~ A-999 를 �
 QR_PREFIX = "ROKEY-PICKUP:"     # QR 내용 = QR_PREFIX + pickup_token
 EXPIRED_SHOW_MIN = 180          # 직원 화면 "픽업 대기"에 만료된 주문을 보여 주는 시간(분)
 FAIL_MAX = 10                   # verify / manual: FAIL_WINDOW_SEC 초 안에 이만큼 틀리면
-FAIL_WINDOW_SEC = 60            #   그 IP 는 잠시 막음 (429)
+FAIL_WINDOW_SEC = 60            #   그 IP 는 잠시 막음 (429). 로그인 실패에도 같은 기준 사용
+
+# ---- 로그인
+SESSION_HOURS = 12              # 로그인 유지 시간

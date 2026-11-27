@@ -1,9 +1,10 @@
-"""서버 상태를 한데 묶는 곳: 재고(Store) + 주문(Orders) + 구매 이력(CustomerHistory) + 추천(Recommender) + 로봇
+"""서버 상태를 한데 묶는 곳: 재고(Store) + 주문(Orders) + 구매 이력(CustomerHistory) + 추천(Recommender) + 계정(Accounts) + 로봇
 
 API(pickup/api)와 로봇 연결(pickup/robot.py)은 이 PickupService 하나만 받아서 사용합니다.
 """
 import secrets
 
+from .auth import Accounts
 from .config import HISTORY_FILE, ORDERS_FILE, PICKUP_EXPIRE_MIN, RUNTIME
 from .history import CustomerHistory
 from .inventory import Store
@@ -17,6 +18,7 @@ class PickupService:
     def __init__(self, expire_min=PICKUP_EXPIRE_MIN):
         RUNTIME.mkdir(parents=True, exist_ok=True)
         self.store = Store()
+        self.accounts = Accounts()   # 로그인 계정·세션
         # 고객 구매 이력 (SQLite). DB 문제가 생겨도 주문·추천은 계속 동작하도록 hist() 로만 호출
         try:
             self.history = CustomerHistory(HISTORY_FILE)

@@ -17,8 +17,8 @@ R 점수 = 이 고객이 그 상품을 산 주문 수 / 이 고객의 구매 완
   (한 주문에서 같은 상품을 여러 개 사도 1번으로 셈, expired 주문은 빼고 계산)
 
 실행 (시연용 샘플 고객 만들기):
-    python3 -m pickup.history seed           # 고객번호 1234, 5678 에 샘플 구매 이력
-    python3 -m pickup.history show 1234      # 고객 이력·R 점수 보기
+    python3 -m pickup.history seed           # user1, user2, user3 (로그인 계정) 에 샘플 구매 이력
+    python3 -m pickup.history show user2     # 고객 이력·R 점수 보기
     python3 -m pickup.history events         # 추천 노출/클릭/구매 집계
 """
 import re
@@ -32,7 +32,6 @@ from .config import HISTORY_FILE as DB_FILE
 
 COUNTED_STATUSES = ("completed", "picked_up")   # R 계산에 넣는 주문 상태
 CUSTOMER_ID_RE = re.compile(r"^[0-9A-Za-z가-힣_-]{1,20}$")
-BAD_CUSTOMER_ID = "고객번호는 한글·영문·숫자 20자 이내로 입력해 주세요"   # 형식이 틀릴 때 API 오류 문구
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS purchases (
@@ -170,9 +169,11 @@ class CustomerHistory:
 
 # ---------------------------------------------------------------- 시연용 샘플 고객
 SEED = {
-    # 고객번호: [주문마다 산 상품]  -> 1234 는 우유·시리얼을 자주, 5678 은 콜라·과자를 자주
-    "1234": [{"milk_pack": 1, "cereal": 1}, {"milk_pack": 2, "bread": 1}, {"milk_pack": 1, "yogurt": 1, "cereal": 1}],
-    "5678": [{"cola": 2, "snack_bag": 1}, {"cola": 1, "cup_ramen": 1}, {"snack_bag": 1, "cola": 1, "nuts": 1}],
+    # 고객 id(= 로그인 ID): [주문마다 산 상품]  -> user1·user2 는 우유·시리얼을 자주, user3 은 콜라·과자를 자주
+    # (user2, user3 은 예전 샘플 고객번호 1234, 5678 의 이력을 옮긴 것)
+    "user1": [{"milk_pack": 1, "cereal": 1}, {"milk_pack": 2, "bread": 1}, {"milk_pack": 1, "yogurt": 1, "cereal": 1}],
+    "user2": [{"milk_pack": 1, "cereal": 1}, {"milk_pack": 2, "bread": 1}, {"milk_pack": 1, "yogurt": 1, "cereal": 1}],
+    "user3": [{"cola": 2, "snack_bag": 1}, {"cola": 1, "cup_ramen": 1}, {"snack_bag": 1, "cola": 1, "nuts": 1}],
 }
 
 

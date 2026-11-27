@@ -2,9 +2,13 @@
 from pydantic import BaseModel
 
 
+class LoginReq(BaseModel):
+    username: str = ""
+    password: str = ""
+
+
 class OrderReq(BaseModel):
-    items: dict[str, int]
-    customer_id: str | None = None             # 없으면 비회원 (구매 이력 저장 안 함)
+    items: dict[str, int]                      # 고객은 로그인 세션으로 정함 (비회원이면 구매 이력 저장 안 함)
     rec_attrib: dict[str, dict] | None = None  # 추천을 눌러 담은 상품 {pid: {"slot","algo","rec_id","rank"}}
 
 
@@ -20,7 +24,6 @@ class RecEventReq(BaseModel):
     algo: str | None = None
     rec_id: str | None = None
     rank: int | None = None
-    customer_id: str | None = None
 
 
 class RestockReq(BaseModel):
