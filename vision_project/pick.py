@@ -43,8 +43,9 @@ AXIS_TOLERANCE = 5.0                # deg, 집을 때 TCP 방향(툴 z축)과 ba
 GRIP_MARGIN = 20.0                  # mm, 물체 가로 폭보다 더 벌리는 여유 (양쪽 합)
 GRASP_DEPTH = 25.0                  # mm, 손가락 끝(TCP)을 물체 중심(앞면 + 가로 폭/2)보다 더 넣는 깊이
 MAX_OPEN = 110.0                    # mm, RG2 최대 벌림
-GRIPPER_BOX = (120.0, 70.0, 180.0)  # mm, 그리퍼 상자: 가로 폭(손가락이 벌어지는 수평축), 세로 두께, TCP(손가락 끝)→손목 길이 — 실측해 조정
-MARGIN = 10.0                       # mm, 상자 여유
+GRIPPER_BOX = (100.0, 50.0, 150.0)  # mm, 그리퍼 상자: 가로 폭(손가락이 벌어지는 수평축), 세로 두께, TCP(손가락 끝)→손목 길이 — 실측해 조정
+MARGIN = 5.0                        # mm, 상자 여유
+MIN_HITS = 10                       # 상자 안 장애물 점이 이 개수 이상일 때만 막힘으로 판정 (depth 잡음 무시)
 STEP = 10.0                         # mm, 경로를 따라 상자를 검사하는 간격
 RETRIES, RETRY_DELAY = 10, 2.0      # 재시도 횟수, 간격(s)
 GRIPPER_NAME, TOOLCHARGER_IP, TOOLCHARGER_PORT = "rg2", "192.168.1.1", "502"
@@ -102,7 +103,7 @@ class PathChecker:
             for position in np.linspace(start, end, int(np.linalg.norm(end - start) // STEP) + 2):
                 local = (self.points - position) @ self.frame  # base → 그리퍼 좌표
                 hit = ((local > self.low) & (local < self.high)).all(1)
-                if hit.any():
+                if hit.sum() >= MIN_HITS:
                     low, high = local[hit].min(0), local[hit].max(0)
                     return (f"{hit.sum()} obstacle points near TCP {np.round(position).astype(int).tolist()}: "
                             f"across {low[0]:.0f}~{high[0]:.0f}, vertical {low[1]:.0f}~{high[1]:.0f}, "

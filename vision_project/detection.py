@@ -32,7 +32,7 @@ POSX_TIMEOUT = 2.0              # s, 응답을 기다리는 최대 시간 (넘�
 OBSTACLE_STRIDE = 4             # px, 장애물 점을 뽑는 간격
 OBSTACLE_VOXEL = 15             # mm, 장애물 점을 줄이는 격자 크기
 OBSTACLE_RANGE = (0.2, 1.5)     # m, 그리퍼가 비치는 가까운 점과 먼 배경을 뺀 depth 범위
-TARGET_PAD = 7                  # px, 장애물에서 뺄 0번 마스크를 넓히는 폭 (경계의 번진 depth 제외)
+TARGET_PAD = 12                 # px, 장애물에서 뺄 0번 마스크를 넓히는 폭 (경계의 번진 depth 제외)
 TARGET_STRIDE = 2               # px, 물체 점(무게중심·폭)을 뽑는 간격
 TARGET_VOXEL = 5                # mm, 응답에 넣는 0번 물체 점을 줄이는 격자 크기
 
