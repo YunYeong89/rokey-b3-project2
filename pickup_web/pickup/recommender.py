@@ -157,14 +157,16 @@ class Recommender:
         out = []
         n = (history or {}).get("n_orders") or 0
         if n:
+            counts = history.get("counts") or {}
             last = history.get("last") or {}
-            cands = sorted(((c / n, last.get(pid, 0), self.popularity(pid), pid, c)
-                            for pid, c in (history.get("counts") or {}).items()),
-                           key=lambda t: (self._rank("R", t[0], ctx), t[1], t[2]), reverse=True)
-            for r, _, _, pid, c in cands:
+            # R 점수 높은 순, 같으면 최근에 산 것, 그다음 인기 상품 순
+            ranked = sorted(counts, reverse=True, key=lambda pid: (
+                self._rank("R", counts[pid] / n, ctx), last.get(pid, 0), self.popularity(pid)))
+            for pid in ranked:
                 if not self.sellable(pid, seen):
                     continue
-                out.append(self._item(pid, "R", f"주문 {n}번 중 {c}번 구매", round(r, 4),
+                c = counts[pid]
+                out.append(self._item(pid, "R", f"주문 {n}번 중 {c}번 구매", round(c / n, 4),
                                       {"orders_with_item": c, "orders": n}))
                 seen.add(pid)
                 if len(out) >= k:
