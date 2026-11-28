@@ -1,0 +1,13 @@
+{
+  "R": 1.0,
+  "S": 0.0,
+  "C": 0.0,
+  "selection": "validation Hit@3 then MRR@3 then Hit@1",
+  "source": "pattern_analysis_v3",
+  "seed": 42,
+  "max_cases": null,
+  "min_count": 200,
+  "s_scope": "aisles_1_5",
+  "c_scope": "aisles_2_5",
+  "lift_weight": 0.5
+}

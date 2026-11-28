@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>로키편의점 픽업 주문</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f766e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="css/index.css">
+<link rel="stylesheet" href="css/analytics.css">
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="logo">R</div>
+    <div><div class="title">로키편의점 픽업</div><div class="sub">주문하면 로봇이 담아 드려요</div></div>
+    <div class="hbtns">
+      <span class="mode" id="mode">연결 중…</span>
+      <button class="mypk" id="custBtn">👤 로그인</button>
+      <button class="mypk" id="myPickup" hidden>🎫 내 픽업</button>
+    </div>
+  </div>
+  <nav class="tabs">
+    <button class="tab on" data-v="shop" id="shopTab">🛒 주문하기</button>
+    <button class="tab" data-v="history" id="historyTab" hidden>🧾 구매 이력</button>
+    <button class="tab" data-v="staff" id="staffTab" hidden>📋 직원 · 재고</button>
+    <button class="tab" data-v="members" id="membersTab" hidden>👥 회원</button>
+    <button class="tab" data-v="analytics" id="analyticsTab" hidden>📊 분석</button>
+  </nav>
+</header>
+
+<main>
+  <!-- 손님 화면 -->
+  <section class="view on" id="v-shop">
+    <div class="today" id="today" style="display:none">
+      <h2 id="todayTitle">✨ 오늘의 추천</h2>
+      <div class="hscroll" id="todayList"></div>
+      <button class="hint" id="todayHint" hidden>👤 로그인하면 평소 자주 사는 상품을 추천해 드려요 ›</button>
+    </div>
+    <h2>무엇을 담아 드릴까요?</h2>
+    <div class="cats" id="cats"></div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <!-- 직원 화면 -->
+  <section class="view" id="v-staff">
+    <div class="staff-top">
+      <a class="btn sm" href="/kiosk" target="_blank" rel="noopener">🖥 픽업 키오스크 열기 (/kiosk)</a>
+      <span class="sub" style="color:var(--muted)">손님이 휴대폰 QR을 보여 주면 키오스크 카메라가 읽어요 · 카메라는 이 PC(localhost)에서 열기</span>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><small>로봇 상태</small><b id="k-robot">대기</b></div>
+      <div class="kpi amber"><small>보충 필요</small><b id="k-low">0</b></div>
+      <div class="kpi red"><small>재고 불일치</small><b id="k-mis">0</b></div>
+      <div class="kpi"><small>마지막 점검</small><b id="k-time">-</b></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h3>🎫 픽업 대기</h3><span class="sub" style="color:var(--muted)" id="pk-sub">준비 완료 후 30분 지나면 만료</span></div>
+      <table><thead><tr><th>픽업 번호</th><th>준비 시각</th><th>남은 시간</th><th style="text-align:center">상품 수</th><th>상태</th></tr></thead>
+        <tbody id="pickups"></tbody></table>
+    </div>
+    <div class="panel">
+      <div class="ph"><h3>재고 현황</h3><span class="sub" style="color:var(--muted)">창고 · 진열 vs 카메라</span>
+        <div class="r"><button class="btn sm" id="scan">📷 재고 점검</button></div></div>
+      <table><thead><tr><th>상품</th><th>구분</th><th style="text-align:center">창고</th><th style="text-align:center">진열</th><th style="text-align:center">카메라</th><th>상태</th><th>보충</th></tr></thead>
+        <tbody id="inv"></tbody></table>
+    </div>
+    <div class="panel">
+      <div class="ph"><h3>알림</h3></div>
+      <ul class="alerts" id="alerts"></ul>
+    </div>
+  </section>
+
+  <!-- 구매 이력 (로그인한 손님 본인) -->
+  <section class="view" id="v-history">
+    <div class="panel">
+      <div class="ph"><h3>⭐ 자주 산 상품</h3><span class="sub" style="color:var(--muted)" id="hist-sub"></span></div>
+      <ul class="chist" id="hist-top"></ul>
+    </div>
+    <div class="panel">
+      <div class="ph"><h3>🧾 주문 내역</h3><span class="sub" style="color:var(--muted)">최근 20건 · 로봇 담기가 끝난 주문만</span></div>
+      <ul class="olist" id="hist-orders"></ul>
+    </div>
+  </section>
+
+  <!-- 회원 (관리자만) -->
+  <section class="view" id="v-members">
+    <div class="panel">
+      <div class="ph"><h3>👥 회원</h3><span class="sub" style="color:var(--muted)" id="mem-sub"></span></div>
+      <table><thead><tr><th>ID</th><th>구분</th><th style="text-align:center">구매 완료 주문</th><th>마지막 구매</th><th>자주 산 상품</th></tr></thead>
+        <tbody id="members"></tbody></table>
+      <p class="pk-hint" style="text-align:left;margin-top:10px">계정 추가 · 비밀번호 변경: <code>python3 -m pickup.auth set &lt;ID&gt; &lt;admin|user&gt;</code> (서버 다시 켜면 반영)</p>
+    </div>
+  </section>
+
+  <!-- 분석 대시보드 (관리자만, js/analytics.js) -->
+  <section class="view an-root" id="v-analytics">
+    <nav class="an-sub" id="anSub"></nav>
+    <div class="an-filters" id="anFilters"></div>
+    <div id="anBody"></div>
+  </section>
+</main>
+
+<div class="cart" id="cart">
+  <div class="reco" id="reco"><b id="recoTitle">💡 함께 구매하면 좋은 상품</b><div class="chips" id="chips"></div></div>
+  <div class="in">
+    <button class="sum" id="cartBtn" disabled><span id="cnt">담은 상품 0개</span><b id="total">0원</b><u>🧺 장바구니 보기 ›</u></button>
+    <button class="btn" id="orderBtn" disabled>로봇에게 주문하기</button>
+  </div>
+</div>
+
+<div class="overlay" id="ov"><div class="sheet" id="sheet"></div></div>
+<div class="overlay" id="cartOv"><div class="sheet" id="cartSheet"></div></div>
+<div class="overlay" id="custOv"><div class="sheet" id="custSheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="js/index.js"></script>
+<script src="vendor/chart.umd.min.js"></script>
+<script src="js/analytics.js"></script>
+</body>
+</html>
