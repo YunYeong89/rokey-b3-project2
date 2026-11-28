@@ -1,0 +1,4 @@
+﻿experiment,label,run_status,response_model,plan_status,n_steps,n_layer2,seconds,input_tokens,output_tokens,total_tokens,estimated_cost_usd
+experiment_1_text_only,Text-only,ok,gpt-4o-2024-08-06,planned,7,0,10.57,2265,1485,3750,0.020512
+experiment_2_text_vision,Text + Vision,ok,gpt-4o-2024-08-06,planned,7,0,10.074,3055,1500,4555,0.022637
+experiment_3_text_properties,Text + Physical Properties,ok,gpt-4o-2024-08-06,planned,7,0,8.383,3136,1477,4613,0.02261

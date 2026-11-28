@@ -1,0 +1,324 @@
+{
+  "experiment": "experiment_1_text_only",
+  "mode": "text_only",
+  "label": "Text-only",
+  "repeat": 1,
+  "model_requested": "gpt-4o",
+  "generation_settings": {
+    "temperature": 0,
+    "max_output_tokens": 6000
+  },
+  "request": {
+    "instructions": "config.json의 prompt와 동일",
+    "input": [
+      {
+        "type": "input_text",
+        "text": "{\"order\": [{\"name\": \"코카콜라\", \"product_id\": \"coca_cola\", \"quantity\": 2}, {\"name\": \"참치캔\", \"product_id\": \"tuna_can\", \"quantity\": 1}, {\"name\": \"스팸\", \"product_id\": \"spam\", \"quantity\": 1}, {\"name\": \"신라면 컵\", \"product_id\": \"shin_ramyun\", \"quantity\": 1}, {\"name\": \"아몬드 빼빼로\", \"product_id\": \"almond_pepero\", \"quantity\": 1}, {\"name\": \"쫄병스낵\", \"product_id\": \"jjolbyeong\", \"quantity\": 1}], \"items\": [{\"item_id\": \"coca_cola_1\", \"product_id\": \"coca_cola\", \"name\": \"코카콜라\"}, {\"item_id\": \"coca_cola_2\", \"product_id\": \"coca_cola\", \"name\": \"코카콜라\"}, {\"item_id\": \"tuna_can_1\", \"product_id\": \"tuna_can\", \"name\": \"참치캔\"}, {\"item_id\": \"spam_1\", \"product_id\": \"spam\", \"name\": \"스팸\"}, {\"item_id\": \"shin_ramyun_1\", \"product_id\": \"shin_ramyun\", \"name\": \"신라면 컵\"}, {\"item_id\": \"almond_pepero_1\", \"product_id\": \"almond_pepero\", \"name\": \"아몬드 빼빼로\"}, {\"item_id\": \"jjolbyeong_1\", \"product_id\": \"jjolbyeong\", \"name\": \"쫄병스낵\"}], \"packing_space\": {\"container\": \"고정 용기에 설치된 비닐봉투 (바닥·측면 지지, 내부를 직육면체로 근사)\", \"coordinate_system\": \"원점=내부 바닥 왼쪽 앞 모서리, x=오른쪽, y=뒤쪽, z=위쪽, 단위 mm\", \"usable_space_mm\": {\"x\": 320, \"y\": 260, \"z_safe_fill_height\": 200}, \"wall_clearance_mm\": 10, \"allowed_region_mm\": {\"x\": [10, 310], \"y\": [10, 250], \"z\": [0, 200]}, \"opening_clear_dimensions_mm\": [300, 240], \"max_layers\": 2}}"
+      }
+    ]
+  },
+  "run_status": "ok",
+  "response_model": "gpt-4o-2024-08-06",
+  "response_status": "completed",
+  "seconds": 6.595,
+  "input_tokens": 1502,
+  "output_tokens": 690,
+  "total_tokens": 2192,
+  "estimated_cost_usd": 0.010655,
+  "cost_note": "공개 단가(gpt-4o 표준 요금) 기준 추정, 청구액 아님",
+  "plan": {
+    "status": "planned",
+    "steps": [
+      {
+        "sequence": 1,
+        "item_id": "coca_cola_1",
+        "product_id": "coca_cola",
+        "position_mm": {
+          "x": 45,
+          "y": 45,
+          "z": 60
+        },
+        "orientation": "upright",
+        "yaw_deg": 0,
+        "layer": 1,
+        "supported_by": [],
+        "assumed_dimensions_mm": {
+          "width": 60,
+          "depth": 60,
+          "height": 120
+        },
+        "assumed_weight_g": 500,
+        "reason": "Cylindrical bottle placed upright for stability."
+      },
+      {
+        "sequence": 2,
+        "item_id": "coca_cola_2",
+        "product_id": "coca_cola",
+        "position_mm": {
+          "x": 135,
+          "y": 45,
+          "z": 60
+        },
+        "orientation": "upright",
+        "yaw_deg": 0,
+        "layer": 1,
+        "supported_by": [],
+        "assumed_dimensions_mm": {
+          "width": 60,
+          "depth": 60,
+          "height": 120
+        },
+        "assumed_weight_g": 500,
+        "reason": "Cylindrical bottle placed upright for stability."
+      },
+      {
+        "sequence": 3,
+        "item_id": "tuna_can_1",
+        "product_id": "tuna_can",
+        "position_mm": {
+          "x": 225,
+          "y": 45,
+          "z": 45
+        },
+        "orientation": "upright",
+        "yaw_deg": 0,
+        "layer": 1,
+        "supported_by": [],
+        "assumed_dimensions_mm": {
+          "width": 90,
+          "depth": 90,
+          "height": 90
+        },
+        "assumed_weight_g": 200,
+        "reason": "Cylindrical can placed upright for stability."
+      },
+      {
+        "sequence": 4,
+        "item_id": "spam_1",
+        "product_id": "spam",
+        "position_mm": {
+          "x": 45,
+          "y": 135,
+          "z": 40
+        },
+        "orientation": "upright",
+        "yaw_deg": 0,
+        "layer": 1,
+        "supported_by": [],
+        "assumed_dimensions_mm": {
+          "width": 80,
+          "depth": 60,
+          "height": 80
+        },
+        "assumed_weight_g": 340,
+        "reason": "Rectangular can placed upright for stability."
+      },
+      {
+        "sequence": 5,
+        "item_id": "shin_ramyun_1",
+        "product_id": "shin_ramyun",
+        "position_mm": {
+          "x": 135,
+          "y": 135,
+          "z": 40
+        },
+        "orientation": "upright",
+        "yaw_deg": 0,
+        "layer": 1,
+        "supported_by": [],
+        "assumed_dimensions_mm": {
+          "width": 75,
+          "depth": 75,
+          "height": 80
+        },
+        "assumed_weight_g": 100,
+        "reason": "Cup noodle placed upright for stability."
+      },
+      {
+        "sequence": 6,
+        "item_id": "almond_pepero_1",
+        "product_id": "almond_pepero",
+        "position_mm": {
+          "x": 225,
+          "y": 135,
+          "z": 20
+        },
+        "orientation": "flat",
+        "yaw_deg": 0,
+        "layer": 1,
+        "supported_by": [],
+        "assumed_dimensions_mm": {
+          "width": 40,
+          "depth": 20,
+          "height": 200
+        },
+        "assumed_weight_g": 50,
+        "reason": "Box placed flat due to its shape."
+      },
+      {
+        "sequence": 7,
+        "item_id": "jjolbyeong_1",
+        "product_id": "jjolbyeong",
+        "position_mm": {
+          "x": 45,
+          "y": 225,
+          "z": 20
+        },
+        "orientation": "flat",
+        "yaw_deg": 0,
+        "layer": 1,
+        "supported_by": [],
+        "assumed_dimensions_mm": {
+          "width": 50,
+          "depth": 20,
+          "height": 150
+        },
+        "assumed_weight_g": 30,
+        "reason": "Snack placed flat due to its shape."
+      }
+    ],
+    "reason": "All items fit within the allowed region without exceeding the safe fill height.",
+    "assumptions": [
+      "Assumed dimensions and weights based on typical product sizes.",
+      "Coca Cola bottles and cans are stable when placed upright.",
+      "Pepero and snack are stable when placed flat."
+    ]
+  },
+  "evaluation": {
+    "plan_generated": true,
+    "valid": false,
+    "violations": {
+      "missing": [],
+      "unknown_item": [],
+      "duplicate": [],
+      "boundary": [
+        "coca_cola_1: x[12.0,78.0] y[12.0,78.0] z[-1.0,121.0]",
+        "coca_cola_2: x[102.0,168.0] y[12.0,78.0] z[-1.0,121.0]",
+        "tuna_can_1: x[182.5,267.5] y[2.5,87.5] z[25.0,65.0]",
+        "spam_1: x[-5.0,95.0] y[105.0,165.0] z[12.5,67.5]",
+        "shin_ramyun_1: x[85.0,185.0] y[85.0,185.0] z[-15.0,95.0]",
+        "jjolbyeong_1: x[-30.0,120.0] y[167.5,282.5] z[-7.5,47.5]"
+      ],
+      "collision": [
+        "tuna_can_1 / shin_ramyun_1 (겹침 2.5×2.5×40.0mm)",
+        "tuna_can_1 / almond_pepero_1 (겹침 85.0×30.0×7.5mm)",
+        "spam_1 / shin_ramyun_1 (겹침 10.0×60.0×55.0mm)",
+        "shin_ramyun_1 / almond_pepero_1 (겹침 2.5×100.0×25.0mm)",
+        "shin_ramyun_1 / jjolbyeong_1 (겹침 35.0×17.5×55.0mm)"
+      ],
+      "orientation": [],
+      "stack_forbidden": [],
+      "load_exceeded": [],
+      "support_insufficient": [
+        "shin_ramyun_1: z_bottom=-15.0mm, 바닥/지지 상품과 접촉 없음(바닥 아래로 파고듦)",
+        "jjolbyeong_1: z_bottom=-7.5mm, 바닥/지지 상품과 접촉 없음(바닥 아래로 파고듦)",
+        "coca_cola_1: z_bottom=-1.0mm, 바닥/지지 상품과 접촉 없음(바닥 아래로 파고듦)",
+        "coca_cola_2: z_bottom=-1.0mm, 바닥/지지 상품과 접촉 없음(바닥 아래로 파고듦)",
+        "almond_pepero_1: z_bottom=7.5mm, 바닥/지지 상품과 접촉 없음(공중 부양)",
+        "spam_1: z_bottom=12.5mm, 바닥/지지 상품과 접촉 없음(공중 부양)",
+        "tuna_can_1: z_bottom=25.0mm, 바닥/지지 상품과 접촉 없음(공중 부양)"
+      ],
+      "stability": [],
+      "layer_limit": [],
+      "sequence": []
+    },
+    "violation_counts": {
+      "missing": 0,
+      "unknown_item": 0,
+      "duplicate": 0,
+      "boundary": 6,
+      "collision": 5,
+      "orientation": 0,
+      "stack_forbidden": 0,
+      "load_exceeded": 0,
+      "support_insufficient": 7,
+      "stability": 0,
+      "layer_limit": 0,
+      "sequence": 0
+    },
+    "warnings": {
+      "declared_layer_mismatch": [
+        "coca_cola_1: 선언 1 / 계산 None",
+        "coca_cola_2: 선언 1 / 계산 None",
+        "tuna_can_1: 선언 1 / 계산 None",
+        "spam_1: 선언 1 / 계산 None",
+        "shin_ramyun_1: 선언 1 / 계산 None",
+        "almond_pepero_1: 선언 1 / 계산 None",
+        "jjolbyeong_1: 선언 1 / 계산 None"
+      ],
+      "declared_support_mismatch": []
+    },
+    "metrics": {
+      "max_height_mm": 121.0,
+      "layers_used": 0,
+      "unsupported_items": 7,
+      "used_bbox_mm": [
+        297.5,
+        280.0,
+        136.0
+      ],
+      "used_bbox_volume_cm3": 11328.8,
+      "floor_items": 0,
+      "stacked_items": 0,
+      "computed_supports": {
+        "shin_ramyun_1": [],
+        "jjolbyeong_1": [],
+        "coca_cola_1": [],
+        "coca_cola_2": [],
+        "almond_pepero_1": [],
+        "spam_1": [],
+        "tuna_can_1": []
+      },
+      "computed_layers": {
+        "shin_ramyun_1": null,
+        "jjolbyeong_1": null,
+        "coca_cola_1": null,
+        "coca_cola_2": null,
+        "almond_pepero_1": null,
+        "spam_1": null,
+        "tuna_can_1": null
+      },
+      "carried_load_g": {}
+    }
+  },
+  "self_consistency": {
+    "valid": false,
+    "violation_counts": {
+      "missing": 0,
+      "unknown_item": 0,
+      "duplicate": 0,
+      "boundary": 3,
+      "collision": 1,
+      "orientation": 0,
+      "stack_forbidden": 0,
+      "load_exceeded": 0,
+      "support_insufficient": 2,
+      "stability": 0,
+      "layer_limit": 0,
+      "sequence": 0
+    },
+    "violations": {
+      "missing": [],
+      "unknown_item": [],
+      "duplicate": [],
+      "boundary": [
+        "tuna_can_1: x[180.0,270.0] y[0.0,90.0] z[0.0,90.0]",
+        "spam_1: x[5.0,85.0] y[105.0,165.0] z[0.0,80.0]",
+        "jjolbyeong_1: x[20.0,70.0] y[215.0,235.0] z[-55.0,95.0]"
+      ],
+      "collision": [
+        "tuna_can_1 / almond_pepero_1 (겹침 40.0×55.0×20.0mm)"
+      ],
+      "orientation": [],
+      "stack_forbidden": [],
+      "load_exceeded": [],
+      "support_insufficient": [
+        "jjolbyeong_1: z_bottom=-55.0mm, 바닥/지지 상품과 접촉 없음(바닥 아래로 파고듦)",
+        "almond_pepero_1: z_bottom=10.0mm, 바닥/지지 상품과 접촉 없음(공중 부양)"
+      ],
+      "stability": [],
+      "layer_limit": [],
+      "sequence": []
+    }
+  }
+}
