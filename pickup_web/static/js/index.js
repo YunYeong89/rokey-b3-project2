@@ -207,6 +207,7 @@ const Server = {
   qrUrl(id,secret){return `/api/pickup/qr/${id}.png?secret=${encodeURIComponent(secret)}`},
   pickups(){return this.j("/api/pickups")},
   members(){return this.j("/api/members")},  // 관리자
+  analytics(tab,qs){return this.j(`/api/analytics/${tab}${qs?"?"+qs:""}`)},  // 관리자 📊 분석 (서버가 집계한 결과만)
 };
 let API = Server;
 
@@ -616,13 +617,13 @@ async function loadMembers(){
 }
 
 /* ---------------- 탭
-   비회원: 주문하기 / 손님: 주문하기 · 구매 이력 / 관리자: 직원 · 재고 · 회원 (주문 화면·장바구니 바·추천 없음)
+   비회원: 주문하기 / 손님: 주문하기 · 구매 이력 / 관리자: 직원 · 재고 · 회원 · 분석 (주문 화면·장바구니 바·추천 없음)
    서버 API 도 같은 권한 (직원 · 회원 API 는 관리자만, 구매 이력은 본인만) */
 let view="shop";
-const canView=v=>isAdmin()?(v==="staff"||v==="members"):(v==="shop"||(v==="history"&&!!sess));
+const canView=v=>isAdmin()?(v==="staff"||v==="members"||v==="analytics"):(v==="shop"||(v==="history"&&!!sess));
 const defaultView=()=>isAdmin()?"staff":"shop";
 function updateTabs(){const a=isAdmin();
-  $("#shopTab").hidden=a;$("#historyTab").hidden=!sess||a;$("#staffTab").hidden=!a;$("#membersTab").hidden=!a}
+  $("#shopTab").hidden=a;$("#historyTab").hidden=!sess||a;$("#staffTab").hidden=!a;$("#membersTab").hidden=!a;$("#analyticsTab").hidden=!a}
 function show(v){
   if(!canView(v)) v=defaultView();
   view=v;
@@ -630,7 +631,9 @@ function show(v){
   document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id==="v-"+v));
   $("#cart").style.display=v==="shop"?"block":"none";fitCart();
   clearInterval(staffTimer);
-  if(v==="staff"){loadStaff();staffTimer=setInterval(loadStaff,1500)}
+  if(typeof Dash!=="undefined") Dash.close();  // 분석 탭을 떠나면 그래프 정리·자동 갱신 중지
+  if(v==="analytics"&&typeof Dash!=="undefined") Dash.open();
+  else if(v==="staff"){loadStaff();staffTimer=setInterval(loadStaff,1500)}
   else if(v==="history") loadHistory();
   else if(v==="members") loadMembers();
   else loadProducts();
@@ -644,6 +647,6 @@ loadProducts().then(async()=>{
   if(sess) await API.me().catch(()=>{});  // 저장된 로그인이 아직 유효한지 (만료면 Server.j 가 로그아웃 처리)
   const want=location.hash.slice(1)||defaultView();  // #history, #staff, #members 로 바로 열기 (관리자는 기본 직원 · 재고)
   show(want);
-  const needLogin=(want==="history"&&!sess)||((want==="staff"||want==="members")&&!isAdmin());
+  const needLogin=(want==="history"&&!sess)||(["staff","members","analytics"].includes(want)&&!isAdmin());
   if(needLogin){openCust();toast(want==="history"?"구매 이력은 로그인이 필요해요":"관리자 로그인이 필요해요")}
   restoreMy()});

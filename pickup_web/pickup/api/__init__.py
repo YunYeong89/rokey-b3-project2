@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 
 from ..config import STATIC
-from . import auth, pages, pickup, recommend, shop, staff
+from . import analytics, auth, pages, pickup, recommend, shop, staff
 
 NO_CACHE_EXT = (".html", ".css", ".js", ".json")
 
@@ -24,7 +24,7 @@ def create_app(svc):
             resp.headers["Cache-Control"] = "no-cache"
         return resp
 
-    for module in (auth, shop, recommend, staff, pickup, pages):
+    for module in (auth, shop, recommend, staff, pickup, analytics, pages):
         app.include_router(module.build(svc))
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
     # 맨 마지막: /css, /js, /vendor, /manifest.json 처럼 html 이 상대 경로로 부르는 파일

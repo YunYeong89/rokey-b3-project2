@@ -1,0 +1,12 @@
+{
+  "_doc": "재고 정책 (관리자 설정값). 단위: 일, 개. products 에 상품 id 별로 덮어쓸 값만 적으면 됨. target_stock 을 안 적으면 products.json 의 처음 재고(진열+창고)를 설정 목표로 사용. incoming = 입고 예정 수량 (발주 시스템이 없어 직접 적음). 서버를 다시 켜지 않아도 다음 조회부터 반영",
+  "defaults": {
+    "lead_time_days": 2,
+    "review_period_days": 1,
+    "safety_stock": 2,
+    "service_z": 1.65,
+    "min_history_days": 14,
+    "ma_window_days": 7
+  },
+  "products": {}
+}

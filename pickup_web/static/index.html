@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#0f766e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="stylesheet" href="css/index.css">
+<link rel="stylesheet" href="css/analytics.css">
 </head>
 <body>
 <header>
@@ -25,6 +26,7 @@
     <button class="tab" data-v="history" id="historyTab" hidden>🧾 구매 이력</button>
     <button class="tab" data-v="staff" id="staffTab" hidden>📋 직원 · 재고</button>
     <button class="tab" data-v="members" id="membersTab" hidden>👥 회원</button>
+    <button class="tab" data-v="analytics" id="analyticsTab" hidden>📊 분석</button>
   </nav>
 </header>
 
@@ -91,6 +93,13 @@
       <p class="pk-hint" style="text-align:left;margin-top:10px">계정 추가 · 비밀번호 변경: <code>python3 -m pickup.auth set &lt;ID&gt; &lt;admin|user&gt;</code> (서버 다시 켜면 반영)</p>
     </div>
   </section>
+
+  <!-- 분석 대시보드 (관리자만, js/analytics.js) -->
+  <section class="view an-root" id="v-analytics">
+    <nav class="an-sub" id="anSub"></nav>
+    <div class="an-filters" id="anFilters"></div>
+    <div id="anBody"></div>
+  </section>
 </main>
 
 <div class="cart" id="cart">
@@ -107,5 +116,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="js/index.js"></script>
+<script src="vendor/chart.umd.min.js"></script>
+<script src="js/analytics.js"></script>
 </body>
 </html>

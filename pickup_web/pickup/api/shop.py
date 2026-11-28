@@ -36,6 +36,7 @@ def build(svc):
                     raise HTTPException(400, f"{p['name']} 재고가 부족해요 (남은 {p['stock']}개)")
             o = orders.new(items, customer_id=customer_id, rec_attrib=attrib)
             oid = o["order_id"]
+            svc.track("order_created", o)   # 분석: 주문 시점 가격·수량 기록
             store.status = {"order_id": oid, "state": "checking", "message": "주문을 로봇에게 보냈어요",
                             "done": 0, "total": sum(split_items(items)[0].values())}
         svc.robot.send_order(oid, items)

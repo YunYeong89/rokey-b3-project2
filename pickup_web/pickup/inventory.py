@@ -23,6 +23,8 @@ class Store:
         self.vision_time = None
         self.alerts = []          # 직원 알림
         self.status = {"state": "idle"}   # 로봇이 마지막으로 보낸 /order_status
+        # 재고가 바뀔 때 부르는 함수 (분석 기록용). on_change(상품, kind, 진열 변화, 창고 변화, order_uid, note)
+        self.on_change = None
 
     def save(self):
         self.path.write_text(json.dumps(self.products, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -40,11 +42,18 @@ class Store:
         self.alerts.insert(0, {"time": time.strftime("%H:%M:%S"), "level": level, "text": text})
         del self.alerts[30:]
 
-    def apply_picked(self, picked):
+    def _changed(self, p, kind, shelf, wh, ref=None, note=None):
+        if self.on_change:
+            self.on_change(p, kind, shelf, wh, ref, note)
+
+    def apply_picked(self, picked, ref=None):
+        """판매로 진열 재고 차감. ref = 주문 order_uid (분석 기록용)"""
         for pid, n in picked.items():
             p = self.get(pid)
             if p:
+                before = p["stock"]
                 p["stock"] = max(0, p["stock"] - n)
+                self._changed(p, "sale", p["stock"] - before, 0, ref)
                 if pid in self.vision:
                     self.vision[pid] = max(0, self.vision[pid] - n)
                 if p["stock"] <= LOW_STOCK:
@@ -82,6 +91,7 @@ class Store:
         p = self.get(pid)
         if not p:
             raise KeyError(pid)
+        before = (p["stock"], p["warehouse"])
         if mode == "move":
             n = min(qty, p["warehouse"]) if qty > 0 else max(qty, -p["stock"])
             if n == 0:
@@ -99,5 +109,6 @@ class Store:
             raise ValueError(f"알 수 없는 mode: {mode}")
         self.vision.pop(pid, None)
         self.save()
+        self._changed(p, mode, p["stock"] - before[0], p["warehouse"] - before[1], note=text)
         self.alert("info", text)
         return text

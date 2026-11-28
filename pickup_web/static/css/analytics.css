@@ -1,0 +1,55 @@
+/* 관리자 📊 분석 탭 (index.css 의 색·패널·표·태그를 그대로 쓰고, 대시보드에만 필요한 것만 추가) */
+.an-root{
+  /* 범주 색: 색약에서도 구분되도록 검증한 순서 (항상 이 순서대로, 순위가 아니라 항목에 고정) */
+  --s1:#257de0; --s2:#f47230; --s3:#00b894; --s4:#f2a600; --s5:#ee7fac; --s6:#008a17; --s7:#6a4ce2; --s8:#ec4647;
+}
+body.wide .bar, body.wide .tabs, body.wide main{max-width:1200px}
+.an-sub{display:flex;gap:6px;overflow-x:auto;margin:0 0 12px;padding-bottom:2px}
+.an-sub button{flex:none;padding:8px 14px;border-radius:99px;background:#fff;border:1px solid var(--line);font-size:13px;font-weight:700;color:var(--muted)}
+.an-sub button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.an-filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--radius);padding:10px 12px;margin-bottom:14px;font-size:13px}
+.an-filters .seg{display:flex;background:#f1ede3;border-radius:11px;padding:3px;gap:2px}
+.an-filters .seg button{padding:6px 10px;border-radius:9px;font-size:12px;font-weight:700;color:var(--muted)}
+.an-filters .seg button.on{background:#fff;color:var(--brand);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.an-filters select,.an-filters input[type=date]{font:inherit;font-size:12px;padding:6px 8px;border-radius:9px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+.an-filters label{display:flex;align-items:center;gap:4px;color:var(--muted);font-weight:600}
+.an-filters .r{margin-left:auto;display:flex;align-items:center;gap:8px}
+.an-filters .upd{color:var(--muted);font-size:12px;white-space:nowrap}
+.an-filters [hidden]{display:none!important}
+.an-period{font-size:12px;color:var(--muted);margin:-6px 2px 10px}
+.an-grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media (min-width:860px){.an-grid.two{grid-template-columns:1fr 1fr}}
+.an-grid>.panel{margin-bottom:0;min-width:0}
+.an-sec{margin-bottom:14px}
+.chart-box{position:relative;height:250px}
+.chart-box.tall{height:340px}.chart-box.short{height:200px}
+.kpi b.na{font-size:14px;color:var(--muted);font-weight:700;margin-top:8px}
+.kpi .kx{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.kpis.an{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.collect{display:flex;gap:10px;align-items:flex-start;background:#f6f3ec;border:1px dashed var(--line);border-radius:14px;padding:12px 14px;
+  font-size:13px;color:var(--muted)}
+.collect b{color:var(--ink);white-space:nowrap}
+.collect.nc{background:#f3f4f6}
+.collect .meter{height:6px;background:#e3ddd0;border-radius:99px;overflow:hidden;margin-top:6px;max-width:220px}
+.collect .meter i{display:block;height:100%;background:var(--brand-2)}
+.note{font-size:12px;color:var(--muted);margin:8px 2px 0;line-height:1.5}
+.banner{background:#fffbeb;border:1px solid #f3c46b;color:#78350f;border-radius:14px;padding:10px 14px;font-size:13px;margin-bottom:14px}
+.tscroll{overflow-x:auto}
+.tscroll table{min-width:560px}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+.heat{border-collapse:separate;border-spacing:2px;font-size:11px;width:auto}
+.heat th{font-size:11px;padding:2px 4px;border:0;text-align:center}
+.heat td{width:28px;height:22px;border-radius:4px;padding:0;text-align:center;border:0;font-variant-numeric:tabular-nums}
+.heat td.self{background:#f1ede3}
+.heat-legend{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin-top:8px}
+.heat-legend i{width:90px;height:8px;border-radius:99px;background:linear-gradient(90deg,#e6f4f2,#0f766e)}
+.pill{font-size:11px;font-weight:800;padding:2px 7px;border-radius:99px;background:#eef2f1;color:var(--muted)}
+.pill.S{background:#dbeafe;color:#1e40af}.pill.C{background:#ffedd5;color:#9a3412}.pill.R{background:#dcfce7;color:#166534}
+.tag.out{background:#fee2e2;color:#991b1b}.tag.reorder{background:#fef3c7;color:#92400e}
+.tag.builtin{background:#dcfce7;color:#166534}.tag.external{background:#dbeafe;color:#1e40af}.tag.not_connected{background:#f3f4f6;color:#6b7280}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--ink);margin:0 0 6px}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.legend i.dash{height:0;border-top:2px dashed;border-radius:0;width:14px}
+.an-err{color:var(--danger);font-size:13px}
