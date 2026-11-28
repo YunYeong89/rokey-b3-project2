@@ -1,0 +1,11 @@
+# 파이썬
+__pycache__/
+*.pyc
+
+# 실행할 때마다 새로 만들어지는 그림 (data/)
+data/last_detection.jpg
+data/last_basket.png
+data/realsense_check.jpg
+
+# 갤러리 특징 파일 — 사진(data/gallery/<상품 id>/*.jpg)으로 각자 PC 에서 다시 만듦 (인식기가 시작할 때 자동)
+data/gallery/embeddings.npz

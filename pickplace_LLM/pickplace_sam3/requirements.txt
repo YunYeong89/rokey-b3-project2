@@ -1,0 +1,10 @@
+# pickplace_sam3 — pip install -r requirements.txt
+# ROS 2 (rclpy, sensor_msgs, cv_bridge, tf2_ros …) 와 두산 DSR_ROBOT2 · m0609_rg2_bringup 은 ~/cobot2_ws 에서 (pip 아님)
+numpy<2
+opencv-python
+scipy
+pillow
+torch                    # GPU 가 있으면 CUDA 판으로 (pytorch.org)
+transformers>=5.0        # Sam3Model / DINOv3 가 들어 있는 버전 (이 PC: 5.24.1 에서 확인)
+torchvision              # SAM3·DINOv3 이미지 처리기가 씀 — torch 와 짝이 맞는 버전으로 (pytorch.org 표)
+pymodbus>=3.6            # 실제 RG2 를 Modbus 로 직접 쓸 때 (--gripper modbus)

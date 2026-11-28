@@ -1,0 +1,10 @@
+# LLM_sam3 — pip install -r requirements.txt  (로봇·인식 쪽은 ../pickplace_sam3/requirements.txt 도 같이)
+openai                   # Whisper STT
+langchain-openai         # gpt-4o 로 명령 해석 (LLMParser)
+langchain-core
+python-dotenv            # .env 의 OPENAI_API_KEY
+sounddevice              # 마이크·스피커
+numpy<2
+scipy
+openwakeword             # 호출어 "자비스" / "hey jarvis"
+edge-tts                 # 안내 음성
