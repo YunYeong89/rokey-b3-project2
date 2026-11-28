@@ -221,3 +221,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# packing_planning: 정리 전이라 git 에서 뺌 (로컬에만 둠)
+packing_planning/
